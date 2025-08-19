@@ -20,6 +20,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.FirebaseManager
+import com.kriptogan.supercart2.ui.components.ReusableAlertDialog
+import com.kriptogan.supercart2.ui.components.ReusableFullScreenWindow
 import com.kriptogan.supercart2.ui.theme.SuperCart2Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -50,6 +52,8 @@ class MainActivity : ComponentActivity() {
 fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier) {
     var connectionStatus by remember { mutableStateOf("Checking...") }
     var isConnected by remember { mutableStateOf(false) }
+    var showAlertDialog by remember { mutableStateOf(false) }
+    var showFullScreenWindow by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     
     // Check connection status every 2 seconds
@@ -147,7 +151,90 @@ fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier)
         ) {
             Text("Test Connection")
         }
+        
+        // Test Components Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Test Components",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Button(
+                        onClick = { showAlertDialog = true }
+                    ) {
+                        Text("Test AlertDialog")
+                    }
+                    
+                    Button(
+                        onClick = { showFullScreenWindow = true }
+                    ) {
+                        Text("Test Full Screen")
+                    }
+                }
+            }
+        }
     }
+    
+    // AlertDialog Component
+    ReusableAlertDialog(
+        isVisible = showAlertDialog,
+        onDismiss = { showAlertDialog = false },
+        title = "Test AlertDialog",
+        content = "This is a test of the reusable AlertDialog component. It can be customized with different content and actions.",
+        confirmText = "OK",
+        dismissText = "Cancel",
+        onConfirm = { showAlertDialog = false }
+    )
+    
+    // Full Screen Window Component
+    ReusableFullScreenWindow(
+        isVisible = showFullScreenWindow,
+        onDismiss = { showFullScreenWindow = false },
+        title = "Test Full Screen Window",
+        content = {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "This is a test of the reusable Full Screen Window component.",
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "You can put any content here and customize it as needed.",
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                Button(
+                    onClick = { showFullScreenWindow = false }
+                ) {
+                    Text("Close Window")
+                }
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true)
