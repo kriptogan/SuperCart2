@@ -9,6 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.FirebaseManager
 import com.kriptogan.supercart2.ui.components.ReusableAlertDialog
 import com.kriptogan.supercart2.ui.components.ReusableFullScreenWindow
+import com.kriptogan.supercart2.ui.components.BottomNavigationBar
 import com.kriptogan.supercart2.ui.theme.SuperCart2Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -37,10 +40,21 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             SuperCart2Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                var currentRoute by remember { mutableStateOf("home") }
+                
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        BottomNavigationBar(
+                            currentRoute = currentRoute,
+                            onRouteSelected = { route -> currentRoute = route }
+                        )
+                    }
+                ) { innerPadding ->
                     MainContent(
                         firebaseManager = firebaseManager,
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
+                        currentRoute = currentRoute
                     )
                 }
             }
@@ -49,7 +63,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier) {
+fun MainContent(
+    firebaseManager: FirebaseManager, 
+    modifier: Modifier = Modifier,
+    currentRoute: String = "home"
+) {
     var connectionStatus by remember { mutableStateOf("Checking...") }
     var isConnected by remember { mutableStateOf(false) }
     var showAlertDialog by remember { mutableStateOf(false) }
@@ -66,6 +84,110 @@ fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier)
         }
     }
     
+    // Route-based content
+    when (currentRoute) {
+        "home" -> HomeContent(
+            firebaseManager = firebaseManager,
+            modifier = modifier,
+            connectionStatus = connectionStatus,
+            isConnected = isConnected,
+            showAlertDialog = showAlertDialog,
+            showFullScreenWindow = showFullScreenWindow,
+            onShowAlertDialog = { showAlertDialog = true },
+            onShowFullScreenWindow = { showFullScreenWindow = true },
+            onTestConnection = {
+                coroutineScope.launch {
+                    val connected = firebaseManager.isConnected()
+                    isConnected = connected
+                    connectionStatus = if (connected) "Connected" else "Disconnected"
+                }
+            }
+        )
+        "shopping_list" -> ShoppingListContent(
+            modifier = modifier
+        )
+        else -> HomeContent(
+            firebaseManager = firebaseManager,
+            modifier = modifier,
+            connectionStatus = connectionStatus,
+            isConnected = isConnected,
+            showAlertDialog = showAlertDialog,
+            showFullScreenWindow = showFullScreenWindow,
+            onShowAlertDialog = { showAlertDialog = true },
+            onShowFullScreenWindow = { showFullScreenWindow = true },
+            onTestConnection = {
+                coroutineScope.launch {
+                    val connected = firebaseManager.isConnected()
+                    isConnected = connected
+                    connectionStatus = if (connected) "Connected" else "Disconnected"
+                }
+            }
+        )
+    }
+    
+    // AlertDialog Component
+    if (currentRoute == "home") {
+        ReusableAlertDialog(
+            isVisible = showAlertDialog,
+            onDismiss = { showAlertDialog = false },
+            title = "Test AlertDialog",
+            content = "This is a test of the reusable AlertDialog component. It can be customized with different content and actions.",
+            confirmText = "OK",
+            dismissText = "Cancel",
+            onConfirm = { showAlertDialog = false }
+        )
+        
+        // Full Screen Window Component
+        ReusableFullScreenWindow(
+            isVisible = showFullScreenWindow,
+            onDismiss = { showFullScreenWindow = false },
+            title = "Test Full Screen Window",
+            content = {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "This is a test of the reusable Full Screen Window component.",
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "You can put any content here and customize it as needed.",
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray
+                    )
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    Button(
+                        onClick = { showFullScreenWindow = false }
+                    ) {
+                        Text("Close Window")
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun HomeContent(
+    firebaseManager: FirebaseManager,
+    modifier: Modifier,
+    connectionStatus: String,
+    isConnected: Boolean,
+    showAlertDialog: Boolean,
+    showFullScreenWindow: Boolean,
+    onShowAlertDialog: () -> Unit,
+    onShowFullScreenWindow: () -> Unit,
+    onTestConnection: () -> Unit
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -121,7 +243,7 @@ fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier)
                         "Firebase connection failed. Check your configuration.",
                     fontSize = 14.sp,
                     color = Color.Gray,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -141,13 +263,7 @@ fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier)
         
         // Test Connection Button
         Button(
-            onClick = {
-                coroutineScope.launch {
-                    val connected = firebaseManager.isConnected()
-                    isConnected = connected
-                    connectionStatus = if (connected) "Connected" else "Disconnected"
-                }
-            }
+            onClick = onTestConnection
         ) {
             Text("Test Connection")
         }
@@ -173,13 +289,13 @@ fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier)
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Button(
-                        onClick = { showAlertDialog = true }
+                        onClick = onShowAlertDialog
                     ) {
                         Text("Test AlertDialog")
                     }
                     
                     Button(
-                        onClick = { showFullScreenWindow = true }
+                        onClick = onShowFullScreenWindow
                     ) {
                         Text("Test Full Screen")
                     }
@@ -187,54 +303,41 @@ fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier)
             }
         }
     }
-    
-    // AlertDialog Component
-    ReusableAlertDialog(
-        isVisible = showAlertDialog,
-        onDismiss = { showAlertDialog = false },
-        title = "Test AlertDialog",
-        content = "This is a test of the reusable AlertDialog component. It can be customized with different content and actions.",
-        confirmText = "OK",
-        dismissText = "Cancel",
-        onConfirm = { showAlertDialog = false }
-    )
-    
-    // Full Screen Window Component
-    ReusableFullScreenWindow(
-        isVisible = showFullScreenWindow,
-        onDismiss = { showFullScreenWindow = false },
-        title = "Test Full Screen Window",
-        content = {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "This is a test of the reusable Full Screen Window component.",
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = "You can put any content here and customize it as needed.",
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                    color = Color.Gray
-                )
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Button(
-                    onClick = { showFullScreenWindow = false }
-                ) {
-                    Text("Close Window")
-                }
-            }
-        }
-    )
+}
+
+@Composable
+fun ShoppingListContent(modifier: Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Shopping List",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = "Your shopping list will appear here",
+            fontSize = 16.sp,
+            color = Color.Gray,
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Icon(
+            imageVector = Icons.Default.ShoppingCart,
+            contentDescription = "Shopping Cart",
+            modifier = Modifier.size(64.dp),
+            tint = Color.Gray
+        )
+    }
 }
 
 @Preview(showBackground = true)
