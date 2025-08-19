@@ -4,24 +4,40 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.kriptogan.supercart2.classes.FirebaseManager
 import com.kriptogan.supercart2.ui.theme.SuperCart2Theme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Initialize Firebase
+        val firebaseManager = FirebaseManager()
+        firebaseManager.initialize()
+        
         setContent {
             SuperCart2Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                    MainContent(
+                        firebaseManager = firebaseManager,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -31,17 +47,113 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
+fun MainContent(firebaseManager: FirebaseManager, modifier: Modifier = Modifier) {
+    var connectionStatus by remember { mutableStateOf("Checking...") }
+    var isConnected by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Check connection status every 2 seconds
+    LaunchedEffect(Unit) {
+        while (true) {
+            val connected = firebaseManager.isConnected()
+            isConnected = connected
+            connectionStatus = if (connected) "Connected" else "Disconnected"
+            delay(2000)
+        }
+    }
+    
+    Column(
         modifier = modifier
-    )
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Connection Status Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Firebase Connection Status",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Status Indicator
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(
+                                color = if (isConnected) Color.Green else Color.Red,
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            )
+                    )
+                    
+                    Text(
+                        text = connectionStatus,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isConnected) Color.Green else Color.Red
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = if (isConnected) 
+                        "Your app is successfully connected to Firebase!" 
+                    else 
+                        "Firebase connection failed. Check your configuration.",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        }
+        
+        // App Title
+        Text(
+            text = "SuperCart2",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
+        
+        Text(
+            text = "Grocery Management App",
+            fontSize = 16.sp,
+            color = Color.Gray
+        )
+        
+        // Test Connection Button
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    val connected = firebaseManager.isConnected()
+                    isConnected = connected
+                    connectionStatus = if (connected) "Connected" else "Disconnected"
+                }
+            }
+        ) {
+            Text("Test Connection")
+        }
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun MainContentPreview() {
     SuperCart2Theme {
-        Greeting("Android")
+        MainContent(FirebaseManager())
     }
 }

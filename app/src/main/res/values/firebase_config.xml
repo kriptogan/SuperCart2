@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Firebase Configuration -->
+    <!-- This file will be automatically generated when you add your Firebase project -->
+    <!-- You'll need to download google-services.json from Firebase Console and place it in the app/ directory -->
+    
+    <!-- Placeholder values - replace with actual Firebase project values -->
+    <string name="firebase_project_id">your-project-id</string>
+    <string name="firebase_app_id">your-app-id</string>
+    <string name="firebase_api_key">your-api-key</string>
+</resources>
