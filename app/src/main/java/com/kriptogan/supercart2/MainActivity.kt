@@ -1,5 +1,6 @@
 package com.kriptogan.supercart2
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,12 +20,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.FirebaseManager
 import com.kriptogan.supercart2.ui.components.ReusableAlertDialog
 import com.kriptogan.supercart2.ui.components.ReusableFullScreenWindow
 import com.kriptogan.supercart2.ui.components.BottomNavigationBar
+import com.kriptogan.supercart2.ui.components.CategoryCreationForm
+import com.kriptogan.supercart2.classes.LocalStorageManager
 import com.kriptogan.supercart2.ui.theme.SuperCart2Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -41,6 +45,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SuperCart2Theme {
                 var currentRoute by remember { mutableStateOf("home") }
+                var showCategoryDialog by remember { mutableStateOf(false) }
                 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -54,7 +59,11 @@ class MainActivity : ComponentActivity() {
                     MainContent(
                         firebaseManager = firebaseManager,
                         modifier = Modifier.padding(innerPadding),
-                        currentRoute = currentRoute
+                        currentRoute = currentRoute,
+                        showCategoryDialog = showCategoryDialog,
+                        onShowCategoryDialog = { showCategoryDialog = true },
+                        onHideCategoryDialog = { showCategoryDialog = false },
+                        context = this@MainActivity
                     )
                 }
             }
@@ -66,7 +75,11 @@ class MainActivity : ComponentActivity() {
 fun MainContent(
     firebaseManager: FirebaseManager, 
     modifier: Modifier = Modifier,
-    currentRoute: String = "home"
+    currentRoute: String = "home",
+    showCategoryDialog: Boolean = false,
+    onShowCategoryDialog: () -> Unit = {},
+    onHideCategoryDialog: () -> Unit = {},
+    context: Context
 ) {
     var connectionStatus by remember { mutableStateOf("Checking...") }
     var isConnected by remember { mutableStateOf(false) }
@@ -101,7 +114,9 @@ fun MainContent(
                     isConnected = connected
                     connectionStatus = if (connected) "Connected" else "Disconnected"
                 }
-            }
+            },
+            showCategoryDialog = showCategoryDialog,
+            onShowCategoryDialog = onShowCategoryDialog
         )
         "shopping_list" -> ShoppingListContent(
             modifier = modifier
@@ -121,6 +136,37 @@ fun MainContent(
                     isConnected = connected
                     connectionStatus = if (connected) "Connected" else "Disconnected"
                 }
+            },
+            showCategoryDialog = showCategoryDialog,
+            onShowCategoryDialog = onShowCategoryDialog
+        )
+    }
+    
+    // Category Creation Dialog
+    if (currentRoute == "home" && showCategoryDialog) {
+        ReusableFullScreenWindow(
+            isVisible = showCategoryDialog,
+            onDismiss = onHideCategoryDialog,
+            title = "Create New Category",
+            content = {
+                CategoryCreationForm(
+                    onSave = { category ->
+                        // Save to local storage first
+                        val localStorageManager = LocalStorageManager(context)
+                        localStorageManager.addCategory(category)
+                        
+                        // Then save to Firestore
+                        coroutineScope.launch {
+                            val success = firebaseManager.saveCategory(category)
+                            if (success) {
+                                // Show success message or handle success
+                            }
+                        }
+                        
+                        onHideCategoryDialog()
+                    },
+                    onCancel = onHideCategoryDialog
+                )
             }
         )
     }
@@ -186,68 +232,17 @@ fun HomeContent(
     showFullScreenWindow: Boolean,
     onShowAlertDialog: () -> Unit,
     onShowFullScreenWindow: () -> Unit,
-    onTestConnection: () -> Unit
+    onTestConnection: () -> Unit,
+    showCategoryDialog: Boolean = false,
+    onShowCategoryDialog: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.Center
     ) {
-        // Connection Status Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Firebase Connection Status",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Status Indicator
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(
-                                color = if (isConnected) Color.Green else Color.Red,
-                                shape = androidx.compose.foundation.shape.CircleShape
-                            )
-                    )
-                    
-                    Text(
-                        text = connectionStatus,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (isConnected) Color.Green else Color.Red
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = if (isConnected) 
-                        "Your app is successfully connected to Firebase!" 
-                    else 
-                        "Firebase connection failed. Check your configuration.",
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-        
         // App Title
         Text(
             text = "SuperCart2",
@@ -261,12 +256,7 @@ fun HomeContent(
             color = Color.Gray
         )
         
-        // Test Connection Button
-        Button(
-            onClick = onTestConnection
-        ) {
-            Text("Test Connection")
-        }
+        Spacer(modifier = Modifier.height(32.dp))
         
         // Test Components Section
         Card(
@@ -285,8 +275,9 @@ fun HomeContent(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
                         onClick = onShowAlertDialog
@@ -298,6 +289,12 @@ fun HomeContent(
                         onClick = onShowFullScreenWindow
                     ) {
                         Text("Test Full Screen")
+                    }
+                    
+                    Button(
+                        onClick = onShowCategoryDialog
+                    ) {
+                        Text("Create Category")
                     }
                 }
             }
@@ -344,6 +341,9 @@ fun ShoppingListContent(modifier: Modifier) {
 @Composable
 fun MainContentPreview() {
     SuperCart2Theme {
-        MainContent(FirebaseManager())
+        MainContent(
+            firebaseManager = FirebaseManager(),
+            context = LocalContext.current
+        )
     }
 }

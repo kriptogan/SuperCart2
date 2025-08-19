@@ -44,4 +44,66 @@ class FirebaseManager {
             false
         }
     }
+    
+    /**
+     * Save category to Firestore
+     */
+    suspend fun saveCategory(category: Category): Boolean {
+        return try {
+            firestore.collection(CATEGORIES_COLLECTION)
+                .document(category.uuid)
+                .set(category)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * Get all categories from Firestore
+     */
+    suspend fun getCategories(): List<Category> {
+        return try {
+            val snapshot = firestore.collection(CATEGORIES_COLLECTION)
+                .get()
+                .await()
+            
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Category::class.java)
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    /**
+     * Update category in Firestore
+     */
+    suspend fun updateCategory(category: Category): Boolean {
+        return try {
+            firestore.collection(CATEGORIES_COLLECTION)
+                .document(category.uuid)
+                .set(category)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * Delete category from Firestore
+     */
+    suspend fun deleteCategory(categoryId: String): Boolean {
+        return try {
+            firestore.collection(CATEGORIES_COLLECTION)
+                .document(categoryId)
+                .delete()
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

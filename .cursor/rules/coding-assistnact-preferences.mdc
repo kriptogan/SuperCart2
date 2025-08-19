@@ -16,4 +16,7 @@ ignore the roadmap directory. it is for personal use.
 
 - User re-usable components -
 For showing prompts and windows that opens on button clicks or user actions, use the src/main/ui/components directory
+
+- Double check for syntax errors -
+When done executing a task, search for syntax errors in the new code, or code that might be affected by the new code.
 ---
