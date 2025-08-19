@@ -42,11 +42,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.FirebaseManager
 import com.kriptogan.supercart2.classes.Category
+import com.kriptogan.supercart2.classes.Grocery
 import com.kriptogan.supercart2.ui.components.ReusableAlertDialog
 import com.kriptogan.supercart2.ui.components.ReusableFullScreenWindow
 import com.kriptogan.supercart2.ui.components.BottomNavigationBar
 import com.kriptogan.supercart2.ui.components.CategoryCreationForm
 import com.kriptogan.supercart2.ui.components.CategoriesList
+import com.kriptogan.supercart2.ui.components.GroceryCreationForm
 import com.kriptogan.supercart2.classes.LocalStorageManager
 import com.kriptogan.supercart2.ui.theme.SuperCart2Theme
 import com.kriptogan.supercart2.ui.screens.home.HomeContent
@@ -109,9 +111,17 @@ fun MainContent(
     var showEditCategoryDialog by remember { mutableStateOf(false) }
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     
+    // Grocery state variables - EXACTLY same pattern as categories
+    var showGroceryDialog by remember { mutableStateOf(false) }
+    var showEditGroceryDialog by remember { mutableStateOf(false) }
+    var groceryToEdit by remember { mutableStateOf<Grocery?>(null) }
+    
     // Single source of truth for categories - EXACTLY as it was working before
     val localStorageManager = LocalStorageManager(context)
     var categories by remember { mutableStateOf(localStorageManager.getCategories()) }
+    
+    // Single source of truth for groceries - EXACTLY same pattern as categories
+    var groceries by remember { mutableStateOf(localStorageManager.getGroceries()) }
     
     val coroutineScope = rememberCoroutineScope()
     
@@ -133,6 +143,7 @@ fun MainContent(
             firebaseManager = firebaseManager,
             modifier = modifier,
             categories = categories, // ← Pass categories directly (same as before)
+            groceries = groceries, // ← Pass groceries directly (same pattern as categories)
             localStorageManager = localStorageManager,
             onShowCategoryDialog = onShowCategoryDialog,
             onDeleteAllCategories = {
@@ -154,6 +165,28 @@ fun MainContent(
                 // Handle edit category - EXACTLY as it was working before
                 categoryToEdit = category
                 showEditCategoryDialog = true
+            },
+            onShowGroceryDialog = { showGroceryDialog = true },
+            onDeleteAllGroceries = {
+                // Delete all groceries - EXACTLY same pattern as categories
+                coroutineScope.launch {
+                    try {
+                        val existingGroceries = localStorageManager.getGroceries()
+                        existingGroceries.forEach { grocery ->
+                            // Note: Firebase grocery methods might not exist yet
+                            // firebaseManager.deleteGrocery(grocery.uuid)
+                        }
+                        localStorageManager.clearAllGroceries()
+                        groceries = emptyList() // ← Direct state update (same pattern as categories)
+                    } catch (e: Exception) {
+                        // Handle error if needed
+                    }
+                }
+            },
+            onEditGrocery = { grocery ->
+                // Handle edit grocery - EXACTLY same pattern as categories
+                groceryToEdit = grocery
+                showEditGroceryDialog = true
             }
         )
         "shopping_list" -> ShoppingListContent(
@@ -163,6 +196,7 @@ fun MainContent(
             firebaseManager = firebaseManager,
             modifier = modifier,
             categories = categories, // ← Pass categories directly (same as before)
+            groceries = groceries, // ← Pass groceries directly (same pattern as categories)
             localStorageManager = localStorageManager,
             onShowCategoryDialog = onShowCategoryDialog,
             onDeleteAllCategories = {
@@ -184,6 +218,28 @@ fun MainContent(
                 // Handle edit category - EXACTLY as it was working before
                 categoryToEdit = category
                 showEditCategoryDialog = true
+            },
+            onShowGroceryDialog = { showGroceryDialog = true },
+            onDeleteAllGroceries = {
+                // Delete all groceries - EXACTLY same pattern as categories
+                coroutineScope.launch {
+                    try {
+                        val existingGroceries = localStorageManager.getGroceries()
+                        existingGroceries.forEach { grocery ->
+                            // Note: Firebase grocery methods might not exist yet
+                            // firebaseManager.deleteGrocery(grocery.uuid)
+                        }
+                        localStorageManager.clearAllGroceries()
+                        groceries = emptyList() // ← Direct state update (same pattern as categories)
+                    } catch (e: Exception) {
+                        // Handle error if needed
+                    }
+                }
+            },
+            onEditGrocery = { grocery ->
+                // Handle edit grocery - EXACTLY same pattern as categories
+                groceryToEdit = grocery
+                showEditGroceryDialog = true
             }
         )
     }
@@ -255,6 +311,82 @@ fun MainContent(
                         showEditCategoryDialog = false
                         categoryToEdit = null
                     }
+                )
+            }
+        )
+    }
+    
+    // Grocery Creation Dialog
+    if (currentRoute == "home" && showGroceryDialog) {
+        ReusableFullScreenWindow(
+            isVisible = showGroceryDialog,
+            onDismiss = { showGroceryDialog = false },
+            title = "Create New Grocery Item",
+            content = {
+                GroceryCreationForm(
+                    onSave = { grocery ->
+                        // Save grocery - EXACTLY same pattern as categories
+                        localStorageManager.addGrocery(grocery)
+                        
+                        // Update state directly - EXACTLY same pattern as categories
+                        groceries = localStorageManager.getGroceries()
+                        
+                        // Save to Firebase asynchronously (don't wait)
+                        coroutineScope.launch {
+                            try {
+                                // Note: Firebase grocery methods might not exist yet
+                                // firebaseManager.saveGrocery(grocery)
+                            } catch (e: Exception) {
+                                // Firebase failure doesn't affect local state
+                            }
+                        }
+                        
+                        showGroceryDialog = false
+                    },
+                    onCancel = { showGroceryDialog = false },
+                    availableCategories = categories
+                )
+            }
+        )
+    }
+    
+    // Grocery Edit Dialog
+    if (currentRoute == "home" && showEditGroceryDialog && groceryToEdit != null) {
+        ReusableFullScreenWindow(
+            isVisible = showEditGroceryDialog,
+            onDismiss = { 
+                showEditGroceryDialog = false
+                groceryToEdit = null
+            },
+            title = "Edit Grocery Item",
+            content = {
+                GroceryCreationForm(
+                    initialGrocery = groceryToEdit, // ← Pass existing grocery for editing
+                    onSave = { updatedGrocery ->
+                        // Update grocery - EXACTLY same pattern as categories
+                        localStorageManager.updateGrocery(updatedGrocery)
+                        
+                        // Update state directly - EXACTLY same pattern as categories
+                        groceries = localStorageManager.getGroceries()
+                        
+                        // Save to Firebase asynchronously (don't wait)
+                        coroutineScope.launch {
+                            try {
+                                // Note: Firebase grocery methods might not exist yet
+                                // firebaseManager.saveGrocery(updatedGrocery)
+                            } catch (e: Exception) {
+                                // Firebase failure doesn't affect local state
+                            }
+                        }
+                        
+                        showEditGroceryDialog = false
+                        groceryToEdit = null
+                    },
+                    onCancel = { 
+                        showEditGroceryDialog = false
+                        groceryToEdit = null
+                    },
+                    availableCategories = categories
                 )
             }
         )

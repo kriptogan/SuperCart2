@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.Category
+import com.kriptogan.supercart2.classes.Grocery
 import com.kriptogan.supercart2.classes.FirebaseManager
 import com.kriptogan.supercart2.classes.LocalStorageManager
 import com.kriptogan.supercart2.ui.components.CategoriesList
@@ -34,10 +35,14 @@ fun HomeContent(
     firebaseManager: FirebaseManager,
     modifier: Modifier,
     categories: List<Category>, // ← Keep the same simple approach - categories passed directly
+    groceries: List<Grocery>, // ← Keep the same simple approach - groceries passed directly
     localStorageManager: LocalStorageManager,
     onShowCategoryDialog: () -> Unit,
     onDeleteAllCategories: () -> Unit, // ← Simple callback, no complex state management
-    onEditCategory: ((Category) -> Unit)? = null // ← New callback for editing
+    onEditCategory: ((Category) -> Unit)? = null, // ← New callback for editing
+    onShowGroceryDialog: () -> Unit,
+    onDeleteAllGroceries: () -> Unit,
+    onEditGrocery: ((Grocery) -> Unit)? = null
 ) {
     Column(
         modifier = modifier
@@ -96,61 +101,94 @@ fun HomeContent(
                     ) {
                         Text("Delete All Categories")
                     }
+                    
+                    Button(
+                        onClick = onShowGroceryDialog,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE8F5E8),
+                            contentColor = Color(0xFF2E7D32)
+                        )
+                    ) {
+                        Text("Create Grocery")
+                    }
+                    
+                    Button(
+                        onClick = onDeleteAllGroceries,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFF3E0),
+                            contentColor = Color(0xFFF57C00)
+                        )
+                    ) {
+                        Text("Delete All Groceries")
+                    }
                 }
             }
         }
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Categories Count Display - Shows real-time updates from the categories passed in
-        Card(
+        // Data Count Display - Shows real-time updates from both categories and groceries
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFE3F2FD)
-            )
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            // Categories Count
+            Card(
+                modifier = Modifier.weight(1f),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFE3F2FD)
+                )
             ) {
-                Text(
-                    text = "Categories in Local Storage",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF1976D2)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Categories",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF1976D2)
+                    )
+                    Text(
+                        text = "${categories.size} saved",
+                        fontSize = 12.sp,
+                        color = Color(0xFF424242)
+                    )
+                }
+            }
+            
+            // Groceries Count
+            Card(
+                modifier = Modifier.weight(1f),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFE8F5E8)
                 )
-                Text(
-                    text = "${categories.size} categories saved", // ← Direct observation of categories
-                    fontSize = 12.sp,
-                    color = Color(0xFF424242)
-                )
-                
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Local Storage Info",
-                    modifier = Modifier.size(24.dp),
-                    tint = Color(0xFF1976D2)
-                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Groceries",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF2E7D32)
+                    )
+                    Text(
+                        text = "${groceries.size} saved",
+                        fontSize = 12.sp,
+                        color = Color(0xFF424242)
+                    )
+                }
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Categories List - Receives categories directly as parameter (same as before)
-        CategoriesList(
-            firebaseManager = firebaseManager,
-            localStorageManager = localStorageManager,
-            modifier = Modifier.fillMaxWidth(),
-            onCategoryClick = { /* Handle category click */ },
-            showTitle = true,
-            title = "Your Categories",
-            onDataChanged = { /* This will be handled by parent */ },
-            categories = categories, // ← Direct state observation - no intermediate layers
-            showEditButton = true, // ← Enable edit buttons
-            onEditCategory = onEditCategory // ← Pass edit callback
-        )
+        // Categories removed for now - will be called where needed later
     }
 }
