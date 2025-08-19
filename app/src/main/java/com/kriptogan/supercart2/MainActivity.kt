@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -88,6 +89,12 @@ fun MainContent(
     var isConnected by remember { mutableStateOf(false) }
     var showAlertDialog by remember { mutableStateOf(false) }
     var showFullScreenWindow by remember { mutableStateOf(false) }
+    var categoriesChanged by remember { mutableStateOf(0) }
+    
+    // Single source of truth for categories - like Angular's component property
+    val localStorageManager = LocalStorageManager(context)
+    var categories by remember { mutableStateOf(localStorageManager.getCategories()) }
+    
     val coroutineScope = rememberCoroutineScope()
     
     // Check connection status every 2 seconds
@@ -122,7 +129,15 @@ fun MainContent(
             },
             showCategoryDialog = showCategoryDialog,
             onShowCategoryDialog = onShowCategoryDialog,
-            coroutineScope = coroutineScope
+            coroutineScope = coroutineScope,
+            onCategoriesChanged = {
+                categoriesChanged++
+            },
+            categoriesChanged = categoriesChanged,
+            categories = categories,
+            onCategoriesUpdated = { newCategories ->
+                categories = newCategories
+            }
         )
         "shopping_list" -> ShoppingListContent(
             modifier = modifier
@@ -145,7 +160,15 @@ fun MainContent(
             },
             showCategoryDialog = showCategoryDialog,
             onShowCategoryDialog = onShowCategoryDialog,
-            coroutineScope = coroutineScope
+            coroutineScope = coroutineScope,
+            onCategoriesChanged = {
+                categoriesChanged++
+            },
+            categoriesChanged = categoriesChanged,
+            categories = categories,
+            onCategoriesUpdated = { newCategories ->
+                categories = newCategories
+            }
         )
     }
     
@@ -157,21 +180,24 @@ fun MainContent(
             title = "Create New Category",
             content = {
                 CategoryCreationForm(
-                    onSave = { category ->
-                        // Save to local storage first
-                        val localStorageManager = LocalStorageManager(context)
-                        localStorageManager.addCategory(category)
-                        
-                        // Then save to Firestore
-                        coroutineScope.launch {
-                            val success = firebaseManager.saveCategory(category)
-                            if (success) {
-                                // Show success message or handle success
-                            }
-                        }
-                        
-                        onHideCategoryDialog()
-                    },
+                                         onSave = { category ->
+                         // Save to local storage first
+                         val localStorageManager = LocalStorageManager(context)
+                         localStorageManager.addCategory(category)
+                         
+                         // Then save to Firestore
+                         coroutineScope.launch {
+                             val success = firebaseManager.saveCategory(category)
+                             if (success) {
+                                 // Show success message or handle success
+                             }
+                         }
+                         
+                         // Update the reactive categories state directly
+                         categories = localStorageManager.getCategories()
+                         
+                         onHideCategoryDialog()
+                     },
                     onCancel = onHideCategoryDialog
                 )
             }
@@ -242,10 +268,21 @@ fun HomeContent(
     onTestConnection: () -> Unit,
     showCategoryDialog: Boolean = false,
     onShowCategoryDialog: () -> Unit = {},
-    coroutineScope: CoroutineScope = rememberCoroutineScope()
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    onCategoriesChanged: () -> Unit = {},
+    categoriesChanged: Int = 0,
+    categories: List<Category> = emptyList(),
+    onCategoriesUpdated: (List<Category>) -> Unit = {}
 ) {
     val context = LocalContext.current
     val localStorageManager = remember { LocalStorageManager(context) }
+    
+    // Function to refresh categories - updates the reactive state
+    fun refreshCategories() {
+        val newCategories = localStorageManager.getCategories()
+        onCategoriesUpdated(newCategories)
+        onCategoriesChanged()
+    }
     
     Column(
         modifier = modifier
@@ -311,28 +348,31 @@ fun HomeContent(
                         Text("Create Category")
                     }
                     
-                    Button(
-                        onClick = {
-                            // Delete all categories from both local storage and Firebase
-                            coroutineScope.launch {
-                                try {
-                                    // Get existing categories before clearing
-                                    val existingCategories = localStorageManager.getCategories()
-                                    
-                                    // Clear from Firebase first
-                                    existingCategories.forEach { category ->
-                                        firebaseManager.deleteCategory(category.uuid)
-                                    }
-                                    
-                                    // Then clear from local storage
-                                    localStorageManager.clearAllData()
-                                    
-                                    // Show success message (you can add a toast or snackbar here)
-                                } catch (e: Exception) {
-                                    // Handle error (you can add error handling here)
-                                }
-                            }
-                        },
+                                         Button(
+                         onClick = {
+                             // Delete all categories from both local storage and Firebase
+                             coroutineScope.launch {
+                                 try {
+                                     // Get existing categories before clearing
+                                     val existingCategories = localStorageManager.getCategories()
+                                     
+                                     // Clear from Firebase first
+                                     existingCategories.forEach { category ->
+                                         firebaseManager.deleteCategory(category.uuid)
+                                     }
+                                     
+                                     // Then clear from local storage
+                                     localStorageManager.clearAllData()
+                                     
+                                     // Update the reactive categories state via callback
+                                     onCategoriesUpdated(emptyList())
+                                     
+                                     // Show success message (you can add a toast or snackbar here)
+                                 } catch (e: Exception) {
+                                     // Handle error (you can add error handling here)
+                                 }
+                             }
+                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFFFEBEE),
                             contentColor = Color(0xFFD32F2F)
@@ -346,6 +386,46 @@ fun HomeContent(
         
         Spacer(modifier = Modifier.height(24.dp))
         
+        // Categories Count Display
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFE3F2FD)
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Categories in Local Storage",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF1976D2)
+                    )
+                                         Text(
+                         text = "${categories.size} categories saved",
+                         fontSize = 12.sp,
+                         color = Color(0xFF424242)
+                     )
+                }
+                
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Local Storage Info",
+                    modifier = Modifier.size(24.dp),
+                    tint = Color(0xFF1976D2)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
         // Categories List Section
         CategoriesList(
             firebaseManager = firebaseManager,
@@ -355,7 +435,9 @@ fun HomeContent(
                 // Handle category click - can be expanded later
             },
             showTitle = true,
-            title = "Your Categories"
+            title = "Your Categories",
+            onDataChanged = { refreshCategories() },
+            categories = categories // Use the categories passed from parent
         )
     }
 }

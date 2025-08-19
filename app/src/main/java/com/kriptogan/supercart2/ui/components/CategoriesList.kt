@@ -28,35 +28,35 @@ fun CategoriesList(
     modifier: Modifier = Modifier,
     onCategoryClick: ((Category) -> Unit)? = null,
     showTitle: Boolean = true,
-    title: String = "Categories"
+    title: String = "Categories",
+    onDataChanged: (() -> Unit)? = null,
+    key: Any? = null,
+    categories: List<Category> = emptyList() // Accept categories as parameter
 ) {
-    var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
-    // Fetch categories from both sources
+    // Fetch categories from both sources only when component first loads
     LaunchedEffect(Unit) {
         try {
             isLoading = true
             
-            // Get local categories first for quick display
-            val localCategories = localStorageManager.getCategories()
-            categories = localCategories.sortedBy { it.viewOrder }
-            
             // Try to get Firebase categories and merge them
             try {
                 val firebaseCategories = firebaseManager.getCategories()
+                val localCategories = localStorageManager.getCategories()
                 
                 // Merge and deduplicate categories
                 val mergedCategories = (localCategories + firebaseCategories)
                     .distinctBy { it.uuid }
                     .sortedBy { it.viewOrder }
                 
-                categories = mergedCategories
-                
                 // Update local storage with merged data
                 localStorageManager.saveCategories(mergedCategories)
+                
+                // Notify parent component that data has changed
+                onDataChanged?.invoke()
                 
             } catch (e: Exception) {
                 // If Firebase fails, keep local categories
