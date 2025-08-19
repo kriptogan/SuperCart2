@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,7 +32,9 @@ fun CategoriesList(
     title: String = "Categories",
     onDataChanged: (() -> Unit)? = null,
     key: Any? = null,
-    categories: List<Category> = emptyList() // Accept categories as parameter
+    categories: List<Category> = emptyList(), // Accept categories as parameter
+    showEditButton: Boolean = false, // ← New parameter: control edit button visibility
+    onEditCategory: ((Category) -> Unit)? = null // ← New parameter: handle edit action
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -158,7 +161,9 @@ fun CategoriesList(
                     items(categories) { category ->
                         CategoryCard(
                             category = category,
-                            onClick = { onCategoryClick?.invoke(category) }
+                            onClick = { onCategoryClick?.invoke(category) },
+                            showEditButton = showEditButton,
+                            onEditClick = { onEditCategory?.invoke(category) }
                         )
                     }
                 }
@@ -170,7 +175,9 @@ fun CategoriesList(
 @Composable
 private fun CategoryCard(
     category: Category,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    showEditButton: Boolean = false,
+    onEditClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -228,6 +235,21 @@ private fun CategoryCard(
                 color = Color.Gray,
                 modifier = Modifier.padding(start = 8.dp)
             )
+            
+            // Edit button - only show when enabled
+            if (showEditButton && onEditClick != null) {
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = { onEditClick.invoke() }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit Category",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }

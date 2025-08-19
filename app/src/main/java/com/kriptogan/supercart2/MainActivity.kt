@@ -106,6 +106,8 @@ fun MainContent(
     var isConnected by remember { mutableStateOf(false) }
     var showAlertDialog by remember { mutableStateOf(false) }
     var showFullScreenWindow by remember { mutableStateOf(false) }
+    var showEditCategoryDialog by remember { mutableStateOf(false) }
+    var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     
     // Single source of truth for categories - EXACTLY as it was working before
     val localStorageManager = LocalStorageManager(context)
@@ -147,6 +149,11 @@ fun MainContent(
                         // Handle error if needed
                     }
                 }
+            },
+            onEditCategory = { category ->
+                // Handle edit category - EXACTLY as it was working before
+                categoryToEdit = category
+                showEditCategoryDialog = true
             }
         )
         "shopping_list" -> ShoppingListContent(
@@ -172,6 +179,11 @@ fun MainContent(
                         // Handle error if needed
                     }
                 }
+            },
+            onEditCategory = { category ->
+                // Handle edit category - EXACTLY as it was working before
+                categoryToEdit = category
+                showEditCategoryDialog = true
             }
         )
     }
@@ -203,6 +215,46 @@ fun MainContent(
                         onHideCategoryDialog()
                     },
                     onCancel = onHideCategoryDialog
+                )
+            }
+        )
+    }
+    
+    // Category Edit Dialog
+    if (currentRoute == "home" && showEditCategoryDialog && categoryToEdit != null) {
+        ReusableFullScreenWindow(
+            isVisible = showEditCategoryDialog,
+            onDismiss = { 
+                showEditCategoryDialog = false
+                categoryToEdit = null
+            },
+            title = "Edit Category",
+            content = {
+                CategoryCreationForm(
+                    initialCategory = categoryToEdit, // ← Pass existing category for editing
+                    onSave = { updatedCategory ->
+                        // Update category - EXACTLY as it was working before
+                        localStorageManager.updateCategory(updatedCategory)
+                        
+                        // Update state directly - EXACTLY as it was working before
+                        categories = localStorageManager.getCategories()
+                        
+                        // Save to Firebase asynchronously (don't wait)
+                        coroutineScope.launch {
+                            try {
+                                firebaseManager.saveCategory(updatedCategory)
+                            } catch (e: Exception) {
+                                // Firebase failure doesn't affect local state
+                            }
+                        }
+                        
+                        showEditCategoryDialog = false
+                        categoryToEdit = null
+                    },
+                    onCancel = { 
+                        showEditCategoryDialog = false
+                        categoryToEdit = null
+                    }
                 )
             }
         )

@@ -36,7 +36,8 @@ fun HomeContent(
     categories: List<Category>, // ← Keep the same simple approach - categories passed directly
     localStorageManager: LocalStorageManager,
     onShowCategoryDialog: () -> Unit,
-    onDeleteAllCategories: () -> Unit // ← Simple callback, no complex state management
+    onDeleteAllCategories: () -> Unit, // ← Simple callback, no complex state management
+    onEditCategory: ((Category) -> Unit)? = null // ← New callback for editing
 ) {
     Column(
         modifier = modifier
@@ -147,7 +148,9 @@ fun HomeContent(
             showTitle = true,
             title = "Your Categories",
             onDataChanged = { /* This will be handled by parent */ },
-            categories = categories // ← Direct state observation - no intermediate layers
+            categories = categories, // ← Direct state observation - no intermediate layers
+            showEditButton = true, // ← Enable edit buttons
+            onEditCategory = onEditCategory // ← Pass edit callback
         )
     }
 }

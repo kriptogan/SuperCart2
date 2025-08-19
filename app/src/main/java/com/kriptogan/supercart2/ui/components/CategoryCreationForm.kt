@@ -18,11 +18,12 @@ import com.kriptogan.supercart2.classes.Category
 @Composable
 fun CategoryCreationForm(
     onSave: (Category) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    initialCategory: Category? = null // ← New parameter for editing
 ) {
-    var name by remember { mutableStateOf("") }
-    var isDefault by remember { mutableStateOf(false) }
-    var viewOrder by remember { mutableStateOf("1") }
+    var name by remember { mutableStateOf(initialCategory?.name ?: "") }
+    var isDefault by remember { mutableStateOf(initialCategory?.default ?: false) }
+    var viewOrder by remember { mutableStateOf(initialCategory?.viewOrder?.toString() ?: "1") }
     var isFormValid by remember { mutableStateOf(false) }
     
     // Validate form
@@ -38,7 +39,7 @@ fun CategoryCreationForm(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Create New Category",
+            text = if (initialCategory != null) "Edit Category" else "Create New Category",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
@@ -90,11 +91,21 @@ fun CategoryCreationForm(
             
             Button(
                 onClick = {
-                    val category = Category(
-                        name = name.trim(),
-                        default = isDefault,
-                        viewOrder = viewOrder.toIntOrNull() ?: 1
-                    )
+                    val category = if (initialCategory != null) {
+                        // Update existing category
+                        initialCategory.copy(
+                            name = name.trim(),
+                            default = isDefault,
+                            viewOrder = viewOrder.toIntOrNull() ?: 1
+                        )
+                    } else {
+                        // Create new category
+                        Category(
+                            name = name.trim(),
+                            default = isDefault,
+                            viewOrder = viewOrder.toIntOrNull() ?: 1
+                        )
+                    }
                     onSave(category)
                 },
                 enabled = isFormValid,
