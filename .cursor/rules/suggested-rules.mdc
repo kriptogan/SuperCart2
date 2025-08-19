@@ -1,8 +1,11 @@
 ---
 alwaysApply: true
 
-
-*****
 Before implementing any new feature, verify the complete parameter chain from top-level component calls down to the lowest-level implementation, ensuring all required parameters are properly passed through each function call.
-*****
+
+
+Always prioritize reactive state binding over manual UI updates. When implementing features:
+First choice: Use a single source of truth with state variables that automatically update the UI
+Second choice: Use callback functions to communicate state changes up to parent components
+Last resort: Only use manual refresh mechanisms (like key parameters or page navigation) if absolutely necessary
 ---
