@@ -24,14 +24,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.FirebaseManager
+import com.kriptogan.supercart2.classes.Category
 import com.kriptogan.supercart2.ui.components.ReusableAlertDialog
 import com.kriptogan.supercart2.ui.components.ReusableFullScreenWindow
 import com.kriptogan.supercart2.ui.components.BottomNavigationBar
 import com.kriptogan.supercart2.ui.components.CategoryCreationForm
+import com.kriptogan.supercart2.ui.components.CategoriesList
 import com.kriptogan.supercart2.classes.LocalStorageManager
 import com.kriptogan.supercart2.ui.theme.SuperCart2Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,6 +100,8 @@ fun MainContent(
         }
     }
     
+    // Default categories initialization removed
+    
     // Route-based content
     when (currentRoute) {
         "home" -> HomeContent(
@@ -116,7 +121,8 @@ fun MainContent(
                 }
             },
             showCategoryDialog = showCategoryDialog,
-            onShowCategoryDialog = onShowCategoryDialog
+            onShowCategoryDialog = onShowCategoryDialog,
+            coroutineScope = coroutineScope
         )
         "shopping_list" -> ShoppingListContent(
             modifier = modifier
@@ -138,7 +144,8 @@ fun MainContent(
                 }
             },
             showCategoryDialog = showCategoryDialog,
-            onShowCategoryDialog = onShowCategoryDialog
+            onShowCategoryDialog = onShowCategoryDialog,
+            coroutineScope = coroutineScope
         )
     }
     
@@ -234,14 +241,17 @@ fun HomeContent(
     onShowFullScreenWindow: () -> Unit,
     onTestConnection: () -> Unit,
     showCategoryDialog: Boolean = false,
-    onShowCategoryDialog: () -> Unit = {}
+    onShowCategoryDialog: () -> Unit = {},
+    coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
+    val context = LocalContext.current
+    val localStorageManager = remember { LocalStorageManager(context) }
+    
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // App Title
         Text(
@@ -256,7 +266,11 @@ fun HomeContent(
             color = Color.Gray
         )
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Categories List Section - REMOVED
+        
+        Spacer(modifier = Modifier.height(24.dp))
         
         // Test Components Section
         Card(
@@ -296,9 +310,53 @@ fun HomeContent(
                     ) {
                         Text("Create Category")
                     }
+                    
+                    Button(
+                        onClick = {
+                            // Delete all categories from both local storage and Firebase
+                            coroutineScope.launch {
+                                try {
+                                    // Get existing categories before clearing
+                                    val existingCategories = localStorageManager.getCategories()
+                                    
+                                    // Clear from Firebase first
+                                    existingCategories.forEach { category ->
+                                        firebaseManager.deleteCategory(category.uuid)
+                                    }
+                                    
+                                    // Then clear from local storage
+                                    localStorageManager.clearAllData()
+                                    
+                                    // Show success message (you can add a toast or snackbar here)
+                                } catch (e: Exception) {
+                                    // Handle error (you can add error handling here)
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFEBEE),
+                            contentColor = Color(0xFFD32F2F)
+                        )
+                    ) {
+                        Text("Delete All Categories")
+                    }
                 }
             }
         }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Categories List Section
+        CategoriesList(
+            firebaseManager = firebaseManager,
+            localStorageManager = localStorageManager,
+            modifier = Modifier.fillMaxWidth(),
+            onCategoryClick = { category ->
+                // Handle category click - can be expanded later
+            },
+            showTitle = true,
+            title = "Your Categories"
+        )
     }
 }
 
