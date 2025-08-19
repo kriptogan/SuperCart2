@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+
+- Don't lose context - 
+Use the following directory to stay on track with the project alignments:
+../src
+
+- When you fail more then 2 times to execute a task -
+Present to me a summary of what you tried to do, and suggest other implimentation methods.
+
+- If something is not clear, ask -
+Make sure everything is clear. If something I have said or asked contradict the architechture or general approach of the project, ask me to clearify.
+
+- Ignore personal directory -
+ignore the roadmap directory. it is for personal use.
+---
