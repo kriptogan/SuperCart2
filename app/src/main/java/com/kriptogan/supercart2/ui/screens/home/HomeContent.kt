@@ -112,7 +112,7 @@ fun HomeContent(
                 CollapsibleCategorySection(
                     category = category,
                     subCategories = categorySubCategories,
-                    localStorageManager = localStorageManager
+                    groceries = groceries
                 )
             }
         }

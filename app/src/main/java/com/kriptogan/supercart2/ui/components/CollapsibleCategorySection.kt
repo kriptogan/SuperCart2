@@ -32,13 +32,12 @@ import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.Category
 import com.kriptogan.supercart2.classes.SubCategory
 import com.kriptogan.supercart2.classes.Grocery
-import com.kriptogan.supercart2.classes.LocalStorageManager
 
 @Composable
 fun CollapsibleCategorySection(
     category: Category,
     subCategories: List<SubCategory>,
-    localStorageManager: LocalStorageManager,
+    groceries: List<Grocery>,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -80,9 +79,10 @@ fun CollapsibleCategorySection(
                     modifier = Modifier.padding(start = 52.dp, end = 16.dp, bottom = 16.dp)
                 ) {
                     subCategories.forEach { subCategory ->
+                        val subCategoryGroceries = groceries.filter { it.subCategoryId == subCategory.uuid }
                         SubCategoryItem(
                             subCategory = subCategory,
-                            localStorageManager = localStorageManager
+                            groceries = subCategoryGroceries
                         )
                         if (subCategory != subCategories.last()) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -97,11 +97,10 @@ fun CollapsibleCategorySection(
 @Composable
 private fun SubCategoryItem(
     subCategory: SubCategory,
-    localStorageManager: LocalStorageManager,
+    groceries: List<Grocery>,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
-    val groceries = localStorageManager.getGroceries().filter { it.subCategoryId == subCategory.uuid }
     
     Card(
         modifier = modifier.fillMaxWidth(),
