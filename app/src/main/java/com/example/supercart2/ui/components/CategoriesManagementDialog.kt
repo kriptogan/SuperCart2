@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -51,20 +52,6 @@ fun CategoriesManagementDialog(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Create Category Button
-                Button(
-                    onClick = { /* TODO: Create new category */ },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.primaryGreen,
-                        contentColor = SuperCartColors.white
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = SuperCartSpacing.md)
-                ) {
-                    Text("Create New Category")
-                }
-                
                 // Categories List
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
@@ -80,19 +67,39 @@ fun CategoriesManagementDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SuperCartColors.primaryGreen,
-                    contentColor = SuperCartColors.white
-                ),
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Close"
-                )
-                Text("Close", modifier = Modifier.padding(start = SuperCartSpacing.sm))
+                // Cancel Button (left) - secondary styled
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.white,
+                        contentColor = SuperCartColors.primaryGreen
+                    ),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Cancel"
+                    )
+                }
+                
+                // Accept Button (right) - primary styled
+                Button(
+                    onClick = { /* TODO: Create new category */ },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen,
+                        contentColor = SuperCartColors.white
+                    ),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Create New Category"
+                    )
+                }
             }
         }
     )
