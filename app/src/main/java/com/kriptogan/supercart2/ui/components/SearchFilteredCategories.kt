@@ -24,9 +24,9 @@ fun SearchFilteredCategories(
     modifier: Modifier = Modifier
 ) {
     val relevantCategories = if (expandedCategories.isNotEmpty()) {
-        categories.filter { it.uuid in expandedCategories }
+        categories.filter { it.uuid in expandedCategories }.sortedBy { it.viewOrder }
     } else {
-        categories
+        categories.sortedBy { it.viewOrder }
     }
     
     LazyColumn(

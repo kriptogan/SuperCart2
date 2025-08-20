@@ -158,7 +158,7 @@ fun CategoriesList(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(categories) { category ->
+                    items(categories.sortedBy { it.viewOrder }) { category ->
                         CategoryCard(
                             category = category,
                             onClick = { onCategoryClick?.invoke(category) },

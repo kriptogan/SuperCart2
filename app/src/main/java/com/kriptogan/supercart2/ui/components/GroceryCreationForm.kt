@@ -83,8 +83,9 @@ fun GroceryCreationForm(
     
     LaunchedEffect(categories, subCategories) {
         if (groceryToEdit == null && categories.isNotEmpty() && selectedCategoryId.isEmpty()) {
-            selectedCategoryId = categories.first().uuid
-            val firstCategorySubCategories = subCategories.filter { it.categoryId == categories.first().uuid }
+            val sortedCategories = categories.sortedBy { it.viewOrder }
+            selectedCategoryId = sortedCategories.first().uuid
+            val firstCategorySubCategories = subCategories.filter { it.categoryId == sortedCategories.first().uuid }
             if (firstCategorySubCategories.isNotEmpty()) {
                 selectedSubCategoryId = firstCategorySubCategories.first().uuid
             }
@@ -94,7 +95,6 @@ fun GroceryCreationForm(
     if (selectedCategoryId.isNotEmpty() && filteredSubCategories.isNotEmpty() && selectedSubCategoryId.isEmpty()) {
         selectedSubCategoryId = filteredSubCategories.first().uuid
     }
-    
     Column(
         modifier = modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -185,7 +185,7 @@ fun GroceryCreationForm(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(categories) { category ->
+                    items(categories.sortedBy { it.viewOrder }) { category ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -284,22 +284,12 @@ fun GroceryCreationForm(
             confirmButton = {
                 Button(onClick = {
                     val millis = datePickerState.selectedDateMillis
-                    expirationDate = millis?.let {
-                        LocalDate.ofEpochDay(it / (24 * 60 * 60 * 1000))
-                    }
+                    expirationDate = millis?.let { LocalDate.ofEpochDay(it / (24 * 60 * 60 * 1000)) }
                     showDatePicker = false
-                }) {
-                    Text("Set Date")
-                }
+                }) { Text("Set Date") }
             },
-            dismissButton = {
-                Button(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+            dismissButton = { Button(onClick = { showDatePicker = false }) { Text("Cancel") } }
+        ) { DatePicker(state = datePickerState) }
     }
 }
 

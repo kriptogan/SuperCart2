@@ -73,9 +73,9 @@ fun CategoryManagementScreen(
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(categories) { category ->
+            items(categories.sortedBy { it.viewOrder }) { category ->
                 CategoryItem(
                     category = category,
                     onEdit = { onEditCategory(category) }
