@@ -20,6 +20,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,9 +42,14 @@ fun CollapsibleCategorySection(
     subCategories: List<SubCategory>,
     groceries: List<Grocery>,
     onEditGrocery: (Grocery) -> Unit,
+    isExpandedGlobal: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(isExpandedGlobal) }
+    
+    LaunchedEffect(isExpandedGlobal) {
+        isExpanded = isExpandedGlobal
+    }
     
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -90,7 +96,8 @@ fun CollapsibleCategorySection(
                         SubCategoryItem(
                             subCategory = subCategory,
                             groceries = subCategoryGroceries,
-                            onEditGrocery = onEditGrocery
+                            onEditGrocery = onEditGrocery,
+                            isExpandedGlobal = isExpandedGlobal
                         )
                         if (subCategory != subCategories.last()) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -107,9 +114,14 @@ private fun SubCategoryItem(
     subCategory: SubCategory,
     groceries: List<Grocery>,
     onEditGrocery: (Grocery) -> Unit,
+    isExpandedGlobal: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(isExpandedGlobal) }
+    
+    LaunchedEffect(isExpandedGlobal) {
+        isExpanded = isExpandedGlobal
+    }
     
     Card(
         modifier = modifier.fillMaxWidth(),

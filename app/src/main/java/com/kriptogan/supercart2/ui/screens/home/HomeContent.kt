@@ -48,6 +48,7 @@ fun HomeContent(
     var groceries by remember { mutableStateOf<List<Grocery>>(emptyList()) }
     var showEditForm by remember { mutableStateOf(false) }
     var groceryToEdit by remember { mutableStateOf<Grocery?>(null) }
+    var isAllExpanded by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
     
     // Load sub-categories and groceries when component is created AND when categories change
@@ -123,7 +124,9 @@ fun HomeContent(
         AppHeader(
             categories = categories,
             subCategories = subCategories,
-            onGroceryCreated = onGroceryCreated
+            onGroceryCreated = onGroceryCreated,
+            isAllExpanded = isAllExpanded,
+            onToggleAll = { isAllExpanded = !isAllExpanded }
         )
         
         // Temporary test button to create categories
@@ -150,7 +153,8 @@ fun HomeContent(
                     onEditGrocery = { grocery ->
                         groceryToEdit = grocery
                         showEditForm = true
-                    }
+                    },
+                    isExpandedGlobal = isAllExpanded
                 )
             }
         }

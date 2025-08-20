@@ -9,14 +9,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +41,8 @@ fun AppHeader(
     categories: List<Category>,
     subCategories: List<SubCategory>,
     onGroceryCreated: (String, String, String?) -> Unit,
+    isAllExpanded: Boolean = true,
+    onToggleAll: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showGroceryForm by remember { mutableStateOf(false) }
@@ -119,6 +125,23 @@ fun AppHeader(
                 fontSize = 16.sp,
                 color = Color.Gray,
                 modifier = Modifier.weight(1f)
+            )
+        }
+        
+        // Toggle expand/collapse all button
+        OutlinedButton(
+            onClick = onToggleAll,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = if (isAllExpanded) "Collapse All" else "Expand All",
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isAllExpanded) "Collapse All" else "Expand All",
+                fontSize = 14.sp
             )
         }
         

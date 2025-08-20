@@ -1,0 +1,262 @@
+# 🏢 **Enterprise Security Platform - PROJECT RULES**
+
+## 📋 **Executive Summary**
+
+This document serves as the **SINGLE SOURCE OF TRUTH** for all development guidelines, patterns, and strategies across the Enterprise Security Platform. These rules apply to **EVERY request and chat** in the project.
+
+---
+
+## 🚨 **CRITICAL RULES (Always Follow)**
+
+### 🔒 **Permission-Based Development**
+- **ALWAYS ask for explicit permission before ANY changes**
+- **NEVER implement anything automatically**
+- **EXPLAIN what you're about to do before doing it**
+- **WAIT for confirmation before proceeding**
+
+### 🧪 **Test-Driven Development (TDD)**
+- **ALWAYS write tests FIRST, then implement regular code**
+- **Include edge cases and error scenarios**
+- **Ensure comprehensive test coverage**
+- **Follow existing test patterns from the codebase**
+
+### 📚 **Documentation Reference**
+- **ALWAYS reference MD files before making architectural decisions**
+- **NEVER introduce patterns that contradict existing documentation**
+- **VERIFY new approaches against established patterns**
+- **CROSS-REFERENCE multiple sources before suggesting changes**
+
+### 🌐 **English-Only Documentation**
+- **ALWAYS write comments and documentation in English only**
+- **Use clear, concise English explanations**
+- **Follow proper JSDoc format for API documentation**
+- **Maintain English terminology and explanations**
+
+---
+
+## 🎭 **WHEN-THEN PATTERN RULES**
+
+### **1. Pattern Detection & Completion**
+```
+WHEN you detect a development pattern
+THEN:
+- Identify complete pattern scope across all repositories
+- List all required actions (numbered 1-10+)
+- Ask for permission to implement complete pattern
+- Check for cross-repository dependencies
+- Suggest full implementation approach with timeline
+- Reference relevant MD files for consistency
+```
+
+### **2. TDD Implementation**
+```
+WHEN implementing any code
+THEN:
+- Write comprehensive tests FIRST (unit, integration, e2e)
+- Include edge cases and error scenarios
+- Ensure test coverage meets enterprise standards
+- Only after tests pass, implement production code
+- Follow existing test patterns from MD files
+- Add performance tests for critical paths
+```
+
+### **3. Permission Requests**
+```
+WHEN making any changes
+THEN:
+- ALWAYS ask for explicit permission before changes
+- Explain what will be changed and why
+- List all affected files and repositories
+- Provide rollback strategy if needed
+- Check for cross-repository impact
+- Wait for confirmation before proceeding
+```
+
+### **4. External API Integration**
+```
+WHEN integrating external APIs
+THEN:
+- Research deeply on the web first
+- Check compatibility with existing stack
+- Validate security requirements
+- Test integration thoroughly
+- Document API patterns
+- Consider rate limiting and error handling
+```
+
+### **5. Code Consistency**
+```
+WHEN writing code
+THEN:
+- Match existing patterns exactly
+- Follow established naming conventions
+- Use consistent error handling
+- Maintain architectural patterns
+- Follow security guidelines
+- Add English-only comments
+```
+
+### **6. Error Handling**
+```
+WHEN encountering errors
+THEN:
+- Analyze error patterns systematically
+- Check for existing solutions in MD files
+- Suggest comprehensive fixes
+- Consider cross-repository impact
+- Provide rollback strategies
+- Document error resolution
+```
+
+### **7. Performance Optimization**
+```
+WHEN optimizing performance
+THEN:
+- Reference performance patterns from MD files
+- Consider microservices impact
+- Validate against architecture guidelines
+- Test performance improvements
+- Document optimization strategies
+- Consider scalability implications
+```
+
+---
+
+### **🚀 Quick Action Commands**
+```
+# Implement with TDD
+"Implement [feature] using TDD approach" + @PROJECT_RULES.md#tdd-implementation
+
+# Complete pattern
+"Complete the full pattern for [module]" + @PROJECT_RULES.md#pattern-detection
+
+# Cross-repository work
+"Implement across all repositories" + @PROJECT_RULES.md#cross-repository-awareness
+
+# Add translations
+"Add UI with translations" + @PROJECT_RULES.md#translation-management
+```
+
+### **🎭 WHEN-THEN Quick Commands**
+```
+# Pattern detection
+"WHEN pattern detected THEN complete full scope" + @PROJECT_RULES.md#pattern-detection
+
+# TDD implementation
+"WHEN implementing code THEN write tests first" + @PROJECT_RULES.md#tdd-implementation
+
+# Permission requests
+"WHEN making changes THEN ask permission" + @PROJECT_RULES.md#permission-requests
+```
+
+---
+
+## 📋 **IMPLEMENTATION CHECKLIST**
+
+### **✅ Standard Implementation Process**
+1. **Analyze Request** - Understand requirements and scope
+2. **Check Patterns** - Reference relevant MD files
+3. **Ask Permission** - Get explicit approval
+4. **Write Tests** - Implement TDD approach
+5. **Implement Code** - Follow established patterns
+7. **Test Integration** - Validate cross-repository impact
+8. **Document Changes** - Update relevant documentation
+9. **Deploy Safely** - Follow deployment procedures
+10. **Monitor Performance** - Track metrics and alerts
+
+
+### **✅ Quality Assurance Checklist**
+- [ ] Tests written and passing
+- [ ] Code follows established patterns
+- [ ] Translations added for all languages
+- [ ] Cross-repository impact assessed
+- [ ] Security requirements met
+- [ ] Performance implications considered
+- [ ] Documentation updated
+- [ ] Error handling implemented
+- [ ] Logging and monitoring added
+- [ ] Rollback strategy prepared
+
+## 🚀 **EFFICIENCY MAXIMIZATION TIPS**
+
+### **🎯 Pro Tips for Maximum Efficiency**
+1. **Always reference this document first** - Use as primary cursor rules
+2. **Use WHEN-THEN patterns** - Follow established decision trees
+3. **Leverage cross-repository awareness** - Consider full system impact
+4. **Implement TDD consistently** - Write tests before code
+5. **Follow translation patterns** - Include all 7 languages
+6. **Use permission requests** - Get approval before changes
+7. **Reference architecture patterns** - Follow established designs
+8. **Monitor performance** - Track metrics and optimize
+9. **Document everything** - Keep documentation current
+10. **Test thoroughly** - Validate across all modules
+
+### **🎭 Advanced WHEN-THEN Scenarios**
+```
+WHEN working on any enterprise security platform task
+THEN:
+- Reference @PROJECT_RULES.md first
+- Follow WHEN-THEN patterns for decision making
+- Consider cross-repository impact
+- Implement TDD approach
+- Add translations for UI changes
+- Ask for permission before changes
+- Follow established architecture patterns
+- Monitor performance and security
+- Document all changes
+- Test thoroughly across modules
+```
+
+---
+
+## 💡 **COMMUNICATION PROTOCOL**
+
+### **🤝 How I Should Interact**
+- **Pattern Detection**: Always mention when I detect a pattern and **ASK** if you want the complete implementation
+- **Cross-Repository Patterns**: When a pattern spans multiple repositories, **ASK** if you want me to work on other repositories too
+- **External Research**: Summarize my research findings before implementing
+- **Translation Management**: **ASK** before adding translation keys when adding UI text
+- **Database Changes**: **ASK** for permission before running any commands
+- **Documentation Reference**: Mention which MD files I'm referencing for decisions
+- **All Actions**: **ALWAYS ASK FOR PERMISSION** before doing anything - never do it automatically
+
+### **❓ When to Ask Questions**
+- When patterns conflict with requirements  
+- When external API research reveals multiple approaches
+- When database changes might affect other services
+- When patterns span multiple repositories (ask if you want me to work on other repos)
+- When translation context is unclear
+- When existing documentation seems outdated
+- Before switching to work on a different repository
+
+---
+
+## 🏆 **SUCCESS METRICS**
+
+This project rules file is successful when:
+- ✅ All code follows existing patterns consistently
+- ✅ Tests are written before implementation
+- ✅ All translations are properly added
+- ✅ Patterns are detected and completed systematically  
+- ✅ External APIs are thoroughly researched and properly integrated
+- ✅ Database changes include proper migration workflow
+- ✅ Documentation stays current and English-only
+- ✅ No architectural decisions contradict existing MD files
+- ✅ Permission is always requested before changes
+- ✅ Cross-repository impact is always considered
+
+---
+
+## 📋 **VERSION HISTORY**
+
+- **v1.0**: Initial project rules setup
+- **v1.1**: Added WHEN-THEN patterns
+- **v1.2**: Enhanced cross-repository awareness
+- **v1.3**: Added comprehensive MD file references
+- **v1.4**: Unified all rules into single source of truth
+
+---
+
+**🎯 This document serves as your comprehensive project rules for maximum efficiency in every request and chat!**
+
+**Remember**: These rules should be applied in **EVERY interaction**, whether it's a new chat or continuing an existing conversation.
