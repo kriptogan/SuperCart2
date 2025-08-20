@@ -222,6 +222,7 @@ fun AppHeader(
             onDismiss = { 
                 showCategoryEditForm = false
                 categoryToEdit = null
+                showCategoryManagement = true
             },
             title = "",
             content = {
@@ -233,10 +234,12 @@ fun AppHeader(
                         }
                         showCategoryEditForm = false
                         categoryToEdit = null
+                        showCategoryManagement = true
                     },
                     onCancel = { 
                         showCategoryEditForm = false
                         categoryToEdit = null
+                        showCategoryManagement = true
                     }
                 )
             }
