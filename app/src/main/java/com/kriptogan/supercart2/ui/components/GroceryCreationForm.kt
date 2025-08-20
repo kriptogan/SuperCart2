@@ -1,5 +1,6 @@
 package com.kriptogan.supercart2.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,15 +10,26 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,11 +37,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.Category
 import com.kriptogan.supercart2.classes.SubCategory
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroceryCreationForm(
     categories: List<Category>,
@@ -41,9 +58,10 @@ fun GroceryCreationForm(
     var name by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf(categories.firstOrNull()?.uuid ?: "") }
     var selectedSubCategoryId by remember { mutableStateOf("") }
-    var expirationDate by remember { mutableStateOf("") }
-    var showCategoryDropdown by remember { mutableStateOf(false) }
-    var showSubCategoryDropdown by remember { mutableStateOf(false) }
+    var expirationDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showCategorySelection by remember { mutableStateOf(false) }
+    var showSubCategorySelection by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
     
     // Filter sub-categories based on selected category
     val filteredSubCategories = subCategories.filter { it.categoryId == selectedCategoryId }
@@ -60,6 +78,7 @@ fun GroceryCreationForm(
         Text(
             text = "Create New Grocery Item",
             fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth()
         )
         
@@ -71,98 +90,50 @@ fun GroceryCreationForm(
             modifier = Modifier.fillMaxWidth()
         )
         
-        // 2. Category dropdown
-        Column {
-            Box(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = categories.find { it.uuid == selectedCategoryId }?.name ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Select Category") },
-                    trailingIcon = { 
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Open dropdown"
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showCategoryDropdown = true }
-                )
-            }
-            
-            DropdownMenu(
-                expanded = showCategoryDropdown,
-                onDismissRequest = { showCategoryDropdown = false }
-            ) {
-                categories.forEach { category ->
-                    DropdownMenuItem(
-                        text = { Text(category.name) },
-                        onClick = {
-                            selectedCategoryId = category.uuid
-                            selectedSubCategoryId = "" // Reset sub-category selection
-                            showCategoryDropdown = false
-                        }
-                    )
-                }
-            }
-        }
-        
-        // 3. Sub-category dropdown
-        Column {
-            Box(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = filteredSubCategories.find { it.uuid == selectedSubCategoryId }?.name ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Select Sub-Category") },
-                    trailingIcon = { 
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Open dropdown"
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showSubCategoryDropdown = true }
-                )
-            }
-            
-            DropdownMenu(
-                expanded = showSubCategoryDropdown,
-                onDismissRequest = { showSubCategoryDropdown = false }
-            ) {
-                filteredSubCategories.forEach { subCategory ->
-                    DropdownMenuItem(
-                        text = { Text(subCategory.name) },
-                        onClick = {
-                            selectedSubCategoryId = subCategory.uuid
-                            showSubCategoryDropdown = false
-                        }
-                    )
-                }
-            }
-        }
-        
-        // 4. Expiration date field
-        OutlinedTextField(
-            value = expirationDate,
-            onValueChange = { expirationDate = it },
-            label = { Text("Expiration Date (YYYY-MM-DD)") },
+        // 2. Category selection button
+        Button(
+            onClick = { showCategorySelection = true },
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            Text(
+                if (selectedCategoryId.isNotEmpty()) {
+                    val selectedCategory = categories.find { it.uuid == selectedCategoryId }
+                    selectedCategory?.name ?: "Select Category"
+                } else {
+                    "Select Category"
+                }
+            )
+        }
+        
+        // 3. Sub-category selection button
+        Button(
+            onClick = { showSubCategorySelection = true },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = selectedCategoryId.isNotEmpty()
+        ) {
+            Text(
+                if (selectedSubCategoryId.isNotEmpty()) {
+                    val selectedSubCategory = filteredSubCategories.find { it.uuid == selectedSubCategoryId }
+                    selectedSubCategory?.name ?: "Select Sub-Category"
+                } else {
+                    "Select Sub-Category"
+                }
+            )
+        }
+        
+        // 4. Expiration date button
+        Button(
+            onClick = { showDatePicker = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                if (expirationDate != null) {
+                    expirationDate.toString()
+                } else {
+                    "Set Expiration Date"
+                }
+            )
+        }
         
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -181,7 +152,7 @@ fun GroceryCreationForm(
             Button(
                 onClick = {
                     if (name.isNotBlank() && selectedSubCategoryId.isNotEmpty()) {
-                        onSave(name, selectedSubCategoryId, expirationDate.ifBlank { null })
+                        onSave(name, selectedSubCategoryId, expirationDate?.toString())
                     }
                 },
                 modifier = Modifier.weight(1f),
@@ -191,4 +162,136 @@ fun GroceryCreationForm(
             }
         }
     }
+    
+    // Category selection dialog
+    if (showCategorySelection) {
+        AlertDialog(
+            onDismissRequest = { showCategorySelection = false },
+            title = { Text("Select Category") },
+            text = {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(categories) { category ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = Color(0xFFF5F5F5),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(16.dp)
+                                .clickable {
+                                    selectedCategoryId = category.uuid
+                                    selectedSubCategoryId = ""
+                                    showCategorySelection = false
+                                },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (selectedCategoryId == category.uuid) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.Green,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.width(28.dp))
+                            }
+                            Text(
+                                text = category.name,
+                                modifier = Modifier.weight(1f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showCategorySelection = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+    
+    // Sub-category selection dialog
+    if (showSubCategorySelection) {
+        AlertDialog(
+            onDismissRequest = { showSubCategorySelection = false },
+            title = { Text("Select Sub-Category") },
+            text = {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(filteredSubCategories) { subCategory ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = Color(0xFFF5F5F5),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(16.dp)
+                                .clickable {
+                                    selectedSubCategoryId = subCategory.uuid
+                                    showSubCategorySelection = false
+                                },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (selectedSubCategoryId == subCategory.uuid) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.Green,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.width(28.dp))
+                            }
+                            Text(
+                                text = subCategory.name,
+                                modifier = Modifier.weight(1f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showSubCategorySelection = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+    
+    // Date picker dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(onClick = {
+                    val millis = datePickerState.selectedDateMillis
+                    expirationDate = millis?.let {
+                        LocalDate.ofEpochDay(it / (24 * 60 * 60 * 1000))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("Set Date")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 }
+
