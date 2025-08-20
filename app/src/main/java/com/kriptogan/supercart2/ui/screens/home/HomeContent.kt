@@ -43,11 +43,13 @@ fun HomeContent(
     onEditCategory: ((Category) -> Unit)? = null
 ) {
     var subCategories by remember { mutableStateOf<List<SubCategory>>(emptyList()) }
+    var groceries by remember { mutableStateOf<List<Grocery>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
     
-    // Load sub-categories when component is created AND when categories change
+    // Load sub-categories and groceries when component is created AND when categories change
     LaunchedEffect(categories.size) {
         subCategories = localStorageManager.getSubCategories()
+        groceries = localStorageManager.getGroceries()
     }
     
     // Handle grocery creation
@@ -60,6 +62,9 @@ fun HomeContent(
         
         // Save to local storage
         localStorageManager.addGrocery(grocery)
+        
+        // Update groceries list to reflect changes immediately
+        groceries = localStorageManager.getGroceries()
         
         // Save to Firebase
         coroutineScope.launch {
@@ -106,7 +111,8 @@ fun HomeContent(
                 val categorySubCategories = subCategories.filter { it.categoryId == category.uuid }
                 CollapsibleCategorySection(
                     category = category,
-                    subCategories = categorySubCategories
+                    subCategories = categorySubCategories,
+                    localStorageManager = localStorageManager
                 )
             }
         }

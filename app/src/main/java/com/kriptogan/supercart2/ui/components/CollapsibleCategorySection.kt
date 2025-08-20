@@ -13,14 +13,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,11 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.Category
 import com.kriptogan.supercart2.classes.SubCategory
+import com.kriptogan.supercart2.classes.Grocery
+import com.kriptogan.supercart2.classes.LocalStorageManager
 
 @Composable
 fun CollapsibleCategorySection(
     category: Category,
     subCategories: List<SubCategory>,
+    localStorageManager: LocalStorageManager,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -78,7 +80,10 @@ fun CollapsibleCategorySection(
                     modifier = Modifier.padding(start = 52.dp, end = 16.dp, bottom = 16.dp)
                 ) {
                     subCategories.forEach { subCategory ->
-                        SubCategoryItem(subCategory = subCategory)
+                        SubCategoryItem(
+                            subCategory = subCategory,
+                            localStorageManager = localStorageManager
+                        )
                         if (subCategory != subCategories.last()) {
                             Spacer(modifier = Modifier.height(8.dp))
                         }
@@ -92,44 +97,94 @@ fun CollapsibleCategorySection(
 @Composable
 private fun SubCategoryItem(
     subCategory: SubCategory,
+    localStorageManager: LocalStorageManager,
     modifier: Modifier = Modifier
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val groceries = localStorageManager.getGroceries().filter { it.subCategoryId == subCategory.uuid }
+    
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Shopping cart icon
-            Icon(
-                imageVector = Icons.Default.ShoppingCart,
-                contentDescription = "Shopping cart",
-                modifier = Modifier.size(20.dp),
-                tint = Color(0xFF4CAF50)
-            )
+        Column {
+            // Sub-category header - clickable to expand/collapse
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    modifier = Modifier.size(20.dp),
+                    tint = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                Text(
+                    text = subCategory.name,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                Text(
+                    text = "(${groceries.size} items)",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
             
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            // Edit icon
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit",
-                modifier = Modifier.size(20.dp),
-                tint = Color(0xFF2196F3)
-            )
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Text(
-                text = subCategory.name,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal
-            )
+            // Groceries list - only visible when expanded
+            if (isExpanded) {
+                Column(
+                    modifier = Modifier.padding(start = 40.dp, end = 12.dp, bottom = 12.dp)
+                ) {
+                    if (groceries.isEmpty()) {
+                        Text(
+                            text = "No groceries in this sub-category",
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    } else {
+                        groceries.forEach { grocery ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFF8F9FA)
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = grocery.name,
+                                        fontSize = 13.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (grocery.expirationDate != null) {
+                                        Text(
+                                            text = grocery.expirationDate,
+                                            fontSize = 11.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
