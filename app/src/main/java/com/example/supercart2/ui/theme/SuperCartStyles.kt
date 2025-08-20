@@ -29,6 +29,7 @@ object SuperCartColors {
     val primaryBlue = SuperCartBlue
     val lightGreen = SuperCartLightGreen
     val gray = SuperCartGray
+    val darkGray = SuperCartDarkGray
     val white = SuperCartWhite
     val black = SuperCartBlack
 }

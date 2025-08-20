@@ -1,5 +1,6 @@
 package com.example.supercart2.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.supercart2.ui.components.BurgerMenu
 import com.example.supercart2.ui.components.CategoriesManagementDialog
 import com.example.supercart2.ui.theme.SuperCartSpacing
+import com.example.supercart2.data.DataManagerObject
 
 @Composable
 fun HomeScreen() {
@@ -48,18 +50,45 @@ fun HomeScreen() {
             )
         }
         
-        // Main content
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(SuperCartSpacing.md),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Welcome to SuperCart!",
-                style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
-            )
-        }
+                        // Main content
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(SuperCartSpacing.md),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Welcome to SuperCart!",
+                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(bottom = SuperCartSpacing.lg)
+                    )
+                    
+                    Text(
+                        text = "Categories: ${DataManagerObject.categories.size}",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = SuperCartSpacing.sm)
+                    )
+                    
+                    Text(
+                        text = "Sub-Categories: ${DataManagerObject.categories.sumOf { it.subCategories.size }}",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = SuperCartSpacing.sm)
+                    )
+                    
+                    Text(
+                        text = "Groceries: ${DataManagerObject.categories.sumOf { it.subCategories.sumOf { sub -> sub.groceries.size } }}",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
+                    )
+                    
+                    // Debug info
+                    Text(
+                        text = "Debug: Categories loaded = ${DataManagerObject.categories.isNotEmpty()}",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.ui.graphics.Color.Gray,
+                        modifier = Modifier.padding(top = SuperCartSpacing.md)
+                    )
+                }
     }
     
     // Categories Management Dialog

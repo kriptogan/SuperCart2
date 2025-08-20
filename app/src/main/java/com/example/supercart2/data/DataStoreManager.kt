@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.first
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -15,25 +16,41 @@ object DataStoreManager {
     private const val CATEGORIES_KEY = "categories"
     
     suspend fun saveData(context: Context) {
+        android.util.Log.d("DataStoreManager", "Saving data to storage...")
         val gson = Gson()
         val json = gson.toJson(DataManagerObject.categories)
         
         context.dataStore.edit { preferences ->
             preferences[stringPreferencesKey(CATEGORIES_KEY)] = json
         }
+        android.util.Log.d("DataStoreManager", "Data saved. Categories count: ${DataManagerObject.categories.size}")
     }
     
     suspend fun loadData(context: Context) {
+        android.util.Log.d("DataStoreManager", "Loading data from storage...")
         val gson = Gson()
         val type = object : TypeToken<List<CategoryWithSubCategories>>() {}.type
         
-        context.dataStore.data.collect { preferences ->
-            val json = preferences[stringPreferencesKey(CATEGORIES_KEY)]
-            if (json != null) {
-                val loadedCategories = gson.fromJson<List<CategoryWithSubCategories>>(json, type)
-                DataManagerObject.categories.clear()
-                DataManagerObject.categories.addAll(loadedCategories)
-            }
+        // Get the first value from the DataStore
+        val preferences = context.dataStore.data.first()
+        val json = preferences[stringPreferencesKey(CATEGORIES_KEY)]
+        
+        if (json != null) {
+            android.util.Log.d("DataStoreManager", "Found stored data, loading...")
+            val loadedCategories = gson.fromJson<List<CategoryWithSubCategories>>(json, type)
+            DataManagerObject.categories.clear()
+            DataManagerObject.categories.addAll(loadedCategories)
+            android.util.Log.d("DataStoreManager", "Loaded ${loadedCategories.size} categories")
+        } else {
+            android.util.Log.d("DataStoreManager", "No stored data found")
+        }
+        
+        // Initialize default data if no categories exist
+        if (DataManagerObject.categories.isEmpty()) {
+            android.util.Log.d("DataStoreManager", "No categories found, initializing defaults...")
+            DataInitializer.initializeDefaultData(context)
+        } else {
+            android.util.Log.d("DataStoreManager", "Categories already loaded: ${DataManagerObject.categories.size}")
         }
     }
 }
