@@ -7,8 +7,7 @@ import java.util.UUID
  * Represents a grocery item in the SuperCart app
  * @param uuid Unique identifier for the grocery item
  * @param name Display name of the grocery item (שם המצרך)
- * @param categoryId Reference to the parent Category (optional)
- * @param subCategoryId Reference to the parent SubCategory (optional)
+ * @param subCategoryId Reference to the parent SubCategory (required)
  * @param expirationDate Expiration date as ISO string (תאריך תפוגה, optional)
  * @param lastTimeBoughtDays Days since last purchase (מספר ימים מאז הקנייה האחרונה, optional)
  * @param averageBuyingDays Average days between purchases (ממוצע ימים בין קניות, optional)
@@ -20,8 +19,7 @@ import java.util.UUID
 data class Grocery(
     val uuid: String = UUID.randomUUID().toString(),
     val name: String,
-    val categoryId: String? = null,
-    val subCategoryId: String? = null,
+    val subCategoryId: String, // Required field - every grocery must belong to a sub-category
     val expirationDate: String? = null,
     val lastTimeBoughtDays: Int? = null,
     val averageBuyingDays: Int? = null,
