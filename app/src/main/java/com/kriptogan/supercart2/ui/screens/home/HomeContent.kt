@@ -28,6 +28,8 @@ import com.kriptogan.supercart2.classes.FirebaseManager
 import com.kriptogan.supercart2.classes.LocalStorageManager
 import com.kriptogan.supercart2.ui.components.CollapsibleCategorySection
 import com.kriptogan.supercart2.ui.components.AppHeader
+import com.kriptogan.supercart2.ui.components.ReusableFullScreenWindow
+import com.kriptogan.supercart2.ui.components.GroceryCreationForm
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +46,8 @@ fun HomeContent(
 ) {
     var subCategories by remember { mutableStateOf<List<SubCategory>>(emptyList()) }
     var groceries by remember { mutableStateOf<List<Grocery>>(emptyList()) }
+    var showEditForm by remember { mutableStateOf(false) }
+    var groceryToEdit by remember { mutableStateOf<Grocery?>(null) }
     val coroutineScope = rememberCoroutineScope()
     
     // Load sub-categories and groceries when component is created AND when categories change
@@ -79,6 +83,36 @@ fun HomeContent(
         Unit
     }
     
+    // Handle grocery updates
+    val onGroceryUpdated = { name: String, subCategoryId: String, expirationDate: String? ->
+        groceryToEdit?.let { originalGrocery ->
+            val updatedGrocery = originalGrocery.copy(
+                name = name,
+                subCategoryId = subCategoryId,
+                expirationDate = expirationDate
+            )
+            
+            // Update in local storage
+            localStorageManager.updateGrocery(updatedGrocery)
+            
+            // Update groceries list to reflect changes immediately
+            groceries = localStorageManager.getGroceries()
+            
+            // Update in Firebase
+            coroutineScope.launch {
+                try {
+                    firebaseManager.updateGrocery(updatedGrocery)
+                } catch (e: Exception) {
+                    // Firebase failure doesn't affect local state
+                }
+            }
+        }
+        
+        // Close the edit form
+        showEditForm = false
+        groceryToEdit = null
+    }
+    
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -112,9 +146,37 @@ fun HomeContent(
                 CollapsibleCategorySection(
                     category = category,
                     subCategories = categorySubCategories,
-                    groceries = groceries
+                    groceries = groceries,
+                    onEditGrocery = { grocery ->
+                        groceryToEdit = grocery
+                        showEditForm = true
+                    }
                 )
             }
         }
+    }
+    
+    // Grocery edit form dialog
+    if (showEditForm && groceryToEdit != null) {
+        ReusableFullScreenWindow(
+            isVisible = showEditForm,
+            onDismiss = { 
+                showEditForm = false
+                groceryToEdit = null
+            },
+            title = "Edit Grocery",
+            content = {
+                GroceryCreationForm(
+                    categories = categories,
+                    subCategories = subCategories,
+                    onSave = onGroceryUpdated,
+                    onCancel = { 
+                        showEditForm = false
+                        groceryToEdit = null
+                    },
+                    groceryToEdit = groceryToEdit
+                )
+            }
+        )
     }
 }

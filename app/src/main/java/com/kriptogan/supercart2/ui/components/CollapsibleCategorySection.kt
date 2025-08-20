@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -38,6 +40,7 @@ fun CollapsibleCategorySection(
     category: Category,
     subCategories: List<SubCategory>,
     groceries: List<Grocery>,
+    onEditGrocery: (Grocery) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -82,7 +85,8 @@ fun CollapsibleCategorySection(
                         val subCategoryGroceries = groceries.filter { it.subCategoryId == subCategory.uuid }
                         SubCategoryItem(
                             subCategory = subCategory,
-                            groceries = subCategoryGroceries
+                            groceries = subCategoryGroceries,
+                            onEditGrocery = onEditGrocery
                         )
                         if (subCategory != subCategories.last()) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -98,6 +102,7 @@ fun CollapsibleCategorySection(
 private fun SubCategoryItem(
     subCategory: SubCategory,
     groceries: List<Grocery>,
+    onEditGrocery: (Grocery) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -171,13 +176,30 @@ private fun SubCategoryItem(
                                         fontSize = 13.sp,
                                         modifier = Modifier.weight(1f)
                                     )
-                                    if (grocery.expirationDate != null) {
-                                        Text(
-                                            text = grocery.expirationDate,
-                                            fontSize = 11.sp,
-                                            color = Color.Gray
-                                        )
-                                    }
+                                    
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    
+                                    // Edit icon - opens grocery form with pre-filled data
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit grocery",
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .clickable { 
+                                                onEditGrocery(grocery)
+                                            },
+                                        tint = Color.Blue
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    
+                                    // Cart icon - does nothing for now
+                                    Icon(
+                                        imageVector = Icons.Default.ShoppingCart,
+                                        contentDescription = "Add to cart",
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color.Green
+                                    )
                                 }
                             }
                         }

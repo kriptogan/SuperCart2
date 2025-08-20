@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.Category
 import com.kriptogan.supercart2.classes.SubCategory
+import com.kriptogan.supercart2.classes.Grocery
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -53,20 +55,32 @@ fun GroceryCreationForm(
     subCategories: List<SubCategory>,
     onSave: (String, String, String?) -> Unit,
     onCancel: () -> Unit,
+    groceryToEdit: Grocery? = null,
     modifier: Modifier = Modifier
 ) {
-    var name by remember { mutableStateOf("") }
-    var selectedCategoryId by remember { mutableStateOf(categories.firstOrNull()?.uuid ?: "") }
-    var selectedSubCategoryId by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(groceryToEdit?.name ?: "") }
+    var selectedCategoryId by remember { mutableStateOf("") }
+    var selectedSubCategoryId by remember { mutableStateOf(groceryToEdit?.subCategoryId ?: "") }
     var expirationDate by remember { mutableStateOf<LocalDate?>(null) }
     var showCategorySelection by remember { mutableStateOf(false) }
     var showSubCategorySelection by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     
-    // Filter sub-categories based on selected category
+    LaunchedEffect(groceryToEdit) {
+        if (groceryToEdit != null) {
+            val subCategory = subCategories.find { it.uuid == groceryToEdit.subCategoryId }
+            if (subCategory != null) {
+                selectedCategoryId = subCategory.categoryId
+                selectedSubCategoryId = subCategory.uuid
+            }
+            if (groceryToEdit.expirationDate != null) {
+                try {
+                    expirationDate = LocalDate.parse(groceryToEdit.expirationDate)
+                } catch (e: Exception) { }
+            }
+        }
+    }
     val filteredSubCategories = subCategories.filter { it.categoryId == selectedCategoryId }
-    
-    // Update selected sub-category when category changes
     if (selectedCategoryId.isNotEmpty() && filteredSubCategories.isNotEmpty() && selectedSubCategoryId.isEmpty()) {
         selectedSubCategoryId = filteredSubCategories.first().uuid
     }
@@ -76,13 +90,12 @@ fun GroceryCreationForm(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Create New Grocery Item",
+            text = if (groceryToEdit != null) "Edit Grocery Item" else "Create New Grocery Item",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth()
         )
         
-        // 1. Name field
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -90,7 +103,6 @@ fun GroceryCreationForm(
             modifier = Modifier.fillMaxWidth()
         )
         
-        // 2. Category selection button
         Button(
             onClick = { showCategorySelection = true },
             modifier = Modifier.fillMaxWidth()
@@ -105,7 +117,6 @@ fun GroceryCreationForm(
             )
         }
         
-        // 3. Sub-category selection button
         Button(
             onClick = { showSubCategorySelection = true },
             modifier = Modifier.fillMaxWidth(),
@@ -121,7 +132,6 @@ fun GroceryCreationForm(
             )
         }
         
-        // 4. Expiration date button
         Button(
             onClick = { showDatePicker = true },
             modifier = Modifier.fillMaxWidth()
@@ -137,7 +147,6 @@ fun GroceryCreationForm(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Action buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -158,12 +167,10 @@ fun GroceryCreationForm(
                 modifier = Modifier.weight(1f),
                 enabled = name.isNotBlank() && selectedSubCategoryId.isNotEmpty()
             ) {
-                Text("Create")
+                Text(if (groceryToEdit != null) "Update" else "Create")
             }
         }
     }
-    
-    // Category selection dialog
     if (showCategorySelection) {
         AlertDialog(
             onDismissRequest = { showCategorySelection = false },
@@ -215,8 +222,6 @@ fun GroceryCreationForm(
             }
         )
     }
-    
-    // Sub-category selection dialog
     if (showSubCategorySelection) {
         AlertDialog(
             onDismissRequest = { showSubCategorySelection = false },
@@ -267,8 +272,6 @@ fun GroceryCreationForm(
             }
         )
     }
-    
-    // Date picker dialog
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
