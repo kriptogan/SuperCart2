@@ -39,8 +39,8 @@ fun HomeContent(
 ) {
     var subCategories by remember { mutableStateOf<List<SubCategory>>(emptyList()) }
     
-    // Load sub-categories when component is created
-    LaunchedEffect(Unit) {
+    // Load sub-categories when component is created AND when categories change
+    LaunchedEffect(categories.size) {
         subCategories = localStorageManager.getSubCategories()
     }
     

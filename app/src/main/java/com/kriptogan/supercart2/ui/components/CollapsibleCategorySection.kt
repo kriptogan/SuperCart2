@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -103,22 +105,22 @@ private fun SubCategoryItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Shopping cart icon (placeholder for now)
+            // Shopping cart icon
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown, // Placeholder icon
+                imageVector = Icons.Default.ShoppingCart,
                 contentDescription = "Shopping cart",
                 modifier = Modifier.size(20.dp),
-                tint = Color.Gray
+                tint = Color(0xFF4CAF50)
             )
             
             Spacer(modifier = Modifier.width(8.dp))
             
-            // Edit icon (placeholder for now)
+            // Edit icon
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown, // Placeholder icon
+                imageVector = Icons.Default.Edit,
                 contentDescription = "Edit",
                 modifier = Modifier.size(20.dp),
-                tint = Color.Gray
+                tint = Color(0xFF2196F3)
             )
             
             Spacer(modifier = Modifier.width(12.dp))
