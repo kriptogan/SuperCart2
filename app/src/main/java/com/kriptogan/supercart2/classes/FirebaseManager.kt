@@ -106,4 +106,84 @@ class FirebaseManager {
             false
         }
     }
+    
+    /**
+     * Save sub-category to Firestore
+     */
+    suspend fun saveSubCategory(subCategory: SubCategory): Boolean {
+        return try {
+            firestore.collection(SUBCATEGORIES_COLLECTION)
+                .document(subCategory.uuid)
+                .set(subCategory)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * Get all sub-categories from Firestore
+     */
+    suspend fun getSubCategories(): List<SubCategory> {
+        return try {
+            val snapshot = firestore.collection(SUBCATEGORIES_COLLECTION)
+                .get()
+                .await()
+            
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(SubCategory::class.java)
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    /**
+     * Get sub-categories by category ID from Firestore
+     */
+    suspend fun getSubCategoriesByCategoryId(categoryId: String): List<SubCategory> {
+        return try {
+            val snapshot = firestore.collection(SUBCATEGORIES_COLLECTION)
+                .whereEqualTo("categoryId", categoryId)
+                .get()
+                .await()
+            
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(SubCategory::class.java)
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    /**
+     * Update sub-category in Firestore
+     */
+    suspend fun updateSubCategory(subCategory: SubCategory): Boolean {
+        return try {
+            firestore.collection(SUBCATEGORIES_COLLECTION)
+                .document(subCategory.uuid)
+                .set(subCategory)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * Delete sub-category from Firestore
+     */
+    suspend fun deleteSubCategory(subCategoryId: String): Boolean {
+        return try {
+            firestore.collection(SUBCATEGORIES_COLLECTION)
+                .document(subCategoryId)
+                .delete()
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

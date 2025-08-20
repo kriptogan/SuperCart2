@@ -77,6 +77,64 @@ class LocalStorageManager(context: Context) {
     }
     
     /**
+     * Save sub-categories to local storage
+     */
+    fun saveSubCategories(subCategories: List<SubCategory>) {
+        val json = gson.toJson(subCategories)
+        sharedPreferences.edit().putString(SUBCATEGORIES_KEY, json).apply()
+    }
+    
+    /**
+     * Get sub-categories from local storage
+     */
+    fun getSubCategories(): List<SubCategory> {
+        val json = sharedPreferences.getString(SUBCATEGORIES_KEY, "[]")
+        val type = object : TypeToken<List<SubCategory>>() {}.type
+        return try {
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    /**
+     * Get sub-categories by category ID
+     */
+    fun getSubCategoriesByCategoryId(categoryId: String): List<SubCategory> {
+        return getSubCategories().filter { it.categoryId == categoryId }
+    }
+    
+    /**
+     * Add a new sub-category to local storage
+     */
+    fun addSubCategory(subCategory: SubCategory) {
+        val currentSubCategories = getSubCategories().toMutableList()
+        currentSubCategories.add(subCategory)
+        saveSubCategories(currentSubCategories)
+    }
+    
+    /**
+     * Update an existing sub-category in local storage
+     */
+    fun updateSubCategory(updatedSubCategory: SubCategory) {
+        val currentSubCategories = getSubCategories().toMutableList()
+        val index = currentSubCategories.indexOfFirst { it.uuid == updatedSubCategory.uuid }
+        if (index != -1) {
+            currentSubCategories[index] = updatedSubCategory
+            saveSubCategories(currentSubCategories)
+        }
+    }
+    
+    /**
+     * Delete a sub-category from local storage
+     */
+    fun deleteSubCategory(subCategoryId: String) {
+        val currentSubCategories = getSubCategories().toMutableList()
+        currentSubCategories.removeAll { it.uuid == subCategoryId }
+        saveSubCategories(currentSubCategories)
+    }
+    
+    /**
      * Clear all local data
      */
     fun clearAllData() {
