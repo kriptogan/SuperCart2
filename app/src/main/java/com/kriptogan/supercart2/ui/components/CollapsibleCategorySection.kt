@@ -83,7 +83,7 @@ fun CollapsibleCategorySection(
             // Sub-categories content - only visible when expanded
             if (isExpanded) {
                 Column(
-                    modifier = Modifier.padding(start = 52.dp, end = 16.dp, bottom = 16.dp)
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                 ) {
                     subCategories.forEach { subCategory ->
                         val subCategoryGroceries = groceries.filter { it.subCategoryId == subCategory.uuid }
@@ -151,7 +151,7 @@ private fun SubCategoryItem(
             // Groceries list - only visible when expanded
             if (isExpanded) {
                 Column(
-                    modifier = Modifier.padding(start = 40.dp, end = 12.dp, bottom = 12.dp)
+                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
                 ) {
                     if (groceries.isEmpty()) {
                         Text(
