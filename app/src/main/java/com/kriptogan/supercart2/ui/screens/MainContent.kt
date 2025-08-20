@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.FirebaseManager
+import com.kriptogan.supercart2.classes.SubCategory
 import com.kriptogan.supercart2.ui.components.ReusableAlertDialog
 import com.kriptogan.supercart2.ui.components.ReusableFullScreenWindow
 import com.kriptogan.supercart2.ui.components.CategoryCreationForm
@@ -29,6 +31,7 @@ import com.kriptogan.supercart2.ui.screens.home.HomeContent
 import com.kriptogan.supercart2.ui.screens.shopping.ShoppingListContent
 import com.kriptogan.supercart2.ui.state.rememberCategoryState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainContent(
@@ -47,6 +50,7 @@ fun MainContent(
     
     // Use the new state manager
     val categoryState = rememberCategoryState(context, firebaseManager)
+    val coroutineScope = rememberCoroutineScope()
     
     // Check connection status every 2 seconds
     LaunchedEffect(Unit) {
@@ -92,7 +96,27 @@ fun MainContent(
             content = {
                 CategoryCreationForm(
                     onSave = { category ->
+                        // Save the category first
                         categoryState.onSaveCategory(category)
+                        
+                        // Automatically create a "General" sub-category for this category
+                        val generalSubCategory = SubCategory(
+                            categoryId = category.uuid,
+                            name = "General"
+                        )
+                        
+                        // Save the general sub-category to local storage
+                        categoryState.localStorageManager.addSubCategory(generalSubCategory)
+                        
+                        // Save the general sub-category to Firebase
+                        coroutineScope.launch {
+                            try {
+                                firebaseManager.saveSubCategory(generalSubCategory)
+                            } catch (e: Exception) {
+                                // Firebase failure doesn't affect local state
+                            }
+                        }
+                        
                         onHideCategoryDialog()
                     },
                     onCancel = onHideCategoryDialog

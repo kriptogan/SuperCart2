@@ -8,6 +8,7 @@ import java.util.UUID
  * @param uuid Unique identifier for the grocery item
  * @param name Display name of the grocery item (שם המצרך)
  * @param categoryId Reference to the parent Category (optional)
+ * @param subCategoryId Reference to the parent SubCategory (optional)
  * @param expirationDate Expiration date as ISO string (תאריך תפוגה, optional)
  * @param lastTimeBoughtDays Days since last purchase (מספר ימים מאז הקנייה האחרונה, optional)
  * @param averageBuyingDays Average days between purchases (ממוצע ימים בין קניות, optional)
@@ -20,6 +21,7 @@ data class Grocery(
     val uuid: String = UUID.randomUUID().toString(),
     val name: String,
     val categoryId: String? = null,
+    val subCategoryId: String? = null,
     val expirationDate: String? = null,
     val lastTimeBoughtDays: Int? = null,
     val averageBuyingDays: Int? = null,
