@@ -80,6 +80,16 @@ fun GroceryCreationForm(
             }
         }
     }
+    
+    LaunchedEffect(categories, subCategories) {
+        if (groceryToEdit == null && categories.isNotEmpty() && selectedCategoryId.isEmpty()) {
+            selectedCategoryId = categories.first().uuid
+            val firstCategorySubCategories = subCategories.filter { it.categoryId == categories.first().uuid }
+            if (firstCategorySubCategories.isNotEmpty()) {
+                selectedSubCategoryId = firstCategorySubCategories.first().uuid
+            }
+        }
+    }
     val filteredSubCategories = subCategories.filter { it.categoryId == selectedCategoryId }
     if (selectedCategoryId.isNotEmpty() && filteredSubCategories.isNotEmpty() && selectedSubCategoryId.isEmpty()) {
         selectedSubCategoryId = filteredSubCategories.first().uuid
@@ -95,14 +105,12 @@ fun GroceryCreationForm(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth()
         )
-        
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Grocery Name") },
             modifier = Modifier.fillMaxWidth()
         )
-        
         Button(
             onClick = { showCategorySelection = true },
             modifier = Modifier.fillMaxWidth()
@@ -116,7 +124,6 @@ fun GroceryCreationForm(
                 }
             )
         }
-        
         Button(
             onClick = { showSubCategorySelection = true },
             modifier = Modifier.fillMaxWidth(),
@@ -131,7 +138,6 @@ fun GroceryCreationForm(
                 }
             )
         }
-        
         Button(
             onClick = { showDatePicker = true },
             modifier = Modifier.fillMaxWidth()
@@ -144,7 +150,6 @@ fun GroceryCreationForm(
                 }
             )
         }
-        
         Spacer(modifier = Modifier.height(16.dp))
         
         Row(
