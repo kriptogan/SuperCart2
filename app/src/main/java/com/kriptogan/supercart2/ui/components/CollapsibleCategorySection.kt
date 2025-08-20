@@ -68,8 +68,12 @@ fun CollapsibleCategorySection(
                 
                 Spacer(modifier = Modifier.width(12.dp))
                 
+                val categoryGroceriesCount = groceries.count { grocery -> 
+                    subCategories.any { it.uuid == grocery.subCategoryId }
+                }
+                
                 Text(
-                    text = category.name,
+                    text = "${category.name} ($categoryGroceriesCount items)",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f)
