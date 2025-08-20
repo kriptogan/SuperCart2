@@ -34,15 +34,17 @@ import com.kriptogan.supercart2.classes.Category
 @Composable
 fun CategoryEditForm(
     category: Category,
-    onSave: (String) -> Unit,
+    onSave: (String, Int) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var categoryName by remember { mutableStateOf(category.name) }
+    var viewOrder by remember { mutableStateOf(category.viewOrder.toString()) }
     
     // Pre-fill the form with existing category data
     LaunchedEffect(category) {
         categoryName = category.name
+        viewOrder = category.viewOrder.toString()
     }
     
     Column(
@@ -90,6 +92,20 @@ fun CategoryEditForm(
             singleLine = true
         )
         
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // View order input field
+        OutlinedTextField(
+            value = viewOrder,
+            onValueChange = { viewOrder = it },
+            label = { Text("View Order") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            singleLine = true,
+            isError = viewOrder.isNotBlank() && viewOrder.toIntOrNull() == null
+        )
+        
         Spacer(modifier = Modifier.height(32.dp))
         
         // Action buttons
@@ -108,12 +124,15 @@ fun CategoryEditForm(
             
             OutlinedButton(
                 onClick = { 
-                    if (categoryName.isNotBlank()) {
-                        onSave(categoryName)
+                    if (categoryName.isNotBlank() && viewOrder.isNotBlank()) {
+                        val orderValue = viewOrder.toIntOrNull()
+                        if (orderValue != null) {
+                            onSave(categoryName, orderValue)
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f),
-                enabled = categoryName.isNotBlank()
+                enabled = categoryName.isNotBlank() && viewOrder.isNotBlank() && viewOrder.toIntOrNull() != null
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,

@@ -42,7 +42,7 @@ fun HomeContent(
     onShowCategoryDialog: () -> Unit,
     onDeleteAllCategories: () -> Unit,
     onEditCategory: ((Category) -> Unit)? = null,
-    onCategoryUpdated: (Category, String) -> Unit = { _, _ -> }
+    onCategoryUpdated: (Category, String, Int) -> Unit = { _, _, _ -> }
 ) {
     var subCategories by remember { mutableStateOf<List<SubCategory>>(emptyList()) }
     var groceries by remember { mutableStateOf<List<Grocery>>(emptyList()) }

@@ -50,7 +50,7 @@ fun AppHeader(
     subCategories: List<SubCategory>,
     groceries: List<Grocery>,
     onGroceryCreated: (String, String, String?) -> Unit,
-    onCategoryUpdated: (Category, String) -> Unit = { _, _ -> },
+    onCategoryUpdated: (Category, String, Int) -> Unit = { _, _, _ -> },
     isAllExpanded: Boolean = true,
     onToggleAll: () -> Unit = {},
     onSearch: (String) -> Unit = {},
@@ -228,9 +228,9 @@ fun AppHeader(
             content = {
                 CategoryEditForm(
                     category = categoryToEdit!!,
-                    onSave = { newName ->
+                    onSave = { newName, newViewOrder ->
                         categoryToEdit?.let { category ->
-                            onCategoryUpdated(category, newName)
+                            onCategoryUpdated(category, newName, newViewOrder)
                         }
                         showCategoryEditForm = false
                         categoryToEdit = null

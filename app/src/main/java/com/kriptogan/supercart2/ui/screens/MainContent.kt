@@ -72,8 +72,8 @@ fun MainContent(
             onShowCategoryDialog = onShowCategoryDialog,
             onDeleteAllCategories = categoryState.onDeleteAllCategories,
             onEditCategory = categoryState.onShowEditDialog,
-            onCategoryUpdated = { category, newName ->
-                val updatedCategory = category.copy(name = newName)
+            onCategoryUpdated = { category, newName, newViewOrder ->
+                val updatedCategory = category.copy(name = newName, viewOrder = newViewOrder)
                 categoryState.onUpdateCategory(updatedCategory)
             }
         )
@@ -88,8 +88,8 @@ fun MainContent(
             onShowCategoryDialog = onShowCategoryDialog,
             onDeleteAllCategories = categoryState.onDeleteAllCategories,
             onEditCategory = categoryState.onShowEditDialog,
-            onCategoryUpdated = { category, newName ->
-                val updatedCategory = category.copy(name = newName)
+            onCategoryUpdated = { category, newName, newViewOrder ->
+                val updatedCategory = category.copy(name = newName, viewOrder = newViewOrder)
                 categoryState.onUpdateCategory(updatedCategory)
             }
         )
