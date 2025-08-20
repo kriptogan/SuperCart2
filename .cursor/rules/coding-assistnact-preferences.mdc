@@ -13,6 +13,7 @@ Make sure everything is clear. If something I have said or asked contradict the 
 
 - Ignore personal directory -
 ignore the roadmap directory. it is for personal use.
+ignore the old projects directory as well.
 
 - User re-usable components -
 For showing prompts and windows that opens on button clicks or user actions, use the src/main/ui/components directory

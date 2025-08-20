@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+
+Use a Shared Objects (simple global state) instead of state management approach, to manage
+the categories, sub-categories, and groceries data and states.
+
+Use local state approach for temporary selected options, show/hide content, etc.
+---
