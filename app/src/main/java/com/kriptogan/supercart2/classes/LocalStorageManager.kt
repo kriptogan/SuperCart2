@@ -20,9 +20,8 @@ class LocalStorageManager(context: Context) {
     
     companion object {
         private const val CATEGORIES_KEY = "categories"
-        private const val GROCERIES_KEY = "groceries"
         private const val SUBCATEGORIES_KEY = "subcategories"
-        private const val GROUPS_KEY = "groups"
+        private const val GROCERIES_KEY = "groceries"
     }
     
     /**
@@ -132,6 +131,47 @@ class LocalStorageManager(context: Context) {
         val currentSubCategories = getSubCategories().toMutableList()
         currentSubCategories.removeAll { it.uuid == subCategoryId }
         saveSubCategories(currentSubCategories)
+    }
+    
+    // Grocery management methods
+    fun saveGroceries(groceries: List<Grocery>) {
+        val json = gson.toJson(groceries)
+        sharedPreferences.edit().putString(GROCERIES_KEY, json).apply()
+    }
+    
+    fun getGroceries(): List<Grocery> {
+        val json = sharedPreferences.getString(GROCERIES_KEY, "[]")
+        val type = object : TypeToken<List<Grocery>>() {}.type
+        return try {
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    fun getGroceriesBySubCategoryId(subCategoryId: String): List<Grocery> {
+        return getGroceries().filter { it.subCategoryId == subCategoryId }
+    }
+    
+    fun addGrocery(grocery: Grocery) {
+        val currentGroceries = getGroceries().toMutableList()
+        currentGroceries.add(grocery)
+        saveGroceries(currentGroceries)
+    }
+    
+    fun updateGrocery(updatedGrocery: Grocery) {
+        val currentGroceries = getGroceries().toMutableList()
+        val index = currentGroceries.indexOfFirst { it.uuid == updatedGrocery.uuid }
+        if (index != -1) {
+            currentGroceries[index] = updatedGrocery
+            saveGroceries(currentGroceries)
+        }
+    }
+    
+    fun deleteGrocery(groceryId: String) {
+        val currentGroceries = getGroceries().toMutableList()
+        currentGroceries.removeAll { it.uuid == groceryId }
+        saveGroceries(currentGroceries)
     }
     
     /**

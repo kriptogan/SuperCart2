@@ -130,7 +130,7 @@ class FirebaseManager {
             val snapshot = firestore.collection(SUBCATEGORIES_COLLECTION)
                 .get()
                 .await()
-            
+
             snapshot.documents.mapNotNull { doc ->
                 doc.toObject(SubCategory::class.java)
             }
@@ -140,7 +140,7 @@ class FirebaseManager {
     }
     
     /**
-     * Get sub-categories by category ID from Firestore
+     * Get sub-categories by category ID
      */
     suspend fun getSubCategoriesByCategoryId(categoryId: String): List<SubCategory> {
         return try {
@@ -148,7 +148,7 @@ class FirebaseManager {
                 .whereEqualTo("categoryId", categoryId)
                 .get()
                 .await()
-            
+
             snapshot.documents.mapNotNull { doc ->
                 doc.toObject(SubCategory::class.java)
             }
@@ -179,6 +179,72 @@ class FirebaseManager {
         return try {
             firestore.collection(SUBCATEGORIES_COLLECTION)
                 .document(subCategoryId)
+                .delete()
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    // Grocery management methods
+    suspend fun saveGrocery(grocery: Grocery): Boolean {
+        return try {
+            firestore.collection(GROCERIES_COLLECTION)
+                .document(grocery.uuid)
+                .set(grocery)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    suspend fun getGroceries(): List<Grocery> {
+        return try {
+            val snapshot = firestore.collection(GROCERIES_COLLECTION)
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Grocery::class.java)
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    suspend fun getGroceriesBySubCategoryId(subCategoryId: String): List<Grocery> {
+        return try {
+            val snapshot = firestore.collection(GROCERIES_COLLECTION)
+                .whereEqualTo("subCategoryId", subCategoryId)
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Grocery::class.java)
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    suspend fun updateGrocery(grocery: Grocery): Boolean {
+        return try {
+            firestore.collection(GROCERIES_COLLECTION)
+                .document(grocery.uuid)
+                .set(grocery)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    suspend fun deleteGrocery(groceryId: String): Boolean {
+        return try {
+            firestore.collection(GROCERIES_COLLECTION)
+                .document(groceryId)
                 .delete()
                 .await()
             true

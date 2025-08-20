@@ -17,15 +17,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kriptogan.supercart2.classes.Category
 import com.kriptogan.supercart2.classes.SubCategory
+import com.kriptogan.supercart2.classes.Grocery
 import com.kriptogan.supercart2.classes.FirebaseManager
 import com.kriptogan.supercart2.classes.LocalStorageManager
 import com.kriptogan.supercart2.ui.components.CollapsibleCategorySection
 import com.kriptogan.supercart2.ui.components.AppHeader
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun HomeContent(
@@ -38,10 +43,35 @@ fun HomeContent(
     onEditCategory: ((Category) -> Unit)? = null
 ) {
     var subCategories by remember { mutableStateOf<List<SubCategory>>(emptyList()) }
+    val coroutineScope = rememberCoroutineScope()
     
     // Load sub-categories when component is created AND when categories change
     LaunchedEffect(categories.size) {
         subCategories = localStorageManager.getSubCategories()
+    }
+    
+    // Handle grocery creation
+    val onGroceryCreated = { name: String, subCategoryId: String, expirationDate: String? ->
+        val grocery = Grocery(
+            name = name,
+            subCategoryId = subCategoryId,
+            expirationDate = expirationDate
+        )
+        
+        // Save to local storage
+        localStorageManager.addGrocery(grocery)
+        
+        // Save to Firebase
+        coroutineScope.launch {
+            try {
+                firebaseManager.saveGrocery(grocery)
+            } catch (e: Exception) {
+                // Firebase failure doesn't affect local state
+            }
+        }
+        
+        // Return Unit explicitly
+        Unit
     }
     
     Column(
@@ -50,8 +80,12 @@ fun HomeContent(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // App Header with search bar
-        AppHeader()
+        // App Header with search bar and functional plus button
+        AppHeader(
+            categories = categories,
+            subCategories = subCategories,
+            onGroceryCreated = onGroceryCreated
+        )
         
         // Temporary test button to create categories
         Button(

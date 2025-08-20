@@ -18,6 +18,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,11 +29,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kriptogan.supercart2.classes.Category
+import com.kriptogan.supercart2.classes.SubCategory
 
 @Composable
 fun AppHeader(
+    categories: List<Category>,
+    subCategories: List<SubCategory>,
+    onGroceryCreated: (String, String, String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showGroceryForm by remember { mutableStateOf(false) }
+    
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -74,9 +85,9 @@ fun AppHeader(
                 )
             }
             
-            // Plus button (does nothing for now)
+            // Plus button - now functional for creating groceries
             IconButton(
-                onClick = { /* TODO: Implement add functionality */ },
+                onClick = { showGroceryForm = true },
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
@@ -84,7 +95,7 @@ fun AppHeader(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add",
+                    contentDescription = "Add Grocery",
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
@@ -112,5 +123,25 @@ fun AppHeader(
         }
         
         Spacer(modifier = Modifier.height(16.dp))
+    }
+    
+    // Grocery creation form dialog
+    if (showGroceryForm) {
+        ReusableFullScreenWindow(
+            isVisible = showGroceryForm,
+            onDismiss = { showGroceryForm = false },
+            title = "Create New Grocery",
+            content = {
+                GroceryCreationForm(
+                    categories = categories,
+                    subCategories = subCategories,
+                    onSave = { name, subCategoryId, expirationDate ->
+                        onGroceryCreated(name, subCategoryId, expirationDate)
+                        showGroceryForm = false
+                    },
+                    onCancel = { showGroceryForm = false }
+                )
+            }
+        )
     }
 }
