@@ -1,39 +1,6 @@
-# 🏢 **Enterprise Security Platform - PROJECT RULES**
-
-## 📋 **Executive Summary**
-
-This document serves as the **SINGLE SOURCE OF TRUTH** for all development guidelines, patterns, and strategies across the Enterprise Security Platform. These rules apply to **EVERY request and chat** in the project.
-
 ---
-
-## 🚨 **CRITICAL RULES (Always Follow)**
-
-### 🔒 **Permission-Based Development**
-- **ALWAYS ask for explicit permission before ANY changes**
-- **NEVER implement anything automatically**
-- **EXPLAIN what you're about to do before doing it**
-- **WAIT for confirmation before proceeding**
-
-### 🧪 **Test-Driven Development (TDD)**
-- **ALWAYS write tests FIRST, then implement regular code**
-- **Include edge cases and error scenarios**
-- **Ensure comprehensive test coverage**
-- **Follow existing test patterns from the codebase**
-
-### 📚 **Documentation Reference**
-- **ALWAYS reference MD files before making architectural decisions**
-- **NEVER introduce patterns that contradict existing documentation**
-- **VERIFY new approaches against established patterns**
-- **CROSS-REFERENCE multiple sources before suggesting changes**
-
-### 🌐 **English-Only Documentation**
-- **ALWAYS write comments and documentation in English only**
-- **Use clear, concise English explanations**
-- **Follow proper JSDoc format for API documentation**
-- **Maintain English terminology and explanations**
-
+alwaysApply: true
 ---
-
 ## 🎭 **WHEN-THEN PATTERN RULES**
 
 ### **1. Pattern Detection & Completion**

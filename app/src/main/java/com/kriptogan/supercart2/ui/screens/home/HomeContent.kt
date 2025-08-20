@@ -30,6 +30,7 @@ import com.kriptogan.supercart2.ui.components.CollapsibleCategorySection
 import com.kriptogan.supercart2.ui.components.AppHeader
 import com.kriptogan.supercart2.ui.components.ReusableFullScreenWindow
 import com.kriptogan.supercart2.ui.components.GroceryCreationForm
+import com.kriptogan.supercart2.ui.components.SearchFilteredCategories
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +50,9 @@ fun HomeContent(
     var showEditForm by remember { mutableStateOf(false) }
     var groceryToEdit by remember { mutableStateOf<Grocery?>(null) }
     var isAllExpanded by remember { mutableStateOf(true) }
+    var expandedCategories by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var expandedSubCategories by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var currentSearchQuery by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     
     // Load sub-categories and groceries when component is created AND when categories change
@@ -114,6 +118,42 @@ fun HomeContent(
         groceryToEdit = null
     }
     
+    // Handle search functionality
+    val handleSearch = { query: String ->
+        currentSearchQuery = query
+        
+        if (query.isBlank()) {
+            // If search is empty, expand all
+            isAllExpanded = true
+            expandedCategories = emptySet()
+            expandedSubCategories = emptySet()
+        } else {
+            // Search for groceries matching the query
+            val matchingGroceries = groceries.filter { 
+                it.name.contains(query, ignoreCase = true) 
+            }
+            
+            if (matchingGroceries.isNotEmpty()) {
+                // Find the categories and sub-categories that contain matching groceries
+                val relevantSubCategoryIds = matchingGroceries.map { it.subCategoryId }.toSet()
+                val relevantCategories = subCategories
+                    .filter { it.uuid in relevantSubCategoryIds }
+                    .map { it.categoryId }
+                    .toSet()
+                
+                // Expand only the relevant categories and sub-categories
+                isAllExpanded = false
+                expandedCategories = relevantCategories
+                expandedSubCategories = relevantSubCategoryIds
+            } else {
+                // No matches found, collapse everything
+                isAllExpanded = false
+                expandedCategories = emptySet()
+                expandedSubCategories = emptySet()
+            }
+        }
+    }
+    
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -124,9 +164,11 @@ fun HomeContent(
         AppHeader(
             categories = categories,
             subCategories = subCategories,
+            groceries = groceries,
             onGroceryCreated = onGroceryCreated,
             isAllExpanded = isAllExpanded,
-            onToggleAll = { isAllExpanded = !isAllExpanded }
+            onToggleAll = { isAllExpanded = !isAllExpanded },
+            onSearch = { query -> handleSearch(query) }
         )
         
         // Temporary test button to create categories
@@ -140,24 +182,19 @@ fun HomeContent(
         Spacer(modifier = Modifier.height(16.dp))
         
         // Categories list with collapsible sections
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(categories) { category ->
-                val categorySubCategories = subCategories.filter { it.categoryId == category.uuid }
-                CollapsibleCategorySection(
-                    category = category,
-                    subCategories = categorySubCategories,
-                    groceries = groceries,
-                    onEditGrocery = { grocery ->
-                        groceryToEdit = grocery
-                        showEditForm = true
-                    },
-                    isExpandedGlobal = isAllExpanded
-                )
+        SearchFilteredCategories(
+            categories = categories,
+            subCategories = subCategories,
+            groceries = groceries,
+            expandedCategories = expandedCategories,
+            expandedSubCategories = expandedSubCategories,
+            isAllExpanded = isAllExpanded,
+            currentSearchQuery = currentSearchQuery,
+            onEditGrocery = { grocery ->
+                groceryToEdit = grocery
+                showEditForm = true
             }
-        }
+        )
     }
     
     // Grocery edit form dialog

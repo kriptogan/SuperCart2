@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,17 +36,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kriptogan.supercart2.classes.Category
 import com.kriptogan.supercart2.classes.SubCategory
+import com.kriptogan.supercart2.classes.Grocery
 
 @Composable
 fun AppHeader(
     categories: List<Category>,
     subCategories: List<SubCategory>,
+    groceries: List<Grocery>,
     onGroceryCreated: (String, String, String?) -> Unit,
     isAllExpanded: Boolean = true,
     onToggleAll: () -> Unit = {},
+    onSearch: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showGroceryForm by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -108,25 +113,19 @@ fun AppHeader(
             }
         }
         
-        // Search bar (does nothing for now)
-        Row(
+        // Search bar for groceries
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { 
+                searchQuery = it
+                onSearch(it)
+            },
+            placeholder = { Text("חפש מצרך...") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .background(
-                    color = Color(0xFFF5F5F5),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-                )
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "חפש מצרך...",
-                fontSize = 16.sp,
-                color = Color.Gray,
-                modifier = Modifier.weight(1f)
-            )
-        }
+                .padding(horizontal = 16.dp),
+            singleLine = true
+        )
         
         // Toggle expand/collapse all button
         OutlinedButton(

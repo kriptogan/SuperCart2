@@ -43,12 +43,15 @@ fun CollapsibleCategorySection(
     groceries: List<Grocery>,
     onEditGrocery: (Grocery) -> Unit,
     isExpandedGlobal: Boolean = true,
+    isExpandedIndividually: Boolean = false,
+    expandedSubCategories: Set<String> = emptySet(),
+    searchQuery: String = "",
     modifier: Modifier = Modifier
 ) {
-    var isExpanded by remember { mutableStateOf(isExpandedGlobal) }
+    var isExpanded by remember { mutableStateOf(isExpandedGlobal || isExpandedIndividually) }
     
-    LaunchedEffect(isExpandedGlobal) {
-        isExpanded = isExpandedGlobal
+    LaunchedEffect(isExpandedGlobal, isExpandedIndividually) {
+        isExpanded = isExpandedGlobal || isExpandedIndividually
     }
     
     Card(
@@ -75,7 +78,8 @@ fun CollapsibleCategorySection(
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 val categoryGroceriesCount = groceries.count { grocery -> 
-                    subCategories.any { it.uuid == grocery.subCategoryId }
+                    subCategories.any { it.uuid == grocery.subCategoryId } &&
+                    (searchQuery.isBlank() || grocery.name.contains(searchQuery, ignoreCase = true))
                 }
                 
                 Text(
@@ -92,15 +96,22 @@ fun CollapsibleCategorySection(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                 ) {
                     subCategories.forEach { subCategory ->
-                        val subCategoryGroceries = groceries.filter { it.subCategoryId == subCategory.uuid }
-                        SubCategoryItem(
-                            subCategory = subCategory,
-                            groceries = subCategoryGroceries,
-                            onEditGrocery = onEditGrocery,
-                            isExpandedGlobal = isExpandedGlobal
-                        )
-                        if (subCategory != subCategories.last()) {
-                            Spacer(modifier = Modifier.height(8.dp))
+                        val subCategoryGroceries = groceries.filter { 
+                            it.subCategoryId == subCategory.uuid &&
+                            (searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true))
+                        }
+                        if (subCategoryGroceries.isNotEmpty()) {
+                            SubCategoryItem(
+                                subCategory = subCategory,
+                                groceries = subCategoryGroceries,
+                                onEditGrocery = onEditGrocery,
+                                isExpandedGlobal = isExpandedGlobal,
+                                isExpandedIndividually = expandedSubCategories.contains(subCategory.uuid),
+                                searchQuery = searchQuery
+                            )
+                            if (subCategory != subCategories.last()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
@@ -115,12 +126,14 @@ private fun SubCategoryItem(
     groceries: List<Grocery>,
     onEditGrocery: (Grocery) -> Unit,
     isExpandedGlobal: Boolean = true,
+    isExpandedIndividually: Boolean = false,
+    searchQuery: String = "",
     modifier: Modifier = Modifier
 ) {
-    var isExpanded by remember { mutableStateOf(isExpandedGlobal) }
+    var isExpanded by remember { mutableStateOf(isExpandedGlobal || isExpandedIndividually) }
     
-    LaunchedEffect(isExpandedGlobal) {
-        isExpanded = isExpandedGlobal
+    LaunchedEffect(isExpandedGlobal, isExpandedIndividually) {
+        isExpanded = isExpandedGlobal || isExpandedIndividually
     }
     
     Card(
