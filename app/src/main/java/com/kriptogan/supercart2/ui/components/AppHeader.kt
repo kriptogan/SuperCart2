@@ -2,6 +2,7 @@ package com.kriptogan.supercart2.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,9 +37,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import com.kriptogan.supercart2.classes.Category
 import com.kriptogan.supercart2.classes.SubCategory
 import com.kriptogan.supercart2.classes.Grocery
+import com.kriptogan.supercart2.ui.components.CategoryManagementScreen
+import com.kriptogan.supercart2.ui.components.CategoryEditForm
 
 @Composable
 fun AppHeader(
@@ -44,6 +50,7 @@ fun AppHeader(
     subCategories: List<SubCategory>,
     groceries: List<Grocery>,
     onGroceryCreated: (String, String, String?) -> Unit,
+    onCategoryUpdated: (Category, String) -> Unit = { _, _ -> },
     isAllExpanded: Boolean = true,
     onToggleAll: () -> Unit = {},
     onSearch: (String) -> Unit = {},
@@ -51,6 +58,10 @@ fun AppHeader(
 ) {
     var showGroceryForm by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var showBurgerMenu by remember { mutableStateOf(false) }
+    var showCategoryManagement by remember { mutableStateOf(false) }
+    var showCategoryEditForm by remember { mutableStateOf(false) }
+    var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -64,20 +75,37 @@ fun AppHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Burger menu button (does nothing for now)
-            IconButton(
-                onClick = { /* TODO: Implement burger menu */ },
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF424242))
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "Menu",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
+            // Burger menu button with dropdown
+            Box {
+                IconButton(
+                    onClick = { showBurgerMenu = !showBurgerMenu },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF424242))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "Menu",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                
+                DropdownMenu(
+                    expanded = showBurgerMenu,
+                    onDismissRequest = { showBurgerMenu = false },
+                    modifier = Modifier.background(Color.White),
+                    properties = PopupProperties(focusable = true)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Category Management") },
+                        onClick = {
+                            showCategoryManagement = true
+                            showBurgerMenu = false
+                        }
+                    )
+                }
             }
             
             // Alert button (does nothing for now)
@@ -162,6 +190,54 @@ fun AppHeader(
                         showGroceryForm = false
                     },
                     onCancel = { showGroceryForm = false }
+                )
+            }
+        )
+    }
+    
+    // Category management screen
+    if (showCategoryManagement) {
+        ReusableFullScreenWindow(
+            isVisible = showCategoryManagement,
+            onDismiss = { showCategoryManagement = false },
+            title = "",
+            content = {
+                CategoryManagementScreen(
+                    categories = categories,
+                    onEditCategory = { category ->
+                        categoryToEdit = category
+                        showCategoryEditForm = true
+                        showCategoryManagement = false
+                    },
+                    onBack = { showCategoryManagement = false }
+                )
+            }
+        )
+    }
+    
+    // Category edit form dialog
+    if (showCategoryEditForm && categoryToEdit != null) {
+        ReusableFullScreenWindow(
+            isVisible = showCategoryEditForm,
+            onDismiss = { 
+                showCategoryEditForm = false
+                categoryToEdit = null
+            },
+            title = "",
+            content = {
+                CategoryEditForm(
+                    category = categoryToEdit!!,
+                    onSave = { newName ->
+                        categoryToEdit?.let { category ->
+                            onCategoryUpdated(category, newName)
+                        }
+                        showCategoryEditForm = false
+                        categoryToEdit = null
+                    },
+                    onCancel = { 
+                        showCategoryEditForm = false
+                        categoryToEdit = null
+                    }
                 )
             }
         )

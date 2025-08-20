@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,7 +41,8 @@ fun HomeContent(
     localStorageManager: LocalStorageManager,
     onShowCategoryDialog: () -> Unit,
     onDeleteAllCategories: () -> Unit,
-    onEditCategory: ((Category) -> Unit)? = null
+    onEditCategory: ((Category) -> Unit)? = null,
+    onCategoryUpdated: (Category, String) -> Unit = { _, _ -> }
 ) {
     var subCategories by remember { mutableStateOf<List<SubCategory>>(emptyList()) }
     var groceries by remember { mutableStateOf<List<Grocery>>(emptyList()) }
@@ -166,20 +165,11 @@ fun HomeContent(
             subCategories = subCategories,
             groceries = groceries,
             onGroceryCreated = onGroceryCreated,
+            onCategoryUpdated = onCategoryUpdated,
             isAllExpanded = isAllExpanded,
             onToggleAll = { isAllExpanded = !isAllExpanded },
             onSearch = { query -> handleSearch(query) }
         )
-        
-        // Temporary test button to create categories
-        Button(
-            onClick = onShowCategoryDialog,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Create Category (Test)")
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
         
         // Categories list with collapsible sections
         SearchFilteredCategories(

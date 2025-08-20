@@ -71,7 +71,11 @@ fun MainContent(
             localStorageManager = categoryState.localStorageManager,
             onShowCategoryDialog = onShowCategoryDialog,
             onDeleteAllCategories = categoryState.onDeleteAllCategories,
-            onEditCategory = categoryState.onShowEditDialog
+            onEditCategory = categoryState.onShowEditDialog,
+            onCategoryUpdated = { category, newName ->
+                val updatedCategory = category.copy(name = newName)
+                categoryState.onUpdateCategory(updatedCategory)
+            }
         )
         "shopping_list" -> ShoppingListContent(
             modifier = modifier
@@ -83,7 +87,11 @@ fun MainContent(
             localStorageManager = categoryState.localStorageManager,
             onShowCategoryDialog = onShowCategoryDialog,
             onDeleteAllCategories = categoryState.onDeleteAllCategories,
-            onEditCategory = categoryState.onShowEditDialog
+            onEditCategory = categoryState.onShowEditDialog,
+            onCategoryUpdated = { category, newName ->
+                val updatedCategory = category.copy(name = newName)
+                categoryState.onUpdateCategory(updatedCategory)
+            }
         )
     }
     
