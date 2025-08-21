@@ -1,0 +1,6 @@
+V 1.Implement the create category button
+V 2.Enable editing of existing categories
+V 3.Sort categories by viewOrder
+4.Enable deletion of categories // update viewOrders
+5.Make the first category protected
+6.Allow management of sub-categories in the edit screen of categories

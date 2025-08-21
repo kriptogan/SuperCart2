@@ -44,6 +44,9 @@ fun MainApp() {
     
     // Initialize data on app startup
     DisposableEffect(Unit) {
+        // Set global context for DataStoreManager
+        DataStoreManager.setGlobalContext(context)
+        
         scope.launch {
             DataStoreManager.loadData(context)
         }

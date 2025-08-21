@@ -15,6 +15,22 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 object DataStoreManager {
     private const val CATEGORIES_KEY = "categories"
     
+    // Global context reference for saving data from anywhere
+    private var globalContext: Context? = null
+    
+    fun setGlobalContext(context: Context) {
+        globalContext = context
+    }
+    
+    // Global save function that can be called from anywhere
+    suspend fun saveDataGlobally() {
+        globalContext?.let { context ->
+            saveData(context)
+        } ?: run {
+            android.util.Log.w("DataStoreManager", "Global context not set, cannot save data")
+        }
+    }
+    
     suspend fun saveData(context: Context) {
         android.util.Log.d("DataStoreManager", "Saving data to storage...")
         val gson = Gson()

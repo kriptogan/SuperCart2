@@ -8,6 +8,11 @@ import com.example.supercart2.models.Grocery
 
 object DataManagerObject {
     val categories: SnapshotStateList<CategoryWithSubCategories> = mutableStateListOf()
+    
+    // Get categories sorted by viewOrder for consistent display order
+    fun getSortedCategories(): List<CategoryWithSubCategories> {
+        return categories.sortedBy { it.category.viewOrder }
+    }
 }
 
 data class CategoryWithSubCategories(
