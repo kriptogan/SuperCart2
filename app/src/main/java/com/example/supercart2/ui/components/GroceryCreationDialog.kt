@@ -353,9 +353,11 @@ fun GroceryCreationDialog(
                 selectedSubCategory = firstSubCategory
                 showCategorySelection = false
             },
-            onNewCategoryRequested = {
-                // For now, just close the dialog
-                // TODO: Implement category creation flow
+            onNewCategoryCreated = { newCategory, newSubCategory ->
+                // Set the newly created category and sub-category as selected
+                selectedCategory = newCategory
+                selectedSubCategory = newSubCategory
+                // Close the category selection dialog and return to grocery creation
                 showCategorySelection = false
             },
             selectedCategoryId = selectedCategory?.uuid

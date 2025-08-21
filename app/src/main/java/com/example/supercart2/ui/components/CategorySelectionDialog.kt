@@ -19,15 +19,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.models.Category
+import com.example.supercart2.models.SubCategory
+import com.example.supercart2.ui.components.CreateCategoryDialog
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.supercart2.data.DataStoreManager
+import com.example.supercart2.data.CategoryWithSubCategories
+import com.example.supercart2.data.SubCategoryWithGroceries
 
 @Composable
 fun CategorySelectionDialog(
     onDismiss: () -> Unit,
     onCategorySelected: (Category) -> Unit,
-    onNewCategoryRequested: () -> Unit,
+    onNewCategoryCreated: (Category, SubCategory) -> Unit,
     selectedCategoryId: String? = null
 ) {
     val sortedCategories = DataManagerObject.getSortedCategories()
+    val scope = rememberCoroutineScope()
+    var showCreateCategory by remember { mutableStateOf(false) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -93,7 +102,7 @@ fun CategorySelectionDialog(
                     )
                 }
                 Button(
-                    onClick = onNewCategoryRequested,
+                    onClick = { showCreateCategory = true },
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
@@ -105,4 +114,35 @@ fun CategorySelectionDialog(
             }
         }
     )
+    
+    // Create Category Dialog
+    if (showCreateCategory) {
+        CreateCategoryDialog(
+            onDismiss = { showCreateCategory = false },
+            onCategoryCreated = { newCategory, newSubCategory ->
+                // Add the new category with its "General" sub-category to DataManagerObject
+                val generalSubCategoryWithGroceries = SubCategoryWithGroceries(
+                    subCategory = newSubCategory,
+                    groceries = mutableListOf()
+                )
+                
+                val newCategoryWithSubs = CategoryWithSubCategories(
+                    category = newCategory,
+                    subCategories = mutableListOf(generalSubCategoryWithGroceries)
+                )
+                DataManagerObject.categories.add(newCategoryWithSubs)
+                
+                // Save the updated data to local storage immediately
+                scope.launch {
+                    DataStoreManager.saveDataGlobally()
+                }
+                
+                // Call the callback with both category and sub-category
+                onNewCategoryCreated(newCategory, newSubCategory)
+                
+                // Close create dialog
+                showCreateCategory = false
+            }
+        )
+    }
 }
