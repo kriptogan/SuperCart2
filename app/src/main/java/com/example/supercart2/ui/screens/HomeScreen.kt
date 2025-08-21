@@ -7,11 +7,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +45,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen() {
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     
     Column(
@@ -70,6 +79,66 @@ fun HomeScreen() {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Add New Grocery",
+                        tint = SuperCartColors.primaryGreen
+                    )
+                }
+            }
+            
+            // Search bar and controls row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = SuperCartSpacing.md),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left spacer to align with burger icon
+                Spacer(modifier = Modifier.width(15.dp))
+                // Search bar (takes most of the space)
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search groceries...") },
+                    modifier = Modifier.weight(1f),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SuperCartColors.primaryGreen,
+                        unfocusedBorderColor = SuperCartColors.gray,
+                        focusedLabelColor = SuperCartColors.primaryGreen
+                    ),
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = SuperCartColors.gray
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(
+                                onClick = { searchQuery = "" },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear Search",
+                                    tint = SuperCartColors.darkGray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    textStyle = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                )
+                
+                Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                
+                // Collapse/Expand all toggle
+                IconButton(
+                    onClick = { /* TODO: Implement collapse/expand all functionality */ }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Collapse/Expand All",
                         tint = SuperCartColors.primaryGreen
                     )
                 }
