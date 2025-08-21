@@ -3,5 +3,5 @@ V 2.Enable editing of existing categories
 V 3.Sort categories by viewOrder
 V 4.Enable deletion of categories // update viewOrders
 V 5.Make the first category protected
-6.Allow management of sub-categories in the edit screen of categories
-7. protect first sub-category.
+V 6.Allow management of sub-categories in the edit screen of categories
+V 7. protect first sub-category.
