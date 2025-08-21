@@ -43,6 +43,7 @@ import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.ui.components.CategorySelectionDialog
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -69,8 +70,8 @@ fun GroceryCreationDialog(
         }
     }
     
-    // Dropdown states
-    var showCategoryDropdown by remember { mutableStateOf(false) }
+    // Dialog states
+    var showCategorySelection by remember { mutableStateOf(false) }
     var showSubCategoryDropdown by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     
@@ -124,7 +125,7 @@ fun GroceryCreationDialog(
                     )
                     
                     Button(
-                        onClick = { showCategoryDropdown = true },
+                        onClick = { showCategorySelection = true },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = SuperCartColors.white,
@@ -145,25 +146,6 @@ fun GroceryCreationDialog(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Select Category"
                             )
-                        }
-                    }
-                    
-                    // Category Dropdown
-                    DropdownMenu(
-                        expanded = showCategoryDropdown,
-                        onDismissRequest = { showCategoryDropdown = false }
-                    ) {
-                        sortedCategories.forEach { categoryWithSubs ->
-                                                         DropdownMenuItem(
-                                 text = { Text(categoryWithSubs.category.name) },
-                                 onClick = {
-                                     selectedCategory = categoryWithSubs.category
-                                     // Auto-select first sub-category in the new category
-                                     val firstSubCategory = categoryWithSubs.subCategories.firstOrNull()?.subCategory
-                                     selectedSubCategory = firstSubCategory
-                                     showCategoryDropdown = false
-                                 }
-                             )
                         }
                     }
                 }
@@ -304,12 +286,12 @@ fun GroceryCreationDialog(
                         contentColor = SuperCartColors.white
                     ),
                     modifier = Modifier.weight(1f)
-                                 ) {
-                     Icon(
-                         imageVector = Icons.Default.Check,
-                         contentDescription = "Create Grocery"
-                     )
-                 }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Create Grocery"
+                    )
+                }
             }
         }
     )
@@ -355,5 +337,28 @@ fun GroceryCreationDialog(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+    
+    // Category Selection Dialog
+    if (showCategorySelection) {
+        CategorySelectionDialog(
+            onDismiss = { showCategorySelection = false },
+            onCategorySelected = { category ->
+                selectedCategory = category
+                // Auto-select first sub-category in the new category
+                val firstSubCategory = DataManagerObject.categories
+                    .find { it.category.uuid == category.uuid }
+                    ?.subCategories
+                    ?.firstOrNull()?.subCategory
+                selectedSubCategory = firstSubCategory
+                showCategorySelection = false
+            },
+            onNewCategoryRequested = {
+                // For now, just close the dialog
+                // TODO: Implement category creation flow
+                showCategorySelection = false
+            },
+            selectedCategoryId = selectedCategory?.uuid
+        )
     }
 }
