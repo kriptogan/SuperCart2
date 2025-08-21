@@ -25,7 +25,8 @@ object DataInitializer {
         val otherCategory = Category(
             name = "Other",
             default = true,
-            viewOrder = 1
+            viewOrder = 1,
+            protected = true
         )
         
         val otherSubCategory = SubCategory(
@@ -47,7 +48,8 @@ object DataInitializer {
         val vegetablesCategory = Category(
             name = "Vegetables",
             default = true,
-            viewOrder = 2
+            viewOrder = 2,
+            protected = false
         )
         
         val vegetablesSubCategory = SubCategory(
@@ -69,7 +71,8 @@ object DataInitializer {
         val fruitsCategory = Category(
             name = "Fruits",
             default = true,
-            viewOrder = 3
+            viewOrder = 3,
+            protected = false
         )
         
         val fruitsSubCategory = SubCategory(

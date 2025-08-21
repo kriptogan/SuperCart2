@@ -96,12 +96,13 @@ fun CreateCategoryDialog(
                                 .map { it.category.viewOrder }
                                 .maxOrNull() ?: 0
                             
-                            val newCategory = Category(
-                                name = categoryName.trim(),
-                                default = false,
-                                viewOrder = highestViewOrder + 1,
-                                groupId = null
-                            )
+                                                       val newCategory = Category(
+                               name = categoryName.trim(),
+                               default = false,
+                               viewOrder = highestViewOrder + 1,
+                               groupId = null,
+                               protected = false
+                           )
                             
                             // Create a "General" sub-category for the new category
                             val generalSubCategory = SubCategory(

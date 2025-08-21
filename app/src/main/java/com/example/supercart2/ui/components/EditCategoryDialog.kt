@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -48,11 +49,25 @@ fun EditCategoryDialog(
                 )
             },
             text = {
-                Text(
-                    text = "Are you sure you want to delete '${category.name}'? This will also delete all sub-categories and groceries linked to it.",
-                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                ) {
+                    if (category.protected) {
+                        Text(
+                            text = "⚠️ This category is protected and cannot be deleted.",
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = androidx.compose.ui.graphics.Color.Red,
+                            modifier = Modifier.padding(bottom = SuperCartSpacing.sm)
+                        )
+                    }
+                    Text(
+                        text = "Are you sure you want to delete '${category.name}'? This will also delete all sub-categories and groceries linked to it.",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
             },
             confirmButton = {
                 Row(
@@ -80,15 +95,16 @@ fun EditCategoryDialog(
                             onCategoryDeleted(category)
                             showDeleteConfirmation = false
                         },
+                        enabled = !category.protected,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = androidx.compose.ui.graphics.Color.Red,
+                            containerColor = if (category.protected) SuperCartColors.gray else androidx.compose.ui.graphics.Color.Red,
                             contentColor = SuperCartColors.white
                         ),
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete"
+                            contentDescription = if (category.protected) "Category Protected" else "Delete"
                         )
                     }
                 }
@@ -113,12 +129,13 @@ fun EditCategoryDialog(
                 
                 // Delete Icon
                 androidx.compose.material3.IconButton(
-                    onClick = { showDeleteConfirmation = true }
+                    onClick = { showDeleteConfirmation = true },
+                    enabled = !category.protected
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete Category",
-                        tint = androidx.compose.ui.graphics.Color.Red
+                        contentDescription = if (category.protected) "Category Protected" else "Delete Category",
+                        tint = if (category.protected) SuperCartColors.gray else androidx.compose.ui.graphics.Color.Red
                     )
                 }
             }

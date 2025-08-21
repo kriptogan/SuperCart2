@@ -7,5 +7,6 @@ data class Category(
     val name: String,
     val default: Boolean = false,
     val viewOrder: Int = 0,
-    val groupId: String? = null
+    val groupId: String? = null,
+    val protected: Boolean = false
 )
