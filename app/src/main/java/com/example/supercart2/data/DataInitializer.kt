@@ -31,7 +31,8 @@ object DataInitializer {
         
         val otherSubCategory = SubCategory(
             categoryId = otherCategory.uuid,
-            name = "General"
+            name = "General",
+            protected = true
         )
         
         val otherCategoryWithSubs = CategoryWithSubCategories(
@@ -54,7 +55,8 @@ object DataInitializer {
         
         val vegetablesSubCategory = SubCategory(
             categoryId = vegetablesCategory.uuid,
-            name = "General"
+            name = "General",
+            protected = true
         )
         
         val vegetablesCategoryWithSubs = CategoryWithSubCategories(
@@ -77,7 +79,8 @@ object DataInitializer {
         
         val fruitsSubCategory = SubCategory(
             categoryId = fruitsCategory.uuid,
-            name = "General"
+            name = "General",
+            protected = true
         )
         
         val fruitsCategoryWithSubs = CategoryWithSubCategories(

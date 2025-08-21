@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.unit.dp
@@ -61,7 +62,8 @@ fun EditCategoryDialog(
             onSubCategoryCreated = { subCategoryName ->
                 val newSubCategory = SubCategory(
                     categoryId = category.uuid,
-                    name = subCategoryName.trim()
+                    name = subCategoryName.trim(),
+                    protected = false
                 )
                 onSubCategoryCreated(newSubCategory)
                 showCreateSubCategoryDialog = false
@@ -324,11 +326,24 @@ private fun SubCategoryCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    text = subCategory.name,
-                    style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
-                    color = SuperCartColors.black
-                )
+                Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = subCategory.name,
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                        color = SuperCartColors.black
+                    )
+                    
+                    if (subCategory.protected) {
+                        Spacer(modifier = Modifier.width(SuperCartSpacing.xs))
+                        Text(
+                            text = "(Protected)",
+                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                            color = SuperCartColors.gray
+                        )
+                    }
+                }
                 
                 Text(
                     text = "Groceries: $groceriesCount",
@@ -355,12 +370,13 @@ private fun SubCategoryCard(
                 
                 // Delete Icon
                 androidx.compose.material3.IconButton(
-                    onClick = onDeleteClick
+                    onClick = onDeleteClick,
+                    enabled = !subCategory.protected
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete Sub-Category",
-                        tint = androidx.compose.ui.graphics.Color.Red
+                        contentDescription = if (subCategory.protected) "Sub-Category Protected" else "Delete Sub-Category",
+                        tint = if (subCategory.protected) SuperCartColors.gray else androidx.compose.ui.graphics.Color.Red
                     )
                 }
             }

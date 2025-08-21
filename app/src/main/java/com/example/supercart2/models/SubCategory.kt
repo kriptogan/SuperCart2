@@ -5,5 +5,6 @@ import java.util.UUID
 data class SubCategory(
     val uuid: String = UUID.randomUUID().toString(),
     val categoryId: String,
-    val name: String
+    val name: String,
+    val protected: Boolean = false
 )

@@ -203,6 +203,12 @@ fun CategoriesManagementDialog(
                 }
             },
             onSubCategoryDeleted = { subCategoryToDelete ->
+                // Check if sub-category is protected
+                if (subCategoryToDelete.protected) {
+                    android.util.Log.w("CategoriesManagementDialog", "Attempted to delete protected sub-category: ${subCategoryToDelete.name}")
+                    return@EditCategoryDialog
+                }
+                
                 // Find the category and delete the sub-category
                 val categoryIndex = DataManagerObject.categories.indexOfFirst { 
                     it.category.uuid == editingCategory!!.uuid 

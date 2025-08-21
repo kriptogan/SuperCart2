@@ -107,7 +107,8 @@ fun CreateCategoryDialog(
                             // Create a "General" sub-category for the new category
                             val generalSubCategory = SubCategory(
                                 categoryId = newCategory.uuid,
-                                name = "General"
+                                name = "General",
+                                protected = true
                             )
                             
                             onCategoryCreated(newCategory, generalSubCategory)
