@@ -42,53 +42,42 @@ fun HomeScreen() {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Header with burger menu and add grocery button
-        Row(
+        // Main content area with burger menu and add grocery button
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SuperCartSpacing.md),
-            verticalAlignment = Alignment.CenterVertically
+                .weight(1f) // Take remaining space, leaving room for bottom navigation
+                .padding(SuperCartSpacing.md)
         ) {
-            BurgerMenu(
-                onCategoriesManagementClick = {
-                    showCategoriesManagement = true
-                }
-            )
-            
-            Text(
-                text = "SuperCart",
-                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+            // Burger menu and add grocery button row
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(start = SuperCartSpacing.md)
-            )
-            
-            // Add Grocery Button (+ icon)
-            IconButton(
-                onClick = { showGroceryCreation = true }
+                    .fillMaxWidth()
+                    .padding(bottom = SuperCartSpacing.md),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add New Grocery",
-                    tint = SuperCartColors.primaryGreen
+                BurgerMenu(
+                    onCategoriesManagementClick = {
+                        showCategoriesManagement = true
+                    }
                 )
-            }
-        }
-        
-                        // Main content - Hierarchical Category Display
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(SuperCartSpacing.md)
+                
+                // Add Grocery Button (+ icon)
+                IconButton(
+                    onClick = { showGroceryCreation = true }
                 ) {
-                    Text(
-                        text = "Your Groceries",
-                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(bottom = SuperCartSpacing.md)
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add New Grocery",
+                        tint = SuperCartColors.primaryGreen
                     )
-                    
-                    HierarchicalCategoryDisplay()
                 }
+            }
+            
+            // Hierarchical Category Display (takes remaining space)
+            HierarchicalCategoryDisplay()
+        }
     }
     
     // Categories Management Dialog
