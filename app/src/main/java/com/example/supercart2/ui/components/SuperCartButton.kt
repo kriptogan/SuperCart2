@@ -49,7 +49,7 @@ fun SuperCartSecondaryButton(
             .fillMaxWidth()
             .padding(vertical = SuperCartSpacing.sm),
         colors = ButtonDefaults.buttonColors(
-            containerColor = SuperCartColors.primaryBlue,
+            containerColor = SuperCartColors.blue,
             contentColor = SuperCartColors.white
         ),
         enabled = enabled

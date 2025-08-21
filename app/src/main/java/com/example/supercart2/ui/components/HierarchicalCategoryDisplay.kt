@@ -1,0 +1,310 @@
+package com.example.supercart2.ui.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.supercart2.data.DataManagerObject
+import com.example.supercart2.data.CategoryWithSubCategories
+import com.example.supercart2.data.SubCategoryWithGroceries
+import com.example.supercart2.models.Grocery
+import com.example.supercart2.ui.theme.SuperCartColors
+
+@Composable
+fun HierarchicalCategoryDisplay() {
+    val sortedCategories = DataManagerObject.getSortedCategories()
+    
+    // State for expanded/collapsed categories and sub-categories
+    val categoryExpansion = remember { mutableStateMapOf<String, Boolean>() }
+    val subCategoryExpansion = remember { mutableStateMapOf<String, Boolean>() }
+    
+    // Initialize expansion state for all categories and sub-categories
+    LaunchedEffect(sortedCategories) {
+        sortedCategories.forEach { categoryWithSubs ->
+            if (categoryExpansion[categoryWithSubs.category.uuid] == null) {
+                categoryExpansion[categoryWithSubs.category.uuid] = true
+            }
+            categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                if (subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] == null) {
+                    subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = true
+                }
+            }
+        }
+    }
+    
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(sortedCategories) { categoryWithSubs ->
+            CategoryCard(
+                categoryWithSubs = categoryWithSubs,
+                isExpanded = categoryExpansion[categoryWithSubs.category.uuid] ?: true,
+                onToggleExpansion = {
+                    categoryExpansion[categoryWithSubs.category.uuid] = 
+                        !(categoryExpansion[categoryWithSubs.category.uuid] ?: true)
+                },
+                subCategoryExpansion = subCategoryExpansion,
+                onSubCategoryToggleExpansion = { subCategoryId ->
+                    subCategoryExpansion[subCategoryId] = 
+                        !(subCategoryExpansion[subCategoryId] ?: true)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CategoryCard(
+    categoryWithSubs: CategoryWithSubCategories,
+    isExpanded: Boolean,
+    onToggleExpansion: () -> Unit,
+    subCategoryExpansion: Map<String, Boolean>,
+    onSubCategoryToggleExpansion: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp),
+        border = CardDefaults.outlinedCardBorder(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column {
+            // Category Header (clickable for expand/collapse)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleExpansion() }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = categoryWithSubs.category.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Groceries count badge
+                Badge(
+                    containerColor = SuperCartColors.primaryGreen,
+                    contentColor = SuperCartColors.white
+                ) {
+                    Text(
+                        text = categoryWithSubs.subCategories.sumOf { it.groceries.size }.toString(),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // Expansion indicator
+                Text(
+                    text = if (isExpanded) "▲" else "▼",
+                    fontSize = 18.sp,
+                    color = SuperCartColors.primaryGreen
+                )
+            }
+            
+            Divider(color = SuperCartColors.lightGray)
+            
+            // Expanded Content
+            if (isExpanded) {
+                if (categoryWithSubs.subCategories.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                            SubCategoryCard(
+                                subCategoryWithGroceries = subCategoryWithGroceries,
+                                isExpanded = subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] ?: true,
+                                onToggleExpansion = {
+                                    onSubCategoryToggleExpansion(subCategoryWithGroceries.subCategory.uuid)
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                } else {
+                    // Empty state for no sub-categories
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = SuperCartColors.gray,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "No sub-categories yet",
+                            fontSize = 14.sp,
+                            color = SuperCartColors.gray,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SubCategoryCard(
+    subCategoryWithGroceries: SubCategoryWithGroceries,
+    isExpanded: Boolean,
+    onToggleExpansion: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        border = CardDefaults.outlinedCardBorder(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF8F9FA) // Very light gray background
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column {
+            // Sub-Category Header (clickable for expand/collapse)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleExpansion() }
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = subCategoryWithGroceries.subCategory.name,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Groceries count badge
+                Badge(
+                    containerColor = SuperCartColors.blue,
+                    contentColor = SuperCartColors.white
+                ) {
+                    Text(
+                        text = subCategoryWithGroceries.groceries.size.toString(),
+                        fontSize = 10.sp
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // Expansion indicator
+                Text(
+                    text = if (isExpanded) "▲" else "▼",
+                    fontSize = 14.sp,
+                    color = SuperCartColors.blue
+                )
+            }
+            
+            // Expanded Content
+            if (isExpanded) {
+                Divider(color = SuperCartColors.lightGray)
+                if (subCategoryWithGroceries.groceries.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        subCategoryWithGroceries.groceries.forEach { grocery ->
+                            GroceryItem(grocery = grocery)
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                    }
+                } else {
+                    // Empty state
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = SuperCartColors.gray,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "No groceries yet",
+                            fontSize = 12.sp,
+                            color = SuperCartColors.gray,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroceryItem(grocery: Grocery) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Color.White,
+                shape = RoundedCornerShape(6.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Grocery icon
+        Icon(
+            imageVector = Icons.Default.ShoppingCart,
+            contentDescription = null,
+            tint = SuperCartColors.primaryGreen,
+            modifier = Modifier.size(16.dp)
+        )
+        
+        Spacer(modifier = Modifier.width(8.dp))
+        
+        // Grocery name
+        Text(
+            text = grocery.name,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        
+        // Date indicator with better styling
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = SuperCartColors.lightGray
+            ),
+            shape = RoundedCornerShape(4.dp)
+        ) {
+            Text(
+                text = grocery.date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd")),
+                fontSize = 11.sp,
+                color = SuperCartColors.darkGray,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            )
+        }
+    }
+}

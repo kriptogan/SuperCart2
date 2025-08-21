@@ -26,8 +26,9 @@ object SuperCartShapes {
 // SuperCart Design System - Colors (for direct use in components)
 object SuperCartColors {
     val primaryGreen = SuperCartGreen
-    val primaryBlue = SuperCartBlue
+    val blue = SuperCartBlue
     val lightGreen = SuperCartLightGreen
+    val lightGray = SuperCartLightGreen  // Using light green as light gray
     val gray = SuperCartGray
     val darkGray = SuperCartDarkGray
     val white = SuperCartWhite
