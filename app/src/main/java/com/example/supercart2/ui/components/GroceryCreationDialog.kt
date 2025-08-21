@@ -44,6 +44,7 @@ import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
 import com.example.supercart2.ui.components.CategorySelectionDialog
+import com.example.supercart2.ui.components.SubCategorySelectionDialog
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -72,7 +73,7 @@ fun GroceryCreationDialog(
     
     // Dialog states
     var showCategorySelection by remember { mutableStateOf(false) }
-    var showSubCategoryDropdown by remember { mutableStateOf(false) }
+    var showSubCategorySelection by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     
     // Get sorted categories for consistent display
@@ -164,7 +165,7 @@ fun GroceryCreationDialog(
                     Button(
                         onClick = { 
                             if (selectedCategory != null) {
-                                showSubCategoryDropdown = true 
+                                showSubCategorySelection = true 
                             }
                         },
                         enabled = selectedCategory != null,
@@ -187,22 +188,6 @@ fun GroceryCreationDialog(
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Select Sub-Category"
-                            )
-                        }
-                    }
-                    
-                    // Sub-Category Dropdown
-                    DropdownMenu(
-                        expanded = showSubCategoryDropdown,
-                        onDismissRequest = { showSubCategoryDropdown = false }
-                    ) {
-                        availableSubCategories.forEach { subCategory ->
-                            DropdownMenuItem(
-                                text = { Text(subCategory.name) },
-                                onClick = {
-                                    selectedSubCategory = subCategory
-                                    showSubCategoryDropdown = false
-                                }
                             )
                         }
                     }
@@ -361,6 +346,23 @@ fun GroceryCreationDialog(
                 showCategorySelection = false
             },
             selectedCategoryId = selectedCategory?.uuid
+        )
+    }
+    
+    // Sub-Category Selection Dialog
+    if (showSubCategorySelection && selectedCategory != null) {
+        SubCategorySelectionDialog(
+            onDismiss = { showSubCategorySelection = false },
+            onSubCategorySelected = { subCategory ->
+                selectedSubCategory = subCategory
+                showSubCategorySelection = false
+            },
+            onNewSubCategoryCreated = { newSubCategory ->
+                selectedSubCategory = newSubCategory
+                showSubCategorySelection = false
+            },
+            selectedCategory = selectedCategory!!,
+            selectedSubCategoryId = selectedSubCategory?.uuid
         )
     }
 }
