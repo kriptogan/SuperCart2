@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,19 +30,98 @@ import com.example.supercart2.models.Category
 fun EditCategoryDialog(
     category: Category,
     onDismiss: () -> Unit,
-    onCategoryUpdated: (Category) -> Unit
+    onCategoryUpdated: (Category) -> Unit,
+    onCategoryDeleted: (Category) -> Unit
 ) {
     var categoryName by remember { mutableStateOf(category.name) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = {
+                Text(
+                    text = "Delete Category",
+                    style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete '${category.name}'? This will also delete all sub-categories and groceries linked to it.",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+                ) {
+                    // Cancel Button (left) - secondary styled
+                    Button(
+                        onClick = { showDeleteConfirmation = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SuperCartColors.white,
+                            contentColor = SuperCartColors.primaryGreen
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel"
+                        )
+                    }
+                    
+                    // Delete Button (right) - danger styled
+                    Button(
+                        onClick = {
+                            onCategoryDeleted(category)
+                            showDeleteConfirmation = false
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = androidx.compose.ui.graphics.Color.Red,
+                            contentColor = SuperCartColors.white
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete"
+                        )
+                    }
+                }
+            }
+        )
+    }
     
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = "Edit Category",
-                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Edit Category",
+                    style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Delete Icon
+                androidx.compose.material3.IconButton(
+                    onClick = { showDeleteConfirmation = true }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Category",
+                        tint = androidx.compose.ui.graphics.Color.Red
+                    )
+                }
+            }
         },
         text = {
             Column(

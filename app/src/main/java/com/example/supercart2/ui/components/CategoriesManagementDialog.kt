@@ -100,6 +100,42 @@ fun CategoriesManagementDialog(
                     }
                 }
                 editingCategory = null
+            },
+            onCategoryDeleted = { categoryToDelete ->
+                // Find and delete the category from DataManagerObject
+                val index = DataManagerObject.categories.indexOfFirst { 
+                    it.category.uuid == categoryToDelete.uuid 
+                }
+                if (index != -1) {
+                    val deletedViewOrder = categoryToDelete.viewOrder
+                    
+                    // Remove the category and all its linked items
+                    DataManagerObject.categories.removeAt(index)
+                    
+                    // Update view orders for all categories with higher viewOrder
+                    DataManagerObject.categories.forEach { categoryWithSubs ->
+                        if (categoryWithSubs.category.viewOrder > deletedViewOrder) {
+                            val updatedCategory = categoryWithSubs.category.copy(
+                                viewOrder = categoryWithSubs.category.viewOrder - 1
+                            )
+                            val updatedCategoryWithSubs = categoryWithSubs.copy(
+                                category = updatedCategory
+                            )
+                            val categoryIndex = DataManagerObject.categories.indexOfFirst { 
+                                it.category.uuid == categoryWithSubs.category.uuid 
+                            }
+                            if (categoryIndex != -1) {
+                                DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
+                            }
+                        }
+                    }
+                    
+                    // Save the updated data to local storage immediately
+                    scope.launch {
+                        DataStoreManager.saveDataGlobally()
+                    }
+                }
+                editingCategory = null
             }
         )
     }
