@@ -4,14 +4,24 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -26,16 +36,49 @@ import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
 import com.example.supercart2.models.Category
+import com.example.supercart2.models.SubCategory
+import com.example.supercart2.data.SubCategoryWithGroceries
 
 @Composable
 fun EditCategoryDialog(
     category: Category,
+    subCategories: List<SubCategoryWithGroceries>,
     onDismiss: () -> Unit,
     onCategoryUpdated: (Category) -> Unit,
-    onCategoryDeleted: (Category) -> Unit
+    onCategoryDeleted: (Category) -> Unit,
+    onSubCategoryCreated: (SubCategory) -> Unit,
+    onSubCategoryUpdated: (SubCategory) -> Unit,
+    onSubCategoryDeleted: (SubCategory) -> Unit
 ) {
     var categoryName by remember { mutableStateOf(category.name) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showCreateSubCategoryDialog by remember { mutableStateOf(false) }
+    var editingSubCategory by remember { mutableStateOf<SubCategory?>(null) }
+    
+    if (showCreateSubCategoryDialog) {
+        CreateSubCategoryDialog(
+            onDismiss = { showCreateSubCategoryDialog = false },
+            onSubCategoryCreated = { subCategoryName ->
+                val newSubCategory = SubCategory(
+                    categoryId = category.uuid,
+                    name = subCategoryName.trim()
+                )
+                onSubCategoryCreated(newSubCategory)
+                showCreateSubCategoryDialog = false
+            }
+        )
+    }
+    
+    if (editingSubCategory != null) {
+        EditSubCategoryDialog(
+            subCategory = editingSubCategory!!,
+            onDismiss = { editingSubCategory = null },
+            onSubCategoryUpdated = { updatedSubCategory ->
+                onSubCategoryUpdated(updatedSubCategory)
+                editingSubCategory = null
+            }
+        )
+    }
     
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -144,6 +187,7 @@ fun EditCategoryDialog(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
+                // Category Name Input
                 OutlinedTextField(
                     value = categoryName,
                     onValueChange = { categoryName = it },
@@ -158,6 +202,48 @@ fun EditCategoryDialog(
                     ),
                     shape = SuperCartShapes.small
                 )
+                
+                Spacer(modifier = Modifier.height(SuperCartSpacing.md))
+                
+                // Sub-Categories Section Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Sub-Categories",
+                        style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                        color = SuperCartColors.black
+                    )
+                    
+                    // Add Sub-Category Button
+                    androidx.compose.material3.IconButton(
+                        onClick = { showCreateSubCategoryDialog = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Sub-Category",
+                            tint = SuperCartColors.primaryGreen
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(SuperCartSpacing.sm))
+                
+                // Sub-Categories List
+                LazyColumn(
+                    modifier = Modifier.height(200.dp)
+                ) {
+                    items(subCategories) { subCategoryWithGroceries ->
+                        SubCategoryCard(
+                            subCategory = subCategoryWithGroceries.subCategory,
+                            groceriesCount = subCategoryWithGroceries.groceries.size,
+                            onEditClick = { editingSubCategory = subCategoryWithGroceries.subCategory },
+                            onDeleteClick = { onSubCategoryDeleted(subCategoryWithGroceries.subCategory) }
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
@@ -206,4 +292,78 @@ fun EditCategoryDialog(
             }
         }
     )
+}
+
+@Composable
+private fun SubCategoryCard(
+    subCategory: SubCategory,
+    groceriesCount: Int,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = SuperCartSpacing.sm),
+        colors = CardDefaults.cardColors(
+            containerColor = SuperCartColors.white
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        ),
+        shape = SuperCartShapes.small
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(SuperCartSpacing.sm),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            // Left side: Sub-category name and groceries count
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = subCategory.name,
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                    color = SuperCartColors.black
+                )
+                
+                Text(
+                    text = "Groceries: $groceriesCount",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                    color = SuperCartColors.darkGray
+                )
+            }
+            
+            // Right side: Edit and Delete icons
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.xs),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                // Edit Icon
+                androidx.compose.material3.IconButton(
+                    onClick = onEditClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit Sub-Category",
+                        tint = SuperCartColors.primaryGreen
+                    )
+                }
+                
+                // Delete Icon
+                androidx.compose.material3.IconButton(
+                    onClick = onDeleteClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Sub-Category",
+                        tint = androidx.compose.ui.graphics.Color.Red
+                    )
+                }
+            }
+        }
+    }
 }

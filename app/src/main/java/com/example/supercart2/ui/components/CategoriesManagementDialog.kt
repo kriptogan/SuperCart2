@@ -82,6 +82,7 @@ fun CategoriesManagementDialog(
     if (editingCategory != null) {
         EditCategoryDialog(
             category = editingCategory!!,
+            subCategories = DataManagerObject.categories.find { it.category.uuid == editingCategory!!.uuid }?.subCategories ?: emptyList(),
             onDismiss = { editingCategory = null },
             onCategoryUpdated = { updatedCategory ->
                 // Find and update the category in DataManagerObject
@@ -143,6 +144,90 @@ fun CategoriesManagementDialog(
                     }
                 }
                 editingCategory = null
+            },
+            onSubCategoryCreated = { newSubCategory ->
+                // Find the category and add the new sub-category
+                val index = DataManagerObject.categories.indexOfFirst { 
+                    it.category.uuid == editingCategory!!.uuid 
+                }
+                if (index != -1) {
+                    val categoryWithSubs = DataManagerObject.categories[index]
+                    val newSubCategoryWithGroceries = SubCategoryWithGroceries(
+                        subCategory = newSubCategory,
+                        groceries = mutableListOf()
+                    )
+                    
+                    val updatedCategoryWithSubs = categoryWithSubs.copy(
+                        subCategories = categoryWithSubs.subCategories.toMutableList().apply {
+                            add(newSubCategoryWithGroceries)
+                        }
+                    )
+                    
+                    DataManagerObject.categories[index] = updatedCategoryWithSubs
+                    
+                    // Save the updated data to local storage immediately
+                    scope.launch {
+                        DataStoreManager.saveDataGlobally()
+                    }
+                }
+            },
+            onSubCategoryUpdated = { updatedSubCategory ->
+                // Find the category and update the sub-category
+                val categoryIndex = DataManagerObject.categories.indexOfFirst { 
+                    it.category.uuid == editingCategory!!.uuid 
+                }
+                if (categoryIndex != -1) {
+                    val categoryWithSubs = DataManagerObject.categories[categoryIndex]
+                    val subCategoryIndex = categoryWithSubs.subCategories.indexOfFirst { 
+                        it.subCategory.uuid == updatedSubCategory.uuid 
+                    }
+                    
+                    if (subCategoryIndex != -1) {
+                        val updatedSubCategoryWithGroceries = categoryWithSubs.subCategories[subCategoryIndex].copy(
+                            subCategory = updatedSubCategory
+                        )
+                        
+                        val updatedCategoryWithSubs = categoryWithSubs.copy(
+                            subCategories = categoryWithSubs.subCategories.toMutableList().apply {
+                                set(subCategoryIndex, updatedSubCategoryWithGroceries)
+                            }
+                        )
+                        
+                        DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
+                        
+                        // Save the updated data to local storage immediately
+                        scope.launch {
+                            DataStoreManager.saveDataGlobally()
+                        }
+                    }
+                }
+            },
+            onSubCategoryDeleted = { subCategoryToDelete ->
+                // Find the category and delete the sub-category
+                val categoryIndex = DataManagerObject.categories.indexOfFirst { 
+                    it.category.uuid == editingCategory!!.uuid 
+                }
+                if (categoryIndex != -1) {
+                    val categoryWithSubs = DataManagerObject.categories[categoryIndex]
+                    val subCategoryIndex = categoryWithSubs.subCategories.indexOfFirst { 
+                        it.subCategory.uuid == subCategoryToDelete.uuid 
+                    }
+                    
+                    if (subCategoryIndex != -1) {
+                        val updatedCategoryWithSubs = categoryWithSubs.copy(
+                            subCategories = categoryWithSubs.subCategories.toMutableList().apply {
+                                removeAt(subCategoryIndex)
+                            }
+                        )
+                        
+                        DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
+                        
+                        // Save the updated data to local storage immediately
+                        scope.launch {
+                            DataStoreManager.saveDataGlobally()
+                        }
+                    }
+                }
             }
         )
     }
