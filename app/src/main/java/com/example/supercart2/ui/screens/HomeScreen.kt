@@ -10,6 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
@@ -98,7 +104,12 @@ fun HomeScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f) // Take remaining space, leaving room for bottom navigation
-                .padding(SuperCartSpacing.md)
+                .padding(
+                    start = SuperCartSpacing.md,
+                    end = SuperCartSpacing.md,
+                    bottom = SuperCartSpacing.md,
+                    top = SuperCartSpacing.xl // Much more space at the top
+                )
         ) {
             // Burger menu and add grocery button row
             Row(
@@ -108,21 +119,44 @@ fun HomeScreen() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                BurgerMenu(
-                    onCategoriesManagementClick = {
-                        showCategoriesManagement = true
-                    }
-                )
-                
-                // Add Grocery Button (+ icon)
-                IconButton(
-                    onClick = { showGroceryCreation = true }
+                // Burger menu with right padding
+                Box(
+                    modifier = Modifier.padding(start = 5.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add New Grocery",
-                        tint = SuperCartColors.primaryGreen
+                    BurgerMenu(
+                        onCategoriesManagementClick = {
+                            showCategoriesManagement = true
+                        }
                     )
+                }
+                
+                // Add Grocery Button (+ icon) with left padding
+                Box(
+                    modifier = Modifier.padding(end = 12.dp)
+                ) {
+                    Card(
+                        modifier = Modifier.size(56.dp), // Same size as burger menu
+                        shape = CircleShape,
+                        colors = CardDefaults.cardColors(
+                            containerColor = SuperCartColors.white
+                        ),
+                        border = CardDefaults.outlinedCardBorder(),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 2.dp
+                        )
+                    ) {
+                        IconButton(
+                            onClick = { showGroceryCreation = true },
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add New Grocery",
+                                tint = SuperCartColors.primaryGreen,
+                                modifier = Modifier.size(34.dp) // Slightly larger for better visual balance
+                            )
+                        }
+                    }
                 }
             }
             
@@ -135,12 +169,12 @@ fun HomeScreen() {
             ) {
                 // Left spacer to align with burger icon
                 Spacer(modifier = Modifier.width(15.dp))
-                // Search bar (takes most of the space)
+                // Search bar (responsive width to move collapse button left)
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = { Text("Search groceries...") },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(0.78f), // 70% of available width - responsive!
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SuperCartColors.primaryGreen,
                         unfocusedBorderColor = SuperCartColors.gray,
@@ -151,20 +185,21 @@ fun HomeScreen() {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search",
-                            tint = SuperCartColors.gray
+                            tint = SuperCartColors.gray,
+                            modifier = Modifier.size(24.dp) // Larger search icon
                         )
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(
                                 onClick = { searchQuery = "" },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(40.dp) // Larger touch target
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
                                     contentDescription = "Clear search for '$searchQuery'",
                                     tint = SuperCartColors.darkGray,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp) // Larger icon
                                 )
                             }
                         }
@@ -172,19 +207,35 @@ fun HomeScreen() {
                     textStyle = androidx.compose.material3.MaterialTheme.typography.bodyMedium
                 )
                 
-                Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                Spacer(modifier = Modifier.width(SuperCartSpacing.sm)) // Restored original spacing
                 
                 // Collapse/Expand all toggle
-                IconButton(
-                    onClick = { 
-                        isAllExpanded = !isAllExpanded
-                    }
-                ) {
-                    Icon(
-                        imageVector = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (isAllExpanded) "Collapse All" else "Expand All",
-                        tint = SuperCartColors.primaryGreen
+                Card(
+                    modifier = Modifier
+                        .height(56.dp) // Match search bar height
+                        .width(56.dp), // Square aspect ratio
+                    shape = RoundedCornerShape(12.dp), // Square with rounded corners
+                    colors = CardDefaults.cardColors(
+                        containerColor = SuperCartColors.white
+                    ),
+                    border = CardDefaults.outlinedCardBorder(),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
                     )
+                ) {
+                    IconButton(
+                        onClick = { 
+                            isAllExpanded = !isAllExpanded
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isAllExpanded) "Collapse All" else "Expand All",
+                            tint = SuperCartColors.primaryGreen,
+                            modifier = Modifier.size(28.dp) // Larger icon
+                        )
+                    }
                 }
             }
             

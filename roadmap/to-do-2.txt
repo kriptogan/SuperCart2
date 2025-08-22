@@ -9,5 +9,5 @@ V 7. protect first sub-category.
 _________________________________________________________________________
 
 1. Better icon in home page.
-2. Exipration date not required field.
+V 2. Exipration date not required field.
 3. Edit groceries.

@@ -71,7 +71,7 @@ fun HierarchicalCategoryDisplay(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
                     tint = SuperCartColors.gray,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(56.dp) // Larger search icon for no results
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -200,7 +200,7 @@ private fun CategoryCard(
                             imageVector = Icons.Default.Info,
                             contentDescription = null,
                             tint = SuperCartColors.gray,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp) // Larger info icon
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -292,7 +292,7 @@ private fun SubCategoryCard(
                             imageVector = Icons.Default.Info,
                             contentDescription = null,
                             tint = SuperCartColors.gray,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp) // Larger info icon
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -325,7 +325,7 @@ private fun GroceryItem(grocery: Grocery) {
             imageVector = Icons.Default.ShoppingCart,
             contentDescription = null,
             tint = SuperCartColors.primaryGreen,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(20.dp) // Larger grocery icon
         )
         
         Spacer(modifier = Modifier.width(8.dp))
@@ -354,7 +354,7 @@ private fun GroceryItem(grocery: Grocery) {
                     imageVector = Icons.Default.DateRange,
                     contentDescription = "Expires",
                     tint = SuperCartColors.darkGray,
-                    modifier = Modifier.size(10.dp)
+                    modifier = Modifier.size(12.dp) // Larger date icon
                 )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
