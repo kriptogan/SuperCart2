@@ -273,16 +273,6 @@ fun GroceryCreationDialog(
                         }
                     }
                                          
-                     // Raw date value display for debugging
-                     if (groceryToEdit != null) {
-                         Spacer(modifier = Modifier.height(8.dp))
-                         Text(
-                             text = "Raw expiration date: ${groceryToEdit.date}",
-                             style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                             color = SuperCartColors.gray,
-                             modifier = Modifier.padding(horizontal = 4.dp)
-                         )
-                     }
                  }
             }
         },
