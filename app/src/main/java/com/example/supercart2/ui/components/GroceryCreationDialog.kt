@@ -52,21 +52,35 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun GroceryCreationDialog(
     onDismiss: () -> Unit,
-    onGroceryCreated: (Grocery) -> Unit
+    onGroceryCreated: (Grocery) -> Unit,
+    groceryToEdit: Grocery? = null
 ) {
     var groceryName by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var selectedSubCategory by remember { mutableStateOf<SubCategory?>(null) }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     
-    // Auto-select first category and sub-category when dialog opens
-    LaunchedEffect(Unit) {
-        val sortedCategories = DataManagerObject.getSortedCategories()
-        if (sortedCategories.isNotEmpty()) {
-            selectedCategory = sortedCategories.first().category
-            val firstSubCategory = sortedCategories.first().subCategories.firstOrNull()?.subCategory
-            if (firstSubCategory != null) {
-                selectedSubCategory = firstSubCategory
+    // Initialize form with grocery data when editing, or auto-select first category/sub-category when creating
+    LaunchedEffect(groceryToEdit) {
+        if (groceryToEdit != null) {
+            // Edit mode - populate form with existing grocery data
+            groceryName = groceryToEdit.name
+            selectedCategory = DataManagerObject.categories.find { categoryWithSubs ->
+                categoryWithSubs.category.uuid == groceryToEdit.categoryId
+            }?.category
+            selectedSubCategory = DataManagerObject.categories.find { categoryWithSubs ->
+                categoryWithSubs.category.uuid == groceryToEdit.categoryId
+            }?.subCategories?.find { it.subCategory.uuid == groceryToEdit.subCategoryId }?.subCategory
+            selectedDate = groceryToEdit.date
+        } else {
+            // Create mode - auto-select first category and sub-category
+            val sortedCategories = DataManagerObject.getSortedCategories()
+            if (sortedCategories.isNotEmpty()) {
+                selectedCategory = sortedCategories.first().category
+                val firstSubCategory = sortedCategories.first().subCategories.firstOrNull()?.subCategory
+                if (firstSubCategory != null) {
+                    selectedSubCategory = firstSubCategory
+                }
             }
         }
     }
@@ -88,7 +102,7 @@ fun GroceryCreationDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Create New Grocery",
+                text = if (groceryToEdit != null) "Edit Grocery" else "Create New Grocery",
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -273,17 +287,29 @@ fun GroceryCreationDialog(
                     )
                 }
                 
-                // Create Button (right) - primary styled
+                // Save Button (right) - primary styled
                 Button(
                     onClick = {
                         if (groceryName.isNotBlank() && selectedCategory != null && selectedSubCategory != null) {
-                            val newGrocery = Grocery(
-                                name = groceryName.trim(),
-                                categoryId = selectedCategory!!.uuid,
-                                subCategoryId = selectedSubCategory!!.uuid,
-                                date = selectedDate
-                            )
-                            onGroceryCreated(newGrocery)
+                            if (groceryToEdit != null) {
+                                // Edit mode - update existing grocery
+                                val updatedGrocery = groceryToEdit.copy(
+                                    name = groceryName.trim(),
+                                    categoryId = selectedCategory!!.uuid,
+                                    subCategoryId = selectedSubCategory!!.uuid,
+                                    date = selectedDate
+                                )
+                                onGroceryCreated(updatedGrocery)
+                            } else {
+                                // Create mode - create new grocery
+                                val newGrocery = Grocery(
+                                    name = groceryName.trim(),
+                                    categoryId = selectedCategory!!.uuid,
+                                    subCategoryId = selectedSubCategory!!.uuid,
+                                    date = selectedDate
+                                )
+                                onGroceryCreated(newGrocery)
+                            }
                             onDismiss()
                         }
                     },
@@ -296,7 +322,7 @@ fun GroceryCreationDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Create Grocery"
+                        contentDescription = if (groceryToEdit != null) "Save Changes" else "Create Grocery"
                     )
                 }
             }

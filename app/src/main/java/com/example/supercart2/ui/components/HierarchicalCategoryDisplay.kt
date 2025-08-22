@@ -27,7 +27,8 @@ import com.example.supercart2.ui.theme.SuperCartColors
 fun HierarchicalCategoryDisplay(
     categories: List<CategoryWithSubCategories>,
     searchQuery: String = "",
-    isAllExpanded: Boolean = false
+    isAllExpanded: Boolean = false,
+    onEditGrocery: (Grocery) -> Unit = {}
 ) {
     // State for expanded/collapsed categories and sub-categories
     val categoryExpansion = remember { mutableStateMapOf<String, Boolean>() }
@@ -105,7 +106,8 @@ fun HierarchicalCategoryDisplay(
                     onSubCategoryToggleExpansion = { subCategoryId ->
                         subCategoryExpansion[subCategoryId] = 
                             !(subCategoryExpansion[subCategoryId] ?: true)
-                    }
+                    },
+                    onEditGrocery = onEditGrocery
                 )
             }
         }
@@ -118,7 +120,8 @@ private fun CategoryCard(
     isExpanded: Boolean,
     onToggleExpansion: () -> Unit,
     subCategoryExpansion: Map<String, Boolean>,
-    onSubCategoryToggleExpansion: (String) -> Unit
+    onSubCategoryToggleExpansion: (String) -> Unit,
+    onEditGrocery: (Grocery) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -177,14 +180,15 @@ private fun CategoryCard(
                     Column(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
-                        categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
-                                                         SubCategoryCard(
-                                 subCategoryWithGroceries = subCategoryWithGroceries,
-                                 isExpanded = subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] ?: false,
-                                 onToggleExpansion = {
-                                     onSubCategoryToggleExpansion(subCategoryWithGroceries.subCategory.uuid)
-                                 }
-                             )
+                                                 categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                                                          SubCategoryCard(
+                                  subCategoryWithGroceries = subCategoryWithGroceries,
+                                  isExpanded = subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] ?: false,
+                                  onToggleExpansion = {
+                                      onSubCategoryToggleExpansion(subCategoryWithGroceries.subCategory.uuid)
+                                  },
+                                  onEditGrocery = onEditGrocery
+                              )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
@@ -220,7 +224,8 @@ private fun CategoryCard(
 private fun SubCategoryCard(
     subCategoryWithGroceries: SubCategoryWithGroceries,
     isExpanded: Boolean,
-    onToggleExpansion: () -> Unit
+    onToggleExpansion: () -> Unit,
+    onEditGrocery: (Grocery) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -275,10 +280,13 @@ private fun SubCategoryCard(
                     Column(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
-                        subCategoryWithGroceries.groceries.forEach { grocery ->
-                            GroceryItem(grocery = grocery)
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
+                                                 subCategoryWithGroceries.groceries.forEach { grocery ->
+                             GroceryItem(
+                                 grocery = grocery,
+                                 onEdit = { onEditGrocery(grocery) }
+                             )
+                             Spacer(modifier = Modifier.height(4.dp))
+                         }
                     }
                 } else {
                     // Empty state
@@ -309,7 +317,10 @@ private fun SubCategoryCard(
 }
 
 @Composable
-private fun GroceryItem(grocery: Grocery) {
+private fun GroceryItem(
+    grocery: Grocery,
+    onEdit: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -333,21 +344,31 @@ private fun GroceryItem(grocery: Grocery) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Edit icon
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit grocery",
-                tint = SuperCartColors.primaryGreen,
-                modifier = Modifier.size(20.dp)
-            )
+                         // Edit icon
+             IconButton(
+                 onClick = onEdit,
+                 modifier = Modifier.size(24.dp)
+             ) {
+                 Icon(
+                     imageVector = Icons.Default.Edit,
+                     contentDescription = "Edit grocery",
+                     tint = SuperCartColors.primaryGreen,
+                     modifier = Modifier.size(20.dp)
+                 )
+             }
             
-            // Cart icon
-            Icon(
-                imageVector = Icons.Default.ShoppingCart,
-                contentDescription = "Add to cart",
-                tint = SuperCartColors.primaryGreen,
-                modifier = Modifier.size(20.dp)
-            )
+                         // Cart icon
+             IconButton(
+                 onClick = { /* TODO: Add to cart functionality */ },
+                 modifier = Modifier.size(24.dp)
+             ) {
+                 Icon(
+                     imageVector = Icons.Default.ShoppingCart,
+                     contentDescription = "Add to cart",
+                     tint = SuperCartColors.primaryGreen,
+                     modifier = Modifier.size(20.dp)
+                 )
+             }
         }
     }
 }

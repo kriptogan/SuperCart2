@@ -60,6 +60,10 @@ fun HomeScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
     var dataRefreshTrigger by remember { mutableStateOf(0) }
+    
+    // Edit mode state
+    var groceryToEdit by remember { mutableStateOf<Grocery?>(null) }
+    var isEditMode by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // Get filtered and expanded data based on search query
@@ -95,6 +99,13 @@ fun HomeScreen() {
     
     // Debug logging
     Log.d("HomeScreen", "Search query: '$searchQuery', Filtered data size: ${filteredData.value.size}, Display data size: ${displayData.value.size}")
+    
+    // Function to handle editing a grocery
+    fun onEditGrocery(grocery: Grocery) {
+        groceryToEdit = grocery
+        isEditMode = true
+        showGroceryCreation = true
+    }
     
     Column(
         modifier = Modifier.fillMaxSize()
@@ -243,7 +254,8 @@ fun HomeScreen() {
             HierarchicalCategoryDisplay(
                 categories = displayData.value,
                 searchQuery = searchQuery,
-                isAllExpanded = isAllExpanded
+                isAllExpanded = isAllExpanded,
+                onEditGrocery = { grocery -> onEditGrocery(grocery) }
             )
         }
     }
@@ -255,47 +267,97 @@ fun HomeScreen() {
         )
     }
     
-    // Grocery Creation Dialog
+    // Grocery Creation/Edit Dialog
     if (showGroceryCreation) {
         GroceryCreationDialog(
-            onDismiss = { showGroceryCreation = false },
+            groceryToEdit = groceryToEdit,
+            onDismiss = { 
+                showGroceryCreation = false
+                // Reset edit mode when dialog is dismissed
+                isEditMode = false
+                groceryToEdit = null
+            },
             onGroceryCreated = { newGrocery ->
-                // Add the new grocery to the appropriate sub-category in DataManagerObject
-                val categoryIndex = DataManagerObject.categories.indexOfFirst { 
-                    it.category.uuid == newGrocery.categoryId 
-                }
-                
-                if (categoryIndex != -1) {
-                    val categoryWithSubs = DataManagerObject.categories[categoryIndex]
-                    val subCategoryIndex = categoryWithSubs.subCategories.indexOfFirst { 
-                        it.subCategory.uuid == newGrocery.subCategoryId 
+                if (isEditMode && groceryToEdit != null) {
+                    // Edit mode - update existing grocery
+                    val categoryIndex = DataManagerObject.categories.indexOfFirst { 
+                        it.category.uuid == newGrocery.categoryId 
                     }
                     
-                    if (subCategoryIndex != -1) {
-                        // Add the grocery to the sub-category
-                        val updatedSubCategoryWithGroceries = categoryWithSubs.subCategories[subCategoryIndex].copy(
-                            groceries = categoryWithSubs.subCategories[subCategoryIndex].groceries.toMutableList().apply {
-                                add(newGrocery)
-                            }
-                        )
-                        
-                        val updatedCategoryWithSubs = categoryWithSubs.copy(
-                            subCategories = categoryWithSubs.subCategories.toMutableList().apply {
-                                set(subCategoryIndex, updatedSubCategoryWithGroceries)
-                            }
-                        )
-                        
-                        DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
-                        
-                        // Save the updated data to local storage
-                        scope.launch {
-                            DataStoreManager.saveDataGlobally()
+                    if (categoryIndex != -1) {
+                        val categoryWithSubs = DataManagerObject.categories[categoryIndex]
+                        val subCategoryIndex = categoryWithSubs.subCategories.indexOfFirst { 
+                            it.subCategory.uuid == newGrocery.subCategoryId 
                         }
                         
-                        // Trigger UI refresh
-                        dataRefreshTrigger++
+                        if (subCategoryIndex != -1) {
+                            // Update the grocery in the sub-category
+                            val updatedSubCategoryWithGroceries = categoryWithSubs.subCategories[subCategoryIndex].copy(
+                                groceries = categoryWithSubs.subCategories[subCategoryIndex].groceries.toMutableList().apply {
+                                    val existingIndex = indexOfFirst { it.uuid == newGrocery.uuid }
+                                    if (existingIndex != -1) {
+                                        set(existingIndex, newGrocery)
+                                    }
+                                }
+                            )
+                            
+                            val updatedCategoryWithSubs = categoryWithSubs.copy(
+                                subCategories = categoryWithSubs.subCategories.toMutableList().apply {
+                                    set(subCategoryIndex, updatedSubCategoryWithGroceries)
+                                }
+                            )
+                            
+                            DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
+                            
+                            // Save the updated data to local storage
+                            scope.launch {
+                                DataStoreManager.saveDataGlobally()
+                            }
+                            
+                            // Trigger UI refresh
+                            dataRefreshTrigger++
+                            
+                            Log.d("HomeScreen", "Grocery updated: ${newGrocery.name}")
+                        }
+                    }
+                } else {
+                    // Create mode - add new grocery
+                    val categoryIndex = DataManagerObject.categories.indexOfFirst { 
+                        it.category.uuid == newGrocery.categoryId 
+                    }
+                    
+                    if (categoryIndex != -1) {
+                        val categoryWithSubs = DataManagerObject.categories[categoryIndex]
+                        val subCategoryIndex = categoryWithSubs.subCategories.indexOfFirst { 
+                            it.subCategory.uuid == newGrocery.subCategoryId 
+                        }
                         
-                        Log.d("HomeScreen", "New grocery added: ${newGrocery.name}")
+                        if (subCategoryIndex != -1) {
+                            // Add the grocery to the sub-category
+                            val updatedSubCategoryWithGroceries = categoryWithSubs.subCategories[subCategoryIndex].copy(
+                                groceries = categoryWithSubs.subCategories[subCategoryIndex].groceries.toMutableList().apply {
+                                    add(newGrocery)
+                                }
+                            )
+                            
+                            val updatedCategoryWithSubs = categoryWithSubs.copy(
+                                subCategories = categoryWithSubs.subCategories.toMutableList().apply {
+                                    set(subCategoryIndex, updatedSubCategoryWithGroceries)
+                                }
+                            )
+                            
+                            DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
+                            
+                            // Save the updated data to local storage
+                            scope.launch {
+                                DataStoreManager.saveDataGlobally()
+                            }
+                            
+                            // Trigger UI refresh
+                            dataRefreshTrigger++
+                            
+                            Log.d("HomeScreen", "New grocery added: ${newGrocery.name}")
+                        }
                     }
                 }
                 
