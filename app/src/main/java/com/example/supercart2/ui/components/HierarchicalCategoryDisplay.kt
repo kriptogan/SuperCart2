@@ -338,19 +338,32 @@ private fun GroceryItem(grocery: Grocery) {
             modifier = Modifier.weight(1f)
         )
         
-        // Date indicator with better styling
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = SuperCartColors.lightGray
-            ),
-            shape = RoundedCornerShape(4.dp)
-        ) {
-            Text(
-                text = grocery.date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd")),
-                fontSize = 11.sp,
-                color = SuperCartColors.darkGray,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-            )
+        // Date indicator with better styling (only show if date exists)
+        if (grocery.date != null) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = SuperCartColors.lightGray
+                ),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                                    Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = "Expires",
+                    tint = SuperCartColors.darkGray,
+                    modifier = Modifier.size(10.dp)
+                )
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = grocery.date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd")),
+                        fontSize = 11.sp,
+                        color = SuperCartColors.darkGray
+                    )
+                }
+            }
         }
     }
 }

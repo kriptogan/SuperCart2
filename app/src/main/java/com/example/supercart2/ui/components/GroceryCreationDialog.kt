@@ -57,7 +57,7 @@ fun GroceryCreationDialog(
     var groceryName by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var selectedSubCategory by remember { mutableStateOf<SubCategory?>(null) }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     
     // Auto-select first category and sub-category when dialog opens
     LaunchedEffect(Unit) {
@@ -197,37 +197,59 @@ fun GroceryCreationDialog(
                 
                 // Date Selector
                 Column {
-                    Text(
-                        text = "Date",
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                        color = SuperCartColors.black,
-                        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
-                    )
+                                         Text(
+                         text = "Expiration Date",
+                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                         color = SuperCartColors.black,
+                         modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+                     )
                     
-                    Button(
-                        onClick = { showDatePicker = true },
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = SuperCartColors.white,
-                            contentColor = SuperCartColors.primaryGreen
-                        ),
-                        shape = SuperCartShapes.small
+                        horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        // Date selection button
+                        Button(
+                            onClick = { showDatePicker = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SuperCartColors.white,
+                                contentColor = SuperCartColors.primaryGreen
+                            ),
+                            shape = SuperCartShapes.small
                         ) {
-                            Text(
-                                text = selectedDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
-                                color = SuperCartColors.black
-                            )
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Select Date"
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = selectedDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "No date selected",
+                                    color = if (selectedDate != null) SuperCartColors.black else SuperCartColors.gray
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = "Select Date"
+                                )
+                            }
+                        }
+                        
+                        // Clear date button (only show when date is selected)
+                        if (selectedDate != null) {
+                            Button(
+                                onClick = { selectedDate = null },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = SuperCartColors.lightGray,
+                                    contentColor = SuperCartColors.darkGray
+                                ),
+                                shape = SuperCartShapes.small
+                            ) {
+                                Text("Clear")
+                            }
                         }
                     }
+                    
+                    
                 }
             }
         },
@@ -284,7 +306,7 @@ fun GroceryCreationDialog(
     // Material3 Date Picker
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            initialSelectedDateMillis = selectedDate?.atStartOfDay(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
         )
         
         DatePickerDialog(
