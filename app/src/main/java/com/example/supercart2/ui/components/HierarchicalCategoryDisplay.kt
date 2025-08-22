@@ -27,7 +27,7 @@ import com.example.supercart2.ui.theme.SuperCartColors
 fun HierarchicalCategoryDisplay(
     categories: List<CategoryWithSubCategories>,
     searchQuery: String = "",
-    isAllExpanded: Boolean = true
+    isAllExpanded: Boolean = false
 ) {
     // State for expanded/collapsed categories and sub-categories
     val categoryExpansion = remember { mutableStateMapOf<String, Boolean>() }
@@ -96,10 +96,10 @@ fun HierarchicalCategoryDisplay(
             items(categories) { categoryWithSubs ->
                 CategoryCard(
                     categoryWithSubs = categoryWithSubs,
-                    isExpanded = categoryExpansion[categoryWithSubs.category.uuid] ?: true,
+                    isExpanded = categoryExpansion[categoryWithSubs.category.uuid] ?: false,
                     onToggleExpansion = {
                         categoryExpansion[categoryWithSubs.category.uuid] = 
-                            !(categoryExpansion[categoryWithSubs.category.uuid] ?: true)
+                            !(categoryExpansion[categoryWithSubs.category.uuid] ?: false)
                     },
                     subCategoryExpansion = subCategoryExpansion,
                     onSubCategoryToggleExpansion = { subCategoryId ->
@@ -178,13 +178,13 @@ private fun CategoryCard(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
-                            SubCategoryCard(
-                                subCategoryWithGroceries = subCategoryWithGroceries,
-                                isExpanded = subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] ?: true,
-                                onToggleExpansion = {
-                                    onSubCategoryToggleExpansion(subCategoryWithGroceries.subCategory.uuid)
-                                }
-                            )
+                                                         SubCategoryCard(
+                                 subCategoryWithGroceries = subCategoryWithGroceries,
+                                 isExpanded = subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] ?: false,
+                                 onToggleExpansion = {
+                                     onSubCategoryToggleExpansion(subCategoryWithGroceries.subCategory.uuid)
+                                 }
+                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }

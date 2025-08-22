@@ -51,7 +51,7 @@ fun HomeScreen() {
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-    var isAllExpanded by remember { mutableStateOf(true) }
+    var isAllExpanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // Get filtered and expanded data based on search query
@@ -76,6 +76,9 @@ fun HomeScreen() {
     LaunchedEffect(searchQuery) {
         if (searchQuery.isNotBlank()) {
             isAllExpanded = true
+        } else {
+            // When search is cleared, return to collapsed state
+            isAllExpanded = false
         }
     }
     
