@@ -5,3 +5,9 @@ V 4.Enable deletion of categories // update viewOrders
 V 5.Make the first category protected
 V 6.Allow management of sub-categories in the edit screen of categories
 V 7. protect first sub-category.
+
+_________________________________________________________________________
+
+1. Better icon in home page.
+2. Exipration date not required field.
+3. Edit groceries.
