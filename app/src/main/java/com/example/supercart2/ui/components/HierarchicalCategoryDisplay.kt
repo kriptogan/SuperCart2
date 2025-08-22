@@ -320,17 +320,7 @@ private fun GroceryItem(grocery: Grocery) {
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Grocery icon
-        Icon(
-            imageVector = Icons.Default.ShoppingCart,
-            contentDescription = null,
-            tint = SuperCartColors.primaryGreen,
-            modifier = Modifier.size(20.dp) // Larger grocery icon
-        )
-        
-        Spacer(modifier = Modifier.width(8.dp))
-        
-        // Grocery name
+        // Grocery name (takes most space)
         Text(
             text = grocery.name,
             fontSize = 14.sp,
@@ -338,32 +328,26 @@ private fun GroceryItem(grocery: Grocery) {
             modifier = Modifier.weight(1f)
         )
         
-        // Date indicator with better styling (only show if date exists)
-        if (grocery.date != null) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = SuperCartColors.lightGray
-                ),
-                shape = RoundedCornerShape(4.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                                    Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Expires",
-                    tint = SuperCartColors.darkGray,
-                    modifier = Modifier.size(12.dp) // Larger date icon
-                )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(
-                        text = grocery.date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd")),
-                        fontSize = 11.sp,
-                        color = SuperCartColors.darkGray
-                    )
-                }
-            }
+        // Action icons (edit and cart)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Edit icon
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit grocery",
+                tint = SuperCartColors.primaryGreen,
+                modifier = Modifier.size(20.dp)
+            )
+            
+            // Cart icon
+            Icon(
+                imageVector = Icons.Default.ShoppingCart,
+                contentDescription = "Add to cart",
+                tint = SuperCartColors.primaryGreen,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
