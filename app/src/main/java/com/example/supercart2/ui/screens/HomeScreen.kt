@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -52,10 +53,12 @@ fun HomeScreen() {
     var showGroceryCreation by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
+    var dataRefreshTrigger by remember { mutableStateOf(0) }
     val scope = rememberCoroutineScope()
     
     // Get filtered and expanded data based on search query
-    val filteredData = remember(searchQuery) {
+    val filteredData = derivedStateOf {
+        dataRefreshTrigger // This ensures recomposition when data changes
         if (searchQuery.isBlank()) {
             // No search query - return all data as is
             DataManagerObject.getSortedCategories()
@@ -66,10 +69,12 @@ fun HomeScreen() {
     }
     
     // Ensure we always have data to display
-    val displayData = if (filteredData.isEmpty() && searchQuery.isBlank()) {
-        DataManagerObject.getSortedCategories()
-    } else {
-        filteredData
+    val displayData = derivedStateOf {
+        if (filteredData.value.isEmpty() && searchQuery.isBlank()) {
+            DataManagerObject.getSortedCategories()
+        } else {
+            filteredData.value
+        }
     }
     
     // Reset collapse/expand all state when search becomes active
@@ -83,7 +88,7 @@ fun HomeScreen() {
     }
     
     // Debug logging
-    Log.d("HomeScreen", "Search query: '$searchQuery', Filtered data size: ${filteredData.size}, Display data size: ${displayData.size}")
+    Log.d("HomeScreen", "Search query: '$searchQuery', Filtered data size: ${filteredData.value.size}, Display data size: ${displayData.value.size}")
     
     Column(
         modifier = Modifier.fillMaxSize()
@@ -185,7 +190,7 @@ fun HomeScreen() {
             
             // Hierarchical Category Display (takes remaining space)
             HierarchicalCategoryDisplay(
-                categories = displayData,
+                categories = displayData.value,
                 searchQuery = searchQuery,
                 isAllExpanded = isAllExpanded
             )
@@ -235,6 +240,9 @@ fun HomeScreen() {
                         scope.launch {
                             DataStoreManager.saveDataGlobally()
                         }
+                        
+                        // Trigger UI refresh
+                        dataRefreshTrigger++
                         
                         Log.d("HomeScreen", "New grocery added: ${newGrocery.name}")
                     }
