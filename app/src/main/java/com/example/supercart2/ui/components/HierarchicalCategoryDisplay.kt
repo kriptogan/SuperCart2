@@ -24,46 +24,89 @@ import com.example.supercart2.models.Grocery
 import com.example.supercart2.ui.theme.SuperCartColors
 
 @Composable
-fun HierarchicalCategoryDisplay() {
-    val sortedCategories = DataManagerObject.getSortedCategories()
-    
+fun HierarchicalCategoryDisplay(
+    categories: List<CategoryWithSubCategories>,
+    searchQuery: String = ""
+) {
     // State for expanded/collapsed categories and sub-categories
     val categoryExpansion = remember { mutableStateMapOf<String, Boolean>() }
     val subCategoryExpansion = remember { mutableStateMapOf<String, Boolean>() }
     
     // Initialize expansion state for all categories and sub-categories
-    LaunchedEffect(sortedCategories) {
-        sortedCategories.forEach { categoryWithSubs ->
-            if (categoryExpansion[categoryWithSubs.category.uuid] == null) {
+    LaunchedEffect(categories, searchQuery) {
+        categories.forEach { categoryWithSubs ->
+            // If searching, always expand categories with matches
+            if (searchQuery.isNotBlank()) {
+                categoryExpansion[categoryWithSubs.category.uuid] = true
+            } else if (categoryExpansion[categoryWithSubs.category.uuid] == null) {
+                // Default expansion state when not searching
                 categoryExpansion[categoryWithSubs.category.uuid] = true
             }
+            
             categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
-                if (subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] == null) {
+                // If searching, always expand sub-categories with matches
+                if (searchQuery.isNotBlank()) {
+                    subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = true
+                } else if (subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] == null) {
+                    // Default expansion state when not searching
                     subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = true
                 }
             }
         }
     }
     
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(bottom = 80.dp) // Add bottom padding to avoid bottom navigation bar
-    ) {
-        items(sortedCategories) { categoryWithSubs ->
-            CategoryCard(
-                categoryWithSubs = categoryWithSubs,
-                isExpanded = categoryExpansion[categoryWithSubs.category.uuid] ?: true,
-                onToggleExpansion = {
-                    categoryExpansion[categoryWithSubs.category.uuid] = 
-                        !(categoryExpansion[categoryWithSubs.category.uuid] ?: true)
-                },
-                subCategoryExpansion = subCategoryExpansion,
-                onSubCategoryToggleExpansion = { subCategoryId ->
-                    subCategoryExpansion[subCategoryId] = 
-                        !(subCategoryExpansion[subCategoryId] ?: true)
-                }
-            )
+    if (categories.isEmpty() && searchQuery.isNotBlank()) {
+        // No search results
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = SuperCartColors.gray,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "No groceries found",
+                    style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+                    color = SuperCartColors.gray
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Try a different search term",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    color = SuperCartColors.gray
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 80.dp) // Add bottom padding to avoid bottom navigation bar
+        ) {
+            items(categories) { categoryWithSubs ->
+                CategoryCard(
+                    categoryWithSubs = categoryWithSubs,
+                    isExpanded = categoryExpansion[categoryWithSubs.category.uuid] ?: true,
+                    onToggleExpansion = {
+                        categoryExpansion[categoryWithSubs.category.uuid] = 
+                            !(categoryExpansion[categoryWithSubs.category.uuid] ?: true)
+                    },
+                    subCategoryExpansion = subCategoryExpansion,
+                    onSubCategoryToggleExpansion = { subCategoryId ->
+                        subCategoryExpansion[subCategoryId] = 
+                            !(subCategoryExpansion[subCategoryId] ?: true)
+                    }
+                )
+            }
         }
     }
 }

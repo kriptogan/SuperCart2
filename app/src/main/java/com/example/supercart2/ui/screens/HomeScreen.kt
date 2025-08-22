@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,8 @@ import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
+import com.example.supercart2.data.CategoryWithSubCategories
+import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.models.Grocery
 import android.util.Log
 import kotlinx.coroutines.launch
@@ -47,6 +50,27 @@ fun HomeScreen() {
     var showGroceryCreation by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    
+    // Get filtered and expanded data based on search query
+    val filteredData = remember(searchQuery) {
+        if (searchQuery.isBlank()) {
+            // No search query - return all data as is
+            DataManagerObject.getSortedCategories()
+        } else {
+            // Filter data based on search query
+            filterAndExpandData(DataManagerObject.getSortedCategories(), searchQuery)
+        }
+    }
+    
+    // Ensure we always have data to display
+    val displayData = if (filteredData.isEmpty() && searchQuery.isBlank()) {
+        DataManagerObject.getSortedCategories()
+    } else {
+        filteredData
+    }
+    
+    // Debug logging
+    Log.d("HomeScreen", "Search query: '$searchQuery', Filtered data size: ${filteredData.size}, Display data size: ${displayData.size}")
     
     Column(
         modifier = Modifier.fillMaxSize()
@@ -120,7 +144,7 @@ fun HomeScreen() {
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear Search",
+                                    contentDescription = "Clear search for '$searchQuery'",
                                     tint = SuperCartColors.darkGray,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -145,7 +169,10 @@ fun HomeScreen() {
             }
             
             // Hierarchical Category Display (takes remaining space)
-            HierarchicalCategoryDisplay()
+            HierarchicalCategoryDisplay(
+                categories = displayData,
+                searchQuery = searchQuery
+            )
         }
     }
     
@@ -200,5 +227,46 @@ fun HomeScreen() {
                 showGroceryCreation = false
             }
         )
+    }
+}
+
+/**
+ * Filters and expands data based on search query
+ * - Shows only categories/sub-categories that contain matching groceries
+ * - Automatically expands categories/sub-categories with matches
+ * - Hides empty categories and sub-categories
+ */
+private fun filterAndExpandData(
+    categories: List<CategoryWithSubCategories>,
+    searchQuery: String
+): List<CategoryWithSubCategories> {
+    val lowerCaseQuery = searchQuery.lowercase()
+    
+    return categories.mapNotNull { categoryWithSubs ->
+        // Filter sub-categories for this category
+        val filteredSubCategories = categoryWithSubs.subCategories.mapNotNull { subCategoryWithGroceries ->
+            // Filter groceries for this sub-category
+            val filteredGroceries = subCategoryWithGroceries.groceries.filter { grocery ->
+                grocery.name.lowercase().contains(lowerCaseQuery)
+            }
+            
+            // Only include sub-category if it has matching groceries
+            if (filteredGroceries.isNotEmpty()) {
+                subCategoryWithGroceries.copy(
+                    groceries = mutableStateListOf<Grocery>().apply { addAll(filteredGroceries) }
+                )
+            } else {
+                null
+            }
+        }
+        
+        // Only include category if it has sub-categories with matching groceries
+        if (filteredSubCategories.isNotEmpty()) {
+            categoryWithSubs.copy(
+                subCategories = mutableStateListOf<SubCategoryWithGroceries>().apply { addAll(filteredSubCategories) }
+            )
+        } else {
+            null
+        }
     }
 }
