@@ -26,30 +26,31 @@ import com.example.supercart2.ui.theme.SuperCartColors
 @Composable
 fun HierarchicalCategoryDisplay(
     categories: List<CategoryWithSubCategories>,
-    searchQuery: String = ""
+    searchQuery: String = "",
+    isAllExpanded: Boolean = true
 ) {
     // State for expanded/collapsed categories and sub-categories
     val categoryExpansion = remember { mutableStateMapOf<String, Boolean>() }
     val subCategoryExpansion = remember { mutableStateMapOf<String, Boolean>() }
     
     // Initialize expansion state for all categories and sub-categories
-    LaunchedEffect(categories, searchQuery) {
+    LaunchedEffect(categories, searchQuery, isAllExpanded) {
         categories.forEach { categoryWithSubs ->
             // If searching, always expand categories with matches
             if (searchQuery.isNotBlank()) {
                 categoryExpansion[categoryWithSubs.category.uuid] = true
-            } else if (categoryExpansion[categoryWithSubs.category.uuid] == null) {
-                // Default expansion state when not searching
-                categoryExpansion[categoryWithSubs.category.uuid] = true
+            } else {
+                // Use the global collapse/expand all state
+                categoryExpansion[categoryWithSubs.category.uuid] = isAllExpanded
             }
             
             categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
                 // If searching, always expand sub-categories with matches
                 if (searchQuery.isNotBlank()) {
                     subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = true
-                } else if (subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] == null) {
-                    // Default expansion state when not searching
-                    subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = true
+                } else {
+                    // Use the global collapse/expand all state
+                    subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = isAllExpanded
                 }
             }
         }

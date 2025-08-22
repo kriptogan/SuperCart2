@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -49,6 +51,7 @@ fun HomeScreen() {
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var isAllExpanded by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     
     // Get filtered and expanded data based on search query
@@ -67,6 +70,13 @@ fun HomeScreen() {
         DataManagerObject.getSortedCategories()
     } else {
         filteredData
+    }
+    
+    // Reset collapse/expand all state when search becomes active
+    LaunchedEffect(searchQuery) {
+        if (searchQuery.isNotBlank()) {
+            isAllExpanded = true
+        }
     }
     
     // Debug logging
@@ -158,11 +168,13 @@ fun HomeScreen() {
                 
                 // Collapse/Expand all toggle
                 IconButton(
-                    onClick = { /* TODO: Implement collapse/expand all functionality */ }
+                    onClick = { 
+                        isAllExpanded = !isAllExpanded
+                    }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Collapse/Expand All",
+                        imageVector = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isAllExpanded) "Collapse All" else "Expand All",
                         tint = SuperCartColors.primaryGreen
                     )
                 }
@@ -171,7 +183,8 @@ fun HomeScreen() {
             // Hierarchical Category Display (takes remaining space)
             HierarchicalCategoryDisplay(
                 categories = displayData,
-                searchQuery = searchQuery
+                searchQuery = searchQuery,
+                isAllExpanded = isAllExpanded
             )
         }
     }
