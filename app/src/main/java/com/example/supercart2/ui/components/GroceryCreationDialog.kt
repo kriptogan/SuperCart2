@@ -237,10 +237,20 @@ fun GroceryCreationDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = selectedDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) ?: "No date selected",
-                                    color = if (selectedDate != null) SuperCartColors.black else SuperCartColors.gray
-                                )
+                                                                 Text(
+                                     text = try {
+                                         selectedDate?.let { date ->
+                                             if (date.year in 1900..2100) {
+                                                 date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                                             } else {
+                                                 "Invalid date"
+                                             }
+                                         } ?: "No date selected"
+                                     } catch (e: Exception) {
+                                         "Invalid date"
+                                     },
+                                     color = if (selectedDate != null && selectedDate!!.year in 1900..2100) SuperCartColors.black else SuperCartColors.gray
+                                 )
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
                                     contentDescription = "Select Date"
@@ -262,9 +272,18 @@ fun GroceryCreationDialog(
                             }
                         }
                     }
-                    
-                    
-                }
+                                         
+                     // Raw date value display for debugging
+                     if (groceryToEdit != null) {
+                         Spacer(modifier = Modifier.height(8.dp))
+                         Text(
+                             text = "Raw expiration date: ${groceryToEdit.date}",
+                             style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                             color = SuperCartColors.gray,
+                             modifier = Modifier.padding(horizontal = 4.dp)
+                         )
+                     }
+                 }
             }
         },
         confirmButton = {
@@ -289,30 +308,34 @@ fun GroceryCreationDialog(
                 
                 // Save Button (right) - primary styled
                 Button(
-                    onClick = {
-                        if (groceryName.isNotBlank() && selectedCategory != null && selectedSubCategory != null) {
-                            if (groceryToEdit != null) {
-                                // Edit mode - update existing grocery
-                                val updatedGrocery = groceryToEdit.copy(
-                                    name = groceryName.trim(),
-                                    categoryId = selectedCategory!!.uuid,
-                                    subCategoryId = selectedSubCategory!!.uuid,
-                                    date = selectedDate
-                                )
-                                onGroceryCreated(updatedGrocery)
-                            } else {
-                                // Create mode - create new grocery
-                                val newGrocery = Grocery(
-                                    name = groceryName.trim(),
-                                    categoryId = selectedCategory!!.uuid,
-                                    subCategoryId = selectedSubCategory!!.uuid,
-                                    date = selectedDate
-                                )
-                                onGroceryCreated(newGrocery)
-                            }
-                            onDismiss()
-                        }
-                    },
+                                         onClick = {
+                         if (groceryName.isNotBlank() && selectedCategory != null && selectedSubCategory != null) {
+                             android.util.Log.d("GroceryCreationDialog", "Saving grocery. Selected date: $selectedDate")
+                             
+                             if (groceryToEdit != null) {
+                                 // Edit mode - update existing grocery
+                                 val updatedGrocery = groceryToEdit.copy(
+                                     name = groceryName.trim(),
+                                     categoryId = selectedCategory!!.uuid,
+                                     subCategoryId = selectedSubCategory!!.uuid,
+                                     date = selectedDate
+                                 )
+                                 android.util.Log.d("GroceryCreationDialog", "Updated grocery date: ${updatedGrocery.date}")
+                                 onGroceryCreated(updatedGrocery)
+                             } else {
+                                 // Create mode - create new grocery
+                                 val newGrocery = Grocery(
+                                     name = groceryName.trim(),
+                                     categoryId = selectedCategory!!.uuid,
+                                     subCategoryId = selectedSubCategory!!.uuid,
+                                     date = selectedDate
+                                 )
+                                 android.util.Log.d("GroceryCreationDialog", "New grocery date: ${newGrocery.date}")
+                                 onGroceryCreated(newGrocery)
+                             }
+                             onDismiss()
+                         }
+                     },
                     enabled = groceryName.isNotBlank() && selectedCategory != null && selectedSubCategory != null,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SuperCartColors.primaryGreen,
@@ -331,23 +354,58 @@ fun GroceryCreationDialog(
     
     // Material3 Date Picker
     if (showDatePicker) {
+        // Always use a safe, valid date for the picker to prevent crashes
+        val safeInitialDate = try {
+            // Validate the selected date and convert safely
+            selectedDate?.let { date ->
+                if (date.year in 1900..2100) { // Reasonable year range
+                    date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                } else {
+                    null
+                }
+            } ?: java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        } catch (e: Exception) {
+            // Always fallback to current date if anything goes wrong
+            java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        }
+        
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate?.atStartOfDay(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+            initialSelectedDateMillis = safeInitialDate
         )
         
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 Button(
-                    onClick = {
-                        val millis = datePickerState.selectedDateMillis
-                        if (millis != null) {
-                            selectedDate = java.time.Instant.ofEpochMilli(millis)
-                                .atZone(java.time.ZoneId.systemDefault())
-                                .toLocalDate()
-                        }
-                        showDatePicker = false
-                    },
+                                         onClick = {
+                         val millis = datePickerState.selectedDateMillis
+                         android.util.Log.d("GroceryCreationDialog", "Date picker confirm clicked. Millis: $millis")
+                         
+                         if (millis != null) {
+                             try {
+                                 val newDate = java.time.Instant.ofEpochMilli(millis)
+                                     .atZone(java.time.ZoneId.systemDefault())
+                                     .toLocalDate()
+                                 
+                                 android.util.Log.d("GroceryCreationDialog", "Converted date: $newDate, Year: ${newDate.year}")
+                                 
+                                 // Validate the new date before setting it
+                                 if (newDate.year in 1900..2100) {
+                                     selectedDate = newDate
+                                     android.util.Log.d("GroceryCreationDialog", "Date set successfully: $selectedDate")
+                                 } else {
+                                     android.util.Log.d("GroceryCreationDialog", "Date rejected - year out of range: ${newDate.year}")
+                                     selectedDate = null
+                                 }
+                             } catch (e: Exception) {
+                                 android.util.Log.e("GroceryCreationDialog", "Error converting date: ${e.message}", e)
+                                 selectedDate = null
+                             }
+                         } else {
+                             android.util.Log.d("GroceryCreationDialog", "No millis selected from date picker")
+                         }
+                         showDatePicker = false
+                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SuperCartColors.primaryGreen,
                         contentColor = SuperCartColors.white
