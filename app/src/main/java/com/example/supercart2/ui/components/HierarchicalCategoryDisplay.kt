@@ -36,21 +36,53 @@ fun HierarchicalCategoryDisplay(
     
     // Initialize expansion state for all categories and sub-categories
     LaunchedEffect(categories, searchQuery, isAllExpanded) {
-        categories.forEach { categoryWithSubs ->
-            // If searching, always expand categories with matches
-            if (searchQuery.isNotBlank()) {
-                categoryExpansion[categoryWithSubs.category.uuid] = true
-            } else {
-                // Use the global collapse/expand all state
-                categoryExpansion[categoryWithSubs.category.uuid] = isAllExpanded
-            }
-            
-            categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
-                // If searching, always expand sub-categories with matches
+        // Always reset expansion states when search query changes or collapse/expand all is triggered
+        val shouldResetExpansion = searchQuery.isNotBlank() || 
+            (searchQuery.isBlank() && (categoryExpansion.isEmpty() || subCategoryExpansion.isEmpty()))
+        
+        if (shouldResetExpansion) {
+            categories.forEach { categoryWithSubs ->
+                // If searching, always expand categories with matches
                 if (searchQuery.isNotBlank()) {
-                    subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = true
+                    categoryExpansion[categoryWithSubs.category.uuid] = true
                 } else {
                     // Use the global collapse/expand all state
+                    categoryExpansion[categoryWithSubs.category.uuid] = isAllExpanded
+                }
+                
+                categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                    // If searching, always expand sub-categories with matches
+                    if (searchQuery.isNotBlank()) {
+                        subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = true
+                    } else {
+                        // Use the global collapse/expand all state
+                        subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = isAllExpanded
+                    }
+                }
+            }
+        } else {
+            // Preserve existing expansion states, only add new ones for new categories/sub-categories
+            categories.forEach { categoryWithSubs ->
+                if (!categoryExpansion.containsKey(categoryWithSubs.category.uuid)) {
+                    categoryExpansion[categoryWithSubs.category.uuid] = isAllExpanded
+                }
+                
+                categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                    if (!subCategoryExpansion.containsKey(subCategoryWithGroceries.subCategory.uuid)) {
+                        subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = isAllExpanded
+                    }
+                }
+            }
+        }
+    }
+    
+    // Separate LaunchedEffect to handle collapse/expand all changes
+    LaunchedEffect(isAllExpanded) {
+        if (searchQuery.isBlank()) { // Only apply when not searching
+            categories.forEach { categoryWithSubs ->
+                categoryExpansion[categoryWithSubs.category.uuid] = isAllExpanded
+                
+                categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
                     subCategoryExpansion[subCategoryWithGroceries.subCategory.uuid] = isAllExpanded
                 }
             }
