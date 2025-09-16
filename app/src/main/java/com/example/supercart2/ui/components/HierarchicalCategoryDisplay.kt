@@ -55,10 +55,12 @@ private fun CategorySection(
     onEditGrocery: (Grocery) -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(isAllExpanded) }
+    var subCategoriesExpanded by remember { mutableStateOf(isAllExpanded) }
     
     // Update expansion state when isAllExpanded changes
     LaunchedEffect(isAllExpanded) {
         isExpanded = isAllExpanded
+        subCategoriesExpanded = isAllExpanded
     }
     
     Card(
@@ -113,7 +115,8 @@ private fun CategorySection(
                 categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
                     SubCategorySection(
                         subCategoryWithGroceries = subCategoryWithGroceries,
-                        onEditGrocery = onEditGrocery
+                        onEditGrocery = onEditGrocery,
+                        isAllExpanded = subCategoriesExpanded
                     )
                 }
             }
@@ -124,9 +127,15 @@ private fun CategorySection(
 @Composable
 private fun SubCategorySection(
     subCategoryWithGroceries: SubCategoryWithGroceries,
-    onEditGrocery: (Grocery) -> Unit
+    onEditGrocery: (Grocery) -> Unit,
+    isAllExpanded: Boolean
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(isAllExpanded) }
+    
+    // Update expansion state when isAllExpanded changes
+    LaunchedEffect(isAllExpanded) {
+        isExpanded = isAllExpanded
+    }
     
     Column {
         // Sub-category header
