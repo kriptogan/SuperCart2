@@ -32,6 +32,7 @@ data class Grocery(
     val date: LocalDate? = null,
     val inShoppingList: Boolean = false,
     val isBought: Boolean = false
+    val imageId: Int? = null 
 )
 ```
 
