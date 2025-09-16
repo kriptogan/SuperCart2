@@ -66,9 +66,13 @@ fun HomeScreen() {
     var isEditMode by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
+    // Observe data version to trigger recomposition
+    val dataVersion = DataManagerObject.version
+    
     // Get filtered and expanded data based on search query
     val filteredData = derivedStateOf {
-        dataRefreshTrigger // This ensures recomposition when data changes
+        // Use version to trigger recomposition
+        android.util.Log.d("datastore test", "Computing filtered data, version: $dataVersion")
         if (searchQuery.isBlank()) {
             // No search query - return all data as is
             DataManagerObject.getSortedCategories()
@@ -374,8 +378,9 @@ fun HomeScreen() {
                                         }
                                     )
                                     
-                                    DataManagerObject.categories[categoryIndex] = updatedCategory
-                                    Log.d("HomeScreen", "Grocery updated in place: ${newGrocery.name} at position $groceryIndex")
+                                DataManagerObject.categories[categoryIndex] = updatedCategory
+                                DataManagerObject.updateData()
+                                Log.d("HomeScreen", "Grocery updated in place: ${newGrocery.name} at position $groceryIndex")
                                 }
                             }
                         }
@@ -415,6 +420,7 @@ fun HomeScreen() {
                             )
                             
                             DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
+                            DataManagerObject.updateData()
                             
                             // Save the updated data to local storage
                             scope.launch {
