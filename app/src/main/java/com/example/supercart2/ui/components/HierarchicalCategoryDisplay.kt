@@ -309,6 +309,7 @@ private fun GroceryItem(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
+
                     // Remove from cart option
                     DropdownMenuItem(
                         text = { Text("Remove from shopping list") },
@@ -357,6 +358,39 @@ private fun GroceryItem(
                         }
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Check mark icon for bought status
+            IconButton(
+                onClick = {
+                    val newGrocery = currentGrocery.copy(
+                        isBought = !currentGrocery.isBought
+                    )
+
+                    // Find and update the grocery in the data manager
+                    DataManagerObject.categories.forEach { category ->
+                        category.subCategories.forEach { subCategory ->
+                            val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
+                            if (index != -1) {
+                                subCategory.groceries[index] = newGrocery
+                                android.util.Log.d("datastore test",
+                                    "Toggled bought status for ${currentGrocery.name} to ${newGrocery.isBought}")
+                                DataManagerObject.updateData()
+                                return@forEach
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = if (currentGrocery.isBought) "Mark as not bought" else "Mark as bought",
+                    tint = if (currentGrocery.isBought) SuperCartColors.primaryGreen else Color.Gray,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         } else {
             // Action icons for home screen (edit and cart)
