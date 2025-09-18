@@ -23,8 +23,8 @@ _________________________________________________________________________
 6. Add an option to view image.
 7. In home page, create options icon like in shopping list and set the options: edit, view image.
 8. Add an option to view buyEvents.
-9. add option to remove 
-10. open/collapse all row
+V 9. add option to remove 
+V 10. open/collapse all row
 _________________________________________________________________________
 
 1. Impliment the buyEvents calculation analitics.

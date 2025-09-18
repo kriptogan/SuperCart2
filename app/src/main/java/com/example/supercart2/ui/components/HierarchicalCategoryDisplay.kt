@@ -2,6 +2,7 @@ package com.example.supercart2.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -108,6 +109,7 @@ private fun CategorySection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded }
                     .padding(12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -127,16 +129,12 @@ private fun CategorySection(
                 }
                 
                 // Expand/collapse icon
-                IconButton(
-                    onClick = { isExpanded = !isExpanded },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
-                        tint = SuperCartColors.darkGray
-                    )
-                }
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = SuperCartColors.darkGray,
+                    modifier = Modifier.size(24.dp)
+                )
             }
             
             // Sub-categories (when expanded)
@@ -174,6 +172,7 @@ private fun SubCategorySection(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(SuperCartColors.lightGray.copy(alpha = 0.2f))
+                .clickable { isExpanded = !isExpanded }
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -196,16 +195,12 @@ private fun SubCategorySection(
             }
             
             // Expand/collapse icon
-            IconButton(
-                onClick = { isExpanded = !isExpanded },
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = SuperCartColors.darkGray
-                )
-            }
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                tint = SuperCartColors.darkGray,
+                modifier = Modifier.size(24.dp)
+            )
         }
         
         // Expanded Content
