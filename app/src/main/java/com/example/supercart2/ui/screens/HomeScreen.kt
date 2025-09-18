@@ -261,8 +261,8 @@ fun HomeScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    top = 160.dp, // Height of the top bar
-                    bottom = 80.dp, // Height of the bottom navigation bar
+                    top = 180.dp, // Height of the top bar + extra gap
+                    bottom = 100.dp, // Height of the bottom navigation bar + extra gap
                     start = SuperCartSpacing.md,
                     end = SuperCartSpacing.md
                 )
