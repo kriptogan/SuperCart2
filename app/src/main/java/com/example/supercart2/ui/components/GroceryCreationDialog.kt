@@ -310,8 +310,20 @@ fun GroceryCreationDialog(
                                      subCategoryId = selectedSubCategory!!.uuid,
                                      date = selectedDate
                                  )
+                                 
+                                 // If category or sub-category changed, use updateGroceryLocation
+                                 if (groceryToEdit.categoryId != selectedCategory!!.uuid || 
+                                     groceryToEdit.subCategoryId != selectedSubCategory!!.uuid) {
+                                     DataManagerObject.updateGroceryLocation(
+                                         groceryToEdit.uuid,
+                                         selectedCategory!!.uuid,
+                                         selectedSubCategory!!.uuid
+                                     )
+                                 }
+                                 
+                                 // Update other properties
+                                 DataManagerObject.updateGrocery(groceryToEdit.uuid) { updatedGrocery }
                                  android.util.Log.d("GroceryCreationDialog", "Updated grocery date: ${updatedGrocery.date}")
-                                 onGroceryCreated(updatedGrocery)
                              } else {
                                  // Create mode - create new grocery
                                  val newGrocery = Grocery(
@@ -320,8 +332,10 @@ fun GroceryCreationDialog(
                                      subCategoryId = selectedSubCategory!!.uuid,
                                      date = selectedDate
                                  )
+                                 
+                                 // Add the new grocery using DataManagerObject helper
+                                 DataManagerObject.addGrocery(newGrocery)
                                  android.util.Log.d("GroceryCreationDialog", "New grocery date: ${newGrocery.date}")
-                                 onGroceryCreated(newGrocery)
                              }
                              onDismiss()
                          }

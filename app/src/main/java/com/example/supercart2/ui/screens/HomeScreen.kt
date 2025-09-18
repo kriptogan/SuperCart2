@@ -418,29 +418,13 @@ fun HomeScreen() {
                         }
                         
                         if (subCategoryIndex != -1) {
-                            // Add the grocery to the sub-category
-                            val updatedSubCategoryWithGroceries = categoryWithSubs.subCategories[subCategoryIndex].copy(
-                                groceries = categoryWithSubs.subCategories[subCategoryIndex].groceries.toMutableList().apply {
-                                    add(newGrocery)
-                                }
-                            )
-                            
-                            val updatedCategoryWithSubs = categoryWithSubs.copy(
-                                subCategories = categoryWithSubs.subCategories.toMutableList().apply {
-                                    set(subCategoryIndex, updatedSubCategoryWithGroceries)
-                                }
-                            )
-                            
-                            DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
-                            DataManagerObject.updateData()
+                            // Add the grocery using DataManagerObject helper
+                            DataManagerObject.addGrocery(newGrocery)
                             
                             // Save the updated data to local storage
                             scope.launch {
                                 DataStoreManager.saveDataGlobally()
                             }
-                            
-                            // Trigger UI refresh
-                            dataRefreshTrigger++
                             
                             Log.d("HomeScreen", "New grocery added: ${newGrocery.name}")
                         }

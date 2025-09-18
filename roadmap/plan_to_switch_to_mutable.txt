@@ -1,0 +1,42 @@
+1. Current Pattern Analysis
+We have DataManagerObject with:
+This is already designed to be our single source of truth with built-in Compose state management.
+2. File-by-File Refactoring Plan
+A. HierarchicalCategoryDisplay.kt
+Replace all .copy() operations with direct list updates:
+Cart icon toggle:
+Shopping list removal
+Bought status toggle
+Mark as not bought
+B. ShoppingListScreen.kt
+Replace list manipulation copies with direct operations:
+Moving items:
+C. SubCategorySelectionDialog.kt
+Simplify category/subcategory management:
+3. Implementation Steps
+For each file:
+Identify all .copy() operations
+Verify the object is already in DataManagerObject
+Replace with direct list operations
+Ensure updateData() is called after changes
+Key Points to Remember:
+Objects in categories are already observable
+Use existing mutable lists for changes
+Call updateData() to trigger recomposition
+Keep data class properties as val (immutable)
+4. Testing Strategy
+Verify each refactored operation:
+Data updates correctly
+UI recomposes properly
+State remains consistent
+Test Scenarios:
+Adding/removing from shopping list
+Moving items between categories
+Toggling item states
+List modifications
+5. Success Metrics
+All .copy() operations replaced with direct DataManagerObject operations
+UI updates working correctly
+No unnecessary object creation
+Simplified, more maintainable code
+Consistent use of single source of truth

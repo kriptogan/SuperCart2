@@ -310,28 +310,16 @@ private fun GroceryItem(
             // Remove icon
             IconButton(
                 onClick = {
-                    val newGrocery = currentGrocery.copy(
-                        isBought = false
-                    )
-
-                    // Find and update the grocery in the data manager
-                    DataManagerObject.categories.forEach { category ->
-                        category.subCategories.forEach { subCategory ->
-                            val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
-                            if (index != -1) {
-                                subCategory.groceries[index] = newGrocery
-                                android.util.Log.d("datastore test",
-                                    "Marked ${currentGrocery.name} as not bought")
-                                DataManagerObject.updateData()
-                                
-                                // Save to DataStore
-                                scope.launch {
-                                    DataStoreManager.saveDataGlobally()
-                                    android.util.Log.d("datastore test", "Saved bought status to DataStore")
-                                }
-                                return@forEach
-                            }
-                        }
+                    DataManagerObject.updateGrocery(currentGrocery.uuid) { 
+                        it.copy(isBought = false)
+                    }
+                    android.util.Log.d("datastore test",
+                        "Marked ${currentGrocery.name} as not bought")
+                    
+                    // Save to DataStore
+                    scope.launch {
+                        DataStoreManager.saveDataGlobally()
+                        android.util.Log.d("datastore test", "Saved bought status to DataStore")
                     }
                 },
                 modifier = Modifier.size(24.dp)
@@ -377,24 +365,12 @@ private fun GroceryItem(
                         DropdownMenuItem(
                             text = { Text("Remove from shopping list") },
                             onClick = {
-                                val newGrocery = currentGrocery.copy(
-                                    inShoppingList = false
-                                )
-
-                                // Find and update the grocery in the data manager
-                                DataManagerObject.categories.forEach { category ->
-                                    category.subCategories.forEach { subCategory ->
-                                        val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
-                                        if (index != -1) {
-                                            subCategory.groceries[index] = newGrocery
-                                            android.util.Log.d("datastore test",
-                                                "Removed ${currentGrocery.name} from shopping list")
-                                            DataManagerObject.updateData()
-                                            expanded = false
-                                            return@forEach
-                                        }
-                                    }
+                                DataManagerObject.updateGrocery(currentGrocery.uuid) { 
+                                    it.copy(inShoppingList = false)
                                 }
+                                android.util.Log.d("datastore test",
+                                    "Removed ${currentGrocery.name} from shopping list")
+                                expanded = false
                             },
                             leadingIcon = {
                                 Icon(
@@ -428,29 +404,12 @@ private fun GroceryItem(
                 // Check mark icon for bought status
                 IconButton(
                     onClick = {
-                        val newGrocery = currentGrocery.copy(
-                            isBought = !currentGrocery.isBought
-                        )
-
-                        // Find and update the grocery in the data manager
-                        DataManagerObject.categories.forEach { category ->
-                            category.subCategories.forEach { subCategory ->
-                                val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
-                                if (index != -1) {
-                                    subCategory.groceries[index] = newGrocery
-                                    android.util.Log.d("datastore test",
-                                        "Toggled bought status for ${currentGrocery.name} to ${newGrocery.isBought}")
-                                    DataManagerObject.updateData()
-                                    
-                                    // Save to DataStore
-                                    scope.launch {
-                                        DataStoreManager.saveDataGlobally()
-                                        android.util.Log.d("datastore test", "Saved bought status to DataStore")
-                                    }
-                                    
-                                    return@forEach
-                                }
-                            }
+                        DataManagerObject.toggleBoughtStatus(currentGrocery.uuid)
+                        
+                        // Save to DataStore
+                        scope.launch {
+                            DataStoreManager.saveDataGlobally()
+                            android.util.Log.d("datastore test", "Saved bought status to DataStore")
                         }
                     },
                     modifier = Modifier.size(24.dp)
@@ -485,23 +444,7 @@ private fun GroceryItem(
                     IconButton(
                         onClick = {
                             // Toggle the shopping list status
-                            val newGrocery = currentGrocery.copy(
-                                inShoppingList = !currentGrocery.inShoppingList
-                            )
-                            
-                            // Find and update the grocery in the data manager
-                            DataManagerObject.categories.forEach { category ->
-                                category.subCategories.forEach { subCategory ->
-                                    val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
-                                    if (index != -1) {
-                                        subCategory.groceries[index] = newGrocery
-                                        android.util.Log.d("datastore test", 
-                                            "Toggled shopping list status for ${currentGrocery.name} to ${newGrocery.inShoppingList}")
-                                        DataManagerObject.updateData()
-                                        return@IconButton
-                                    }
-                                }
-                            }
+                            DataManagerObject.toggleShoppingListStatus(currentGrocery.uuid)
                         },
                         modifier = Modifier.size(24.dp)
                     ) {

@@ -59,17 +59,16 @@ fun CategoriesManagementDialog(
         CreateCategoryDialog(
             onDismiss = { showCreateDialog = false },
             onCategoryCreated = { newCategory, generalSubCategory ->
-                // Add the new category with its "General" sub-category to DataManagerObject
-                val generalSubCategoryWithGroceries = SubCategoryWithGroceries(
-                    subCategory = generalSubCategory,
-                    groceries = mutableListOf()
-                )
-                
-                val newCategoryWithSubs = CategoryWithSubCategories(
+                // Add the new category with its "General" sub-category
+                DataManagerObject.addCategory(
                     category = newCategory,
-                    subCategories = mutableListOf(generalSubCategoryWithGroceries)
+                    subCategories = listOf(
+                        SubCategoryWithGroceries(
+                            subCategory = generalSubCategory,
+                            groceries = mutableListOf()
+                        )
+                    )
                 )
-                DataManagerObject.categories.add(newCategoryWithSubs)
                 
                 // Save the updated data to local storage immediately
                 scope.launch {
@@ -85,20 +84,12 @@ fun CategoriesManagementDialog(
             subCategories = DataManagerObject.categories.find { it.category.uuid == editingCategory!!.uuid }?.subCategories ?: emptyList(),
             onDismiss = { editingCategory = null },
             onCategoryUpdated = { updatedCategory ->
-                // Find and update the category in DataManagerObject
-                val index = DataManagerObject.categories.indexOfFirst { 
-                    it.category.uuid == updatedCategory.uuid 
-                }
-                if (index != -1) {
-                    val updatedCategoryWithSubs = DataManagerObject.categories[index].copy(
-                        category = updatedCategory
-                    )
-                    DataManagerObject.categories[index] = updatedCategoryWithSubs
-                    
-                    // Save the updated data to local storage immediately
-                    scope.launch {
-                        DataStoreManager.saveDataGlobally()
-                    }
+                // Update the category using DataManagerObject helper
+                DataManagerObject.updateCategory(updatedCategory.uuid) { updatedCategory }
+                
+                // Save the updated data to local storage immediately
+                scope.launch {
+                    DataStoreManager.saveDataGlobally()
                 }
                 editingCategory = null
             },
@@ -110,38 +101,12 @@ fun CategoriesManagementDialog(
                     return@EditCategoryDialog
                 }
                 
-                // Find and delete the category from DataManagerObject
-                val index = DataManagerObject.categories.indexOfFirst { 
-                    it.category.uuid == categoryToDelete.uuid 
-                }
-                if (index != -1) {
-                    val deletedViewOrder = categoryToDelete.viewOrder
-                    
-                    // Remove the category and all its linked items
-                    DataManagerObject.categories.removeAt(index)
-                    
-                    // Update view orders for all categories with higher viewOrder
-                    DataManagerObject.categories.forEach { categoryWithSubs ->
-                        if (categoryWithSubs.category.viewOrder > deletedViewOrder) {
-                            val updatedCategory = categoryWithSubs.category.copy(
-                                viewOrder = categoryWithSubs.category.viewOrder - 1
-                            )
-                            val updatedCategoryWithSubs = categoryWithSubs.copy(
-                                category = updatedCategory
-                            )
-                            val categoryIndex = DataManagerObject.categories.indexOfFirst { 
-                                it.category.uuid == categoryWithSubs.category.uuid 
-                            }
-                            if (categoryIndex != -1) {
-                                DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
-                            }
-                        }
-                    }
-                    
-                    // Save the updated data to local storage immediately
-                    scope.launch {
-                        DataStoreManager.saveDataGlobally()
-                    }
+                // Delete the category using DataManagerObject helper
+                DataManagerObject.deleteCategory(categoryToDelete.uuid)
+                
+                // Save the updated data to local storage immediately
+                scope.launch {
+                    DataStoreManager.saveDataGlobally()
                 }
                 editingCategory = null
             },
@@ -277,16 +242,11 @@ fun CategoriesManagementDialog(
                                     val prevIndex = DataManagerObject.categories.indexOfFirst { it.category.uuid == prevCategory.category.uuid }
                                     
                                     if (currentIndex != -1 && prevIndex != -1) {
-                                        // Update view orders
-                                        val updatedCurrent = categoryWithSubs.copy(
-                                            category = categoryWithSubs.category.copy(viewOrder = prevViewOrder)
-                                        )
-                                        val updatedPrev = prevCategory.copy(
-                                            category = prevCategory.category.copy(viewOrder = currentViewOrder)
-                                        )
-                                        
-                                        DataManagerObject.categories[currentIndex] = updatedCurrent
-                                        DataManagerObject.categories[prevIndex] = updatedPrev
+                                    // Swap categories using DataManagerObject helper
+                                    DataManagerObject.swapCategoryOrder(
+                                        categoryWithSubs.category.uuid,
+                                        prevCategory.category.uuid
+                                    )
                                         
                                         // Save changes
                                         scope.launch {
@@ -307,16 +267,11 @@ fun CategoriesManagementDialog(
                                     val nextIndex = DataManagerObject.categories.indexOfFirst { it.category.uuid == nextCategory.category.uuid }
                                     
                                     if (currentIndex != -1 && nextIndex != -1) {
-                                        // Update view orders
-                                        val updatedCurrent = categoryWithSubs.copy(
-                                            category = categoryWithSubs.category.copy(viewOrder = nextViewOrder)
-                                        )
-                                        val updatedNext = nextCategory.copy(
-                                            category = nextCategory.category.copy(viewOrder = currentViewOrder)
-                                        )
-                                        
-                                        DataManagerObject.categories[currentIndex] = updatedCurrent
-                                        DataManagerObject.categories[nextIndex] = updatedNext
+                                    // Swap categories using DataManagerObject helper
+                                    DataManagerObject.swapCategoryOrder(
+                                        categoryWithSubs.category.uuid,
+                                        nextCategory.category.uuid
+                                    )
                                         
                                         // Save changes
                                         scope.launch {

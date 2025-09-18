@@ -128,33 +128,19 @@ fun SubCategorySelectionDialog(
                     protected = false
                 )
                 
-                // Add the new sub-category to DataManagerObject
-                val categoryIndex = DataManagerObject.categories.indexOfFirst { it.category.uuid == selectedCategory.uuid }
-                if (categoryIndex != -1) {
-                    val categoryWithSubs = DataManagerObject.categories[categoryIndex]
-                    val newSubCategoryWithGroceries = SubCategoryWithGroceries(
-                        subCategory = newSubCategory,
-                        groceries = mutableListOf()
-                    )
-                    
-                    val updatedCategoryWithSubs = categoryWithSubs.copy(
-                        subCategories = categoryWithSubs.subCategories.toMutableList().apply { 
-                            add(newSubCategoryWithGroceries) 
-                        }
-                    )
-                    DataManagerObject.categories[categoryIndex] = updatedCategoryWithSubs
-                    
-                    // Save the updated data to local storage immediately
-                    scope.launch {
-                        DataStoreManager.saveDataGlobally()
-                    }
-                    
-                    // Call the callback with the new sub-category
-                    onNewSubCategoryCreated(newSubCategory)
-                    
-                    // Close create dialog
-                    showCreateSubCategory = false
+                // Add the new sub-category using DataManagerObject helper
+                DataManagerObject.addSubCategory(selectedCategory.uuid, newSubCategory)
+                
+                // Save the updated data to local storage immediately
+                scope.launch {
+                    DataStoreManager.saveDataGlobally()
                 }
+                
+                // Call the callback with the new sub-category
+                onNewSubCategoryCreated(newSubCategory)
+                
+                // Close create dialog
+                showCreateSubCategory = false
             }
         )
     }

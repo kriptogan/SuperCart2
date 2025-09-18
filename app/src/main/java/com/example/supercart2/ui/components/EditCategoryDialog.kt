@@ -39,6 +39,8 @@ import com.example.supercart2.ui.theme.SuperCartShapes
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.data.SubCategoryWithGroceries
+import com.example.supercart2.data.DataManagerObject
+import com.example.supercart2.data.DataStoreManager
 
 @Composable
 fun EditCategoryDialog(
@@ -65,7 +67,8 @@ fun EditCategoryDialog(
                     name = subCategoryName.trim(),
                     protected = false
                 )
-                onSubCategoryCreated(newSubCategory)
+                // Add the new sub-category using DataManagerObject helper
+                DataManagerObject.addSubCategory(category.uuid, newSubCategory)
                 showCreateSubCategoryDialog = false
             }
         )
@@ -76,7 +79,8 @@ fun EditCategoryDialog(
             subCategory = editingSubCategory!!,
             onDismiss = { editingSubCategory = null },
             onSubCategoryUpdated = { updatedSubCategory ->
-                onSubCategoryUpdated(updatedSubCategory)
+                // Update the sub-category using DataManagerObject helper
+                DataManagerObject.updateSubCategory(category.uuid, updatedSubCategory.uuid) { updatedSubCategory }
                 editingSubCategory = null
             }
         )
@@ -242,7 +246,11 @@ fun EditCategoryDialog(
                             subCategory = subCategoryWithGroceries.subCategory,
                             groceriesCount = subCategoryWithGroceries.groceries.size,
                             onEditClick = { editingSubCategory = subCategoryWithGroceries.subCategory },
-                            onDeleteClick = { onSubCategoryDeleted(subCategoryWithGroceries.subCategory) }
+                            onDeleteClick = {
+                                if (!subCategoryWithGroceries.subCategory.protected) {
+                                    DataManagerObject.deleteSubCategory(category.uuid, subCategoryWithGroceries.subCategory.uuid)
+                                }
+                            }
                         )
                     }
                 }
@@ -272,10 +280,9 @@ fun EditCategoryDialog(
                 Button(
                     onClick = {
                         if (categoryName.isNotBlank()) {
-                            val updatedCategory = category.copy(
-                                name = categoryName.trim()
-                            )
-                            onCategoryUpdated(updatedCategory)
+                            DataManagerObject.updateCategory(category.uuid) { 
+                                it.copy(name = categoryName.trim())
+                            }
                             onDismiss()
                         }
                     },

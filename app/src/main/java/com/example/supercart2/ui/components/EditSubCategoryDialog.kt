@@ -24,12 +24,15 @@ import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
 import com.example.supercart2.models.SubCategory
+import com.example.supercart2.data.DataManagerObject
+import com.example.supercart2.data.DataStoreManager
 
 @Composable
 fun EditSubCategoryDialog(
     subCategory: SubCategory,
     onDismiss: () -> Unit,
-    onSubCategoryUpdated: (SubCategory) -> Unit
+    onSubCategoryUpdated: (SubCategory) -> Unit,
+    categoryId: String = subCategory.categoryId
 ) {
     var subCategoryName by remember { mutableStateOf(subCategory.name) }
     
@@ -83,10 +86,12 @@ fun EditSubCategoryDialog(
                 Button(
                     onClick = {
                         if (subCategoryName.isNotBlank()) {
-                            val updatedSubCategory = subCategory.copy(
-                                name = subCategoryName.trim()
-                            )
-                            onSubCategoryUpdated(updatedSubCategory)
+                            DataManagerObject.updateSubCategory(
+                                categoryId,
+                                subCategory.uuid
+                            ) { 
+                                it.copy(name = subCategoryName.trim())
+                            }
                             onDismiss()
                         }
                     },
