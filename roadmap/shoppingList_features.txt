@@ -1,0 +1,72 @@
+Shopping List Features Implementation Summary
+
+1. Navigation & Layout
+   - Bottom navigation bar with "Home" and "Shopping List" screens
+   - Fixed top bar with:
+     * Burger menu (categories management)
+     * Current date display (yyyy-MM-dd)
+     * Add new grocery button
+     * Search bar with clear functionality
+     * Expand/collapse all toggle
+
+2. Shopping List Organization
+   - Two main sections:
+     a) "Things to Buy" section:
+        * Hierarchical view with categories and sub-categories
+        * Expandable/collapsible sections
+        * Shows items where inShoppingList = true and isBought = false
+        * Each item shows:
+          - Item name
+          - Options menu (⋮):
+            * Remove from shopping list
+            * Edit item
+          - Checkmark icon to mark as bought
+     
+     b) "Already Bought" section:
+        * Flat list view (no categories/sub-categories)
+        * Shows items where inShoppingList = true and isBought = true
+        * Each item shows:
+          - Item name
+          - Category name below in gray
+          - Red X icon to mark as not bought
+        * Light green background for bought items
+
+3. Finish Shopping Button
+   - Appears only when there are bought items
+   - Shows total count of bought items
+   - Green button with checkmark icon
+   - Extra padding to avoid navigation bar overlap
+   - Placeholder for future implementation
+
+4. Search Functionality
+   - Real-time filtering across both sections
+   - Searches item names
+   - Clear button (×) appears when search has content
+   - Auto-expands sections with matches during search
+
+5. State Management
+   - All state managed in GroceryRepository/DataManagerObject
+   - Persistent storage using DataStore
+   - Live updates using version counter pattern
+   - Proper state restoration after app restarts
+
+6. Home Screen Integration
+   - Shows all items regardless of bought status
+   - Always displays edit and cart icons
+   - Cart icon color indicates shopping list status:
+     * Green: in shopping list
+     * Black: not in shopping list
+   - Edit functionality available for all items
+
+7. Data Persistence
+   - All actions (add/remove/toggle bought status) save to DataStore
+   - Data loads from DataStore on app start
+   - Logging for debugging with "datastore test" tag
+
+8. UI/UX Considerations
+   - Consistent spacing and padding
+   - Clear visual hierarchy
+   - Intuitive icons and actions
+   - Responsive layout adapting to content
+   - Visual feedback for item states
+   - Proper spacing around navigation elements

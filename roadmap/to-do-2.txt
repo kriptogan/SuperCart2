@@ -10,4 +10,21 @@ _________________________________________________________________________
 
 V 1. Better icon in home page.
 V 2. Exipration date not required field.
-3. Edit groceries.
+V 3. Edit groceries.
+
+_________________________________________________________________________
+
+1. Turning cart icon off should set isBought to false.
+2. Change date property of groceries to experationDate.
+3. Add buyEvents property of groceries as an array of dates.
+3. Confirm isBought items should add a new date (now()) to the buyEvents list of each item.
+4. Add image property.
+5. Enable the option to upload image from galery or camera in the edit grocery screen.
+6. Add an option to view image.
+7. In home page, create options icon like in shopping list and set the options: edit, view image.
+8. Add an option to view buyEvents.
+_________________________________________________________________________
+
+1. Impliment the buyEvents calculation analitics.
+2. Add option to filter by experation date and buyEvents estimation.
+* we need to add an estimatedBuyDate property.
