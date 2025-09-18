@@ -7,11 +7,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -295,7 +303,8 @@ fun ShoppingListScreen() {
                             searchQuery = searchQuery,
                             isAllExpanded = isAllExpanded,
                             onEditGrocery = { onEditGrocery(it) },
-                            useScroll = false
+                            useScroll = false,
+                            isShoppingList = true
                         )
                     } else {
                         Card(
@@ -335,7 +344,8 @@ fun ShoppingListScreen() {
                             searchQuery = searchQuery,
                             isAllExpanded = isAllExpanded,
                             onEditGrocery = { onEditGrocery(it) },
-                            useScroll = false
+                            useScroll = false,
+                            isShoppingList = true
                         )
                     } else {
                         Card(
@@ -355,9 +365,117 @@ fun ShoppingListScreen() {
                     }
                 }
         }
-    }
+}
+
+@Composable
+fun ShoppingListGroceryItem(
+    grocery: Grocery,
+    onEdit: () -> Unit
+) {
+    // Observe version to trigger recomposition
+    val version = DataManagerObject.version
     
-    // Categories Management Dialog
+    // Get current grocery state to ensure we have latest data
+    val currentGrocery = remember(grocery.uuid, version) {
+        android.util.Log.d("datastore test", "Recomputing grocery state for ${grocery.name}, version: $version")
+        DataManagerObject.categories
+            .asSequence()
+            .flatMap { it.subCategories }
+            .flatMap { it.groceries }
+            .find { it.uuid == grocery.uuid } ?: grocery
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Color.White,
+                shape = RoundedCornerShape(6.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Grocery name (takes most space)
+        Text(
+            text = currentGrocery.name,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        
+        // Options menu
+        Box {
+            var expanded by remember { mutableStateOf(false) }
+
+            IconButton(
+                onClick = { expanded = true },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More options",
+                    tint = SuperCartColors.primaryGreen,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                // Remove from cart option
+                DropdownMenuItem(
+                    text = { Text("Remove from shopping list") },
+                    onClick = {
+                        val newGrocery = currentGrocery.copy(
+                            inShoppingList = false
+                        )
+
+                        // Find and update the grocery in the data manager
+                        DataManagerObject.categories.forEach { category ->
+                            category.subCategories.forEach { subCategory ->
+                                val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
+                                if (index != -1) {
+                                    subCategory.groceries[index] = newGrocery
+                                    android.util.Log.d("datastore test",
+                                        "Removed ${currentGrocery.name} from shopping list")
+                                    DataManagerObject.updateData()
+                                    expanded = false
+                                    return@forEach
+                                }
+                            }
+                        }
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.ShoppingCart,
+                            contentDescription = null,
+                            tint = SuperCartColors.primaryGreen
+                        )
+                    }
+                )
+
+                // Edit option
+                DropdownMenuItem(
+                    text = { Text("Edit item") },
+                    onClick = {
+                        onEdit()
+                        expanded = false
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = null,
+                            tint = SuperCartColors.primaryGreen
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+// Categories Management Dialog
     if (showCategoriesManagement) {
         CategoriesManagementDialog(
             onDismiss = { showCategoriesManagement = false }

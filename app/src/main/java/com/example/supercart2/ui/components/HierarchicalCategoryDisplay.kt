@@ -37,7 +37,8 @@ fun HierarchicalCategoryDisplay(
     isAllExpanded: Boolean,
     onEditGrocery: (Grocery) -> Unit,
     modifier: Modifier = Modifier,
-    useScroll: Boolean = true
+    useScroll: Boolean = true,
+    isShoppingList: Boolean = false
 ) {
     if (useScroll) {
         LazyColumn(
@@ -48,7 +49,8 @@ fun HierarchicalCategoryDisplay(
                     categoryWithSubs = categoryWithSubs,
                     searchQuery = searchQuery,
                     isAllExpanded = isAllExpanded,
-                    onEditGrocery = onEditGrocery
+                    onEditGrocery = onEditGrocery,
+                    isShoppingList = isShoppingList
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -61,7 +63,8 @@ fun HierarchicalCategoryDisplay(
                     categoryWithSubs = categoryWithSubs,
                     searchQuery = searchQuery,
                     isAllExpanded = isAllExpanded,
-                    onEditGrocery = onEditGrocery
+                    onEditGrocery = onEditGrocery,
+                    isShoppingList = isShoppingList
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -75,7 +78,8 @@ private fun CategorySection(
     categoryWithSubs: CategoryWithSubCategories,
     searchQuery: String,
     isAllExpanded: Boolean,
-    onEditGrocery: (Grocery) -> Unit
+    onEditGrocery: (Grocery) -> Unit,
+    isShoppingList: Boolean = false
 ) {
     var isExpanded by remember { mutableStateOf(isAllExpanded) }
     var subCategoriesExpanded by remember { mutableStateOf(isAllExpanded) }
@@ -139,6 +143,7 @@ private fun CategorySection(
                     SubCategorySection(
                         subCategoryWithGroceries = subCategoryWithGroceries,
                         onEditGrocery = onEditGrocery,
+                    isShoppingList = isShoppingList,
                         isAllExpanded = subCategoriesExpanded
                     )
                 }
@@ -151,7 +156,8 @@ private fun CategorySection(
 private fun SubCategorySection(
     subCategoryWithGroceries: SubCategoryWithGroceries,
     onEditGrocery: (Grocery) -> Unit,
-    isAllExpanded: Boolean
+    isAllExpanded: Boolean,
+    isShoppingList: Boolean
 ) {
     var isExpanded by remember { mutableStateOf(isAllExpanded) }
     
@@ -211,7 +217,8 @@ private fun SubCategorySection(
                         key(grocery.uuid) {
                             GroceryItem(
                                 grocery = grocery,
-                                onEdit = { onEditGrocery(grocery) }
+                                onEdit = { onEditGrocery(grocery) },
+                                isShoppingList = isShoppingList
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                         }
@@ -247,7 +254,8 @@ private fun SubCategorySection(
 @Composable
 private fun GroceryItem(
     grocery: Grocery,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    isShoppingList: Boolean = false
 ) {
     // Observe version to trigger recomposition
     val version = DataManagerObject.version
@@ -280,54 +288,126 @@ private fun GroceryItem(
             modifier = Modifier.weight(1f)
         )
         
-        // Action icons (edit and cart)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Edit icon
-            IconButton(
-                onClick = onEdit,
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit grocery",
-                    tint = SuperCartColors.primaryGreen,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            
-            // Cart icon with dynamic color based on shopping list status
-            IconButton(
-                onClick = {
-                    // Toggle the shopping list status
-                    val newGrocery = currentGrocery.copy(
-                        inShoppingList = !currentGrocery.inShoppingList
+        if (isShoppingList) {
+            // Options menu for shopping list
+            Box {
+                var expanded by remember { mutableStateOf(false) }
+
+                IconButton(
+                    onClick = { expanded = true },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "More options",
+                        tint = SuperCartColors.primaryGreen,
+                        modifier = Modifier.size(20.dp)
                     )
-                    
-                    // Find and update the grocery in the data manager
-                    DataManagerObject.categories.forEach { category ->
-                        category.subCategories.forEach { subCategory ->
-                            val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
-                            if (index != -1) {
-                                subCategory.groceries[index] = newGrocery
-                                android.util.Log.d("datastore test", 
-                                    "Toggled shopping list status for ${currentGrocery.name} to ${newGrocery.inShoppingList}")
-                                DataManagerObject.updateData()
-                                return@IconButton
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    // Remove from cart option
+                    DropdownMenuItem(
+                        text = { Text("Remove from shopping list") },
+                        onClick = {
+                            val newGrocery = currentGrocery.copy(
+                                inShoppingList = false
+                            )
+
+                            // Find and update the grocery in the data manager
+                            DataManagerObject.categories.forEach { category ->
+                                category.subCategories.forEach { subCategory ->
+                                    val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
+                                    if (index != -1) {
+                                        subCategory.groceries[index] = newGrocery
+                                        android.util.Log.d("datastore test",
+                                            "Removed ${currentGrocery.name} from shopping list")
+                                        DataManagerObject.updateData()
+                                        expanded = false
+                                        return@forEach
+                                    }
+                                }
+                            }
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                tint = SuperCartColors.primaryGreen
+                            )
+                        }
+                    )
+
+                    // Edit option
+                    DropdownMenuItem(
+                        text = { Text("Edit item") },
+                        onClick = {
+                            onEdit()
+                            expanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = null,
+                                tint = SuperCartColors.primaryGreen
+                            )
+                        }
+                    )
+                }
+            }
+        } else {
+            // Action icons for home screen (edit and cart)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Edit icon
+                IconButton(
+                    onClick = onEdit,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit grocery",
+                        tint = SuperCartColors.primaryGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                
+                // Cart icon with dynamic color based on shopping list status
+                IconButton(
+                    onClick = {
+                        // Toggle the shopping list status
+                        val newGrocery = currentGrocery.copy(
+                            inShoppingList = !currentGrocery.inShoppingList
+                        )
+                        
+                        // Find and update the grocery in the data manager
+                        DataManagerObject.categories.forEach { category ->
+                            category.subCategories.forEach { subCategory ->
+                                val index = subCategory.groceries.indexOfFirst { it.uuid == currentGrocery.uuid }
+                                if (index != -1) {
+                                    subCategory.groceries[index] = newGrocery
+                                    android.util.Log.d("datastore test", 
+                                        "Toggled shopping list status for ${currentGrocery.name} to ${newGrocery.inShoppingList}")
+                                    DataManagerObject.updateData()
+                                    return@IconButton
+                                }
                             }
                         }
-                    }
-                },
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = if (currentGrocery.inShoppingList) "Remove from shopping list" else "Add to shopping list",
-                    tint = if (currentGrocery.inShoppingList) SuperCartColors.primaryGreen else Color.Black,
-                    modifier = Modifier.size(20.dp)
-                )
+                    },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = if (currentGrocery.inShoppingList) "Remove from shopping list" else "Add to shopping list",
+                        tint = if (currentGrocery.inShoppingList) SuperCartColors.primaryGreen else Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
