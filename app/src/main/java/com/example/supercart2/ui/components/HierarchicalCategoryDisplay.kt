@@ -20,6 +20,7 @@ import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.models.Grocery
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.data.DataManagerObject
+import com.example.supercart2.data.DataStoreManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import kotlinx.coroutines.launch
 
 @Composable
 fun HierarchicalCategoryDisplay(
@@ -259,6 +261,7 @@ private fun GroceryItem(
 ) {
     // Observe version to trigger recomposition
     val version = DataManagerObject.version
+    val scope = rememberCoroutineScope()
     
     // Get current grocery state to ensure we have latest data
     val currentGrocery = remember(grocery.uuid, version) {
@@ -378,6 +381,13 @@ private fun GroceryItem(
                                 android.util.Log.d("datastore test",
                                     "Toggled bought status for ${currentGrocery.name} to ${newGrocery.isBought}")
                                 DataManagerObject.updateData()
+                                
+                                // Save to DataStore
+                                scope.launch {
+                                    DataStoreManager.saveDataGlobally()
+                                    android.util.Log.d("datastore test", "Saved bought status to DataStore")
+                                }
+                                
                                 return@forEach
                             }
                         }
