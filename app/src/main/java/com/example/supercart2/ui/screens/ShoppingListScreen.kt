@@ -449,10 +449,22 @@ fun ShoppingListScreen() {
                         // Update other properties
                         DataManagerObject.updateGrocery(originalGrocery.uuid) { newGrocery }
                         
+                        // Save to DataStore
+                        scope.launch {
+                            DataStoreManager.saveDataGlobally()
+                            android.util.Log.d("ShoppingListScreen", "Saved grocery update to DataStore")
+                        }
+                        
                         android.util.Log.d("ShoppingListScreen", "Grocery updated: ${newGrocery.name}")
                     } else {
                         // Create mode - add new grocery
                         DataManagerObject.addGrocery(newGrocery)
+                        
+                        // Save to DataStore
+                        scope.launch {
+                            DataStoreManager.saveDataGlobally()
+                            android.util.Log.d("ShoppingListScreen", "Saved new grocery to DataStore")
+                        }
                         android.util.Log.d("ShoppingListScreen", "New grocery added: ${newGrocery.name}")
                     }
                     

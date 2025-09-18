@@ -370,6 +370,12 @@ private fun GroceryItem(
                                 }
                                 android.util.Log.d("datastore test",
                                     "Removed ${currentGrocery.name} from shopping list")
+                                
+                                // Save to DataStore
+                                scope.launch {
+                                    DataStoreManager.saveDataGlobally()
+                                    android.util.Log.d("datastore test", "Saved shopping list status to DataStore")
+                                }
                                 expanded = false
                             },
                             leadingIcon = {
@@ -445,6 +451,12 @@ private fun GroceryItem(
                         onClick = {
                             // Toggle the shopping list status
                             DataManagerObject.toggleShoppingListStatus(currentGrocery.uuid)
+                            
+                            // Save to DataStore
+                            scope.launch {
+                                DataStoreManager.saveDataGlobally()
+                                android.util.Log.d("datastore test", "Saved shopping list status to DataStore")
+                            }
                         },
                         modifier = Modifier.size(24.dp)
                     ) {

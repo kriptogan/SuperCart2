@@ -421,9 +421,10 @@ fun HomeScreen() {
                             // Add the grocery using DataManagerObject helper
                             DataManagerObject.addGrocery(newGrocery)
                             
-                            // Save the updated data to local storage
+                            // Save to DataStore
                             scope.launch {
                                 DataStoreManager.saveDataGlobally()
+                                android.util.Log.d("HomeScreen", "Saved new grocery to DataStore")
                             }
                             
                             Log.d("HomeScreen", "New grocery added: ${newGrocery.name}")

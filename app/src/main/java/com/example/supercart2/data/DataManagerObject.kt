@@ -28,14 +28,37 @@ object DataManagerObject {
     
     // Helper function to update a grocery item
     fun updateGrocery(groceryUuid: String, update: (Grocery) -> Grocery) {
-        categories.forEach { category ->
-            category.subCategories.forEach { subCategory ->
+        categories.forEachIndexed { categoryIndex, category ->
+            category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
                 val index = subCategory.groceries.indexOfFirst { it.uuid == groceryUuid }
                 if (index != -1) {
                     val oldGrocery = subCategory.groceries[index]
                     val newGrocery = update(oldGrocery)
-                    subCategory.groceries[index] = newGrocery
+                    
+                    // Create new groceries list with the updated item
+                    val updatedGroceries = subCategory.groceries.toMutableList().apply {
+                        set(index, newGrocery)
+                    }
+                    
+                    // Create new sub-category with updated groceries list
+                    val updatedSubCategory = SubCategoryWithGroceries(
+                        subCategory = subCategory.subCategory,
+                        groceries = updatedGroceries
+                    )
+                    
+                    // Update sub-categories list
+                    val updatedSubCategories = category.subCategories.toMutableList().apply {
+                        set(subCategoryIndex, updatedSubCategory)
+                    }
+                    
+                    // Update category with new sub-categories list
+                    categories[categoryIndex] = CategoryWithSubCategories(
+                        category = category.category,
+                        subCategories = updatedSubCategories
+                    )
+                    
                     updateData()
+                    android.util.Log.d("DataManagerObject", "Updated grocery ${newGrocery.name}")
                     return
                 }
             }
@@ -199,12 +222,34 @@ object DataManagerObject {
 
     // Grocery Management Helpers
     fun addGrocery(grocery: Grocery) {
-        categories.forEach { category ->
+        categories.forEachIndexed { categoryIndex, category ->
             if (category.category.uuid == grocery.categoryId) {
-                category.subCategories.forEach { subCategory ->
+                category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
                     if (subCategory.subCategory.uuid == grocery.subCategoryId) {
-                        subCategory.groceries.add(grocery)
+                        // Create new list with the added grocery
+                        val updatedGroceries = subCategory.groceries.toMutableList().apply {
+                            add(grocery)
+                        }
+                        
+                        // Create new sub-category with updated groceries list
+                        val updatedSubCategory = SubCategoryWithGroceries(
+                            subCategory = subCategory.subCategory,
+                            groceries = updatedGroceries
+                        )
+                        
+                        // Update sub-categories list
+                        val updatedSubCategories = category.subCategories.toMutableList().apply {
+                            set(subCategoryIndex, updatedSubCategory)
+                        }
+                        
+                        // Update category with new sub-categories list
+                        categories[categoryIndex] = CategoryWithSubCategories(
+                            category = category.category,
+                            subCategories = updatedSubCategories
+                        )
+                        
                         updateData()
+                        android.util.Log.d("DataManagerObject", "Added grocery ${grocery.name}")
                         return
                     }
                 }
@@ -217,50 +262,127 @@ object DataManagerObject {
         newCategoryId: String,
         newSubCategoryId: String
     ) {
+        // Find source and target locations
+        var sourceCategoryIndex = -1
+        var sourceSubCategoryIndex = -1
+        var targetCategoryIndex = -1
+        var targetSubCategoryIndex = -1
         var groceryToMove: Grocery? = null
-        var sourceSubCategory: SubCategoryWithGroceries? = null
 
         // Find the grocery and its current location
-        categories.forEach { category ->
-            category.subCategories.forEach { subCategory ->
-                val index = subCategory.groceries.indexOfFirst { it.uuid == groceryUuid }
-                if (index != -1) {
-                    groceryToMove = subCategory.groceries[index]
-                    sourceSubCategory = subCategory
+        categories.forEachIndexed { catIndex, category ->
+            category.subCategories.forEachIndexed { subIndex, subCategory ->
+                // Find source location
+                val groceryIndex = subCategory.groceries.indexOfFirst { it.uuid == groceryUuid }
+                if (groceryIndex != -1) {
+                    sourceCategoryIndex = catIndex
+                    sourceSubCategoryIndex = subIndex
+                    groceryToMove = subCategory.groceries[groceryIndex]
+                }
+                
+                // Find target location
+                if (category.category.uuid == newCategoryId && 
+                    subCategory.subCategory.uuid == newSubCategoryId) {
+                    targetCategoryIndex = catIndex
+                    targetSubCategoryIndex = subIndex
                 }
             }
         }
 
-        if (groceryToMove != null && sourceSubCategory != null) {
-            // Remove from current location
-            sourceSubCategory!!.groceries.removeAll { it.uuid == groceryUuid }
-
-            // Update location and add to new location
-            val updatedGrocery = groceryToMove!!.copy(
-                categoryId = newCategoryId,
-                subCategoryId = newSubCategoryId
+        if (groceryToMove != null && 
+            sourceCategoryIndex != -1 && 
+            sourceSubCategoryIndex != -1 && 
+            targetCategoryIndex != -1 && 
+            targetSubCategoryIndex != -1) {
+            
+            // Update source category
+            val sourceCategory = categories[sourceCategoryIndex]
+            val sourceSubCategory = sourceCategory.subCategories[sourceSubCategoryIndex]
+            
+            // Create new source groceries list without the moved item
+            val updatedSourceGroceries = sourceSubCategory.groceries
+                .filterNot { it.uuid == groceryUuid }
+                .toMutableList()
+            
+            // Create new source sub-category
+            val updatedSourceSubCategory = SubCategoryWithGroceries(
+                subCategory = sourceSubCategory.subCategory,
+                groceries = updatedSourceGroceries
+            )
+            
+            // Create new source sub-categories list
+            val updatedSourceSubCategories = sourceCategory.subCategories.toMutableList().apply {
+                set(sourceSubCategoryIndex, updatedSourceSubCategory)
+            }
+            
+            // Update source category
+            categories[sourceCategoryIndex] = CategoryWithSubCategories(
+                category = sourceCategory.category,
+                subCategories = updatedSourceSubCategories
             )
 
-            // Add to new location
-            categories.forEach { category ->
-                if (category.category.uuid == newCategoryId) {
-                    category.subCategories.forEach { subCategory ->
-                        if (subCategory.subCategory.uuid == newSubCategoryId) {
-                            subCategory.groceries.add(updatedGrocery)
-                        }
-                    }
-                }
+            // Update target category
+            val targetCategory = categories[targetCategoryIndex]
+            val targetSubCategory = targetCategory.subCategories[targetSubCategoryIndex]
+            
+            // Create new target groceries list with the moved item
+            val updatedTargetGroceries = targetSubCategory.groceries.toMutableList().apply {
+                add(groceryToMove!!.copy(
+                    categoryId = newCategoryId,
+                    subCategoryId = newSubCategoryId
+                ))
             }
+            
+            // Create new target sub-category
+            val updatedTargetSubCategory = SubCategoryWithGroceries(
+                subCategory = targetSubCategory.subCategory,
+                groceries = updatedTargetGroceries
+            )
+            
+            // Create new target sub-categories list
+            val updatedTargetSubCategories = targetCategory.subCategories.toMutableList().apply {
+                set(targetSubCategoryIndex, updatedTargetSubCategory)
+            }
+            
+            // Update target category
+            categories[targetCategoryIndex] = CategoryWithSubCategories(
+                category = targetCategory.category,
+                subCategories = updatedTargetSubCategories
+            )
 
             updateData()
+            android.util.Log.d("DataManagerObject", "Moved grocery ${groceryToMove.name} to new location")
         }
     }
 
     fun deleteGrocery(groceryUuid: String) {
-        categories.forEach { category ->
-            category.subCategories.forEach { subCategory ->
-                if (subCategory.groceries.removeAll { it.uuid == groceryUuid }) {
+        categories.forEachIndexed { categoryIndex, category ->
+            category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
+                if (subCategory.groceries.any { it.uuid == groceryUuid }) {
+                    // Create new list without the deleted grocery
+                    val updatedGroceries = subCategory.groceries.filterNot { 
+                        it.uuid == groceryUuid 
+                    }.toMutableList()
+                    
+                    // Create new sub-category with updated groceries list
+                    val updatedSubCategory = SubCategoryWithGroceries(
+                        subCategory = subCategory.subCategory,
+                        groceries = updatedGroceries
+                    )
+                    
+                    // Update sub-categories list
+                    val updatedSubCategories = category.subCategories.toMutableList().apply {
+                        set(subCategoryIndex, updatedSubCategory)
+                    }
+                    
+                    // Update category with new sub-categories list
+                    categories[categoryIndex] = CategoryWithSubCategories(
+                        category = category.category,
+                        subCategories = updatedSubCategories
+                    )
+                    
                     updateData()
+                    android.util.Log.d("DataManagerObject", "Deleted grocery $groceryUuid")
                     return
                 }
             }

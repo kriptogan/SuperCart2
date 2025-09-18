@@ -13,6 +13,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.IconButton
+import com.example.supercart2.data.DataStoreManager
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -89,6 +95,76 @@ fun GroceryCreationDialog(
     var showCategorySelection by remember { mutableStateOf(false) }
     var showSubCategorySelection by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    
+    // Delete confirmation dialog
+    if (showDeleteConfirmation && groceryToEdit != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = {
+                Text(
+                    text = "Delete Grocery",
+                    style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete '${groceryToEdit.name}'?",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+                ) {
+                    // Cancel Button (left) - secondary styled
+                    Button(
+                        onClick = { showDeleteConfirmation = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SuperCartColors.white,
+                            contentColor = SuperCartColors.primaryGreen
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel"
+                        )
+                    }
+                    
+                    // Delete Button (right) - danger styled
+                    Button(
+                        onClick = {
+                            DataManagerObject.deleteGrocery(groceryToEdit.uuid)
+                            
+                            // Save to DataStore
+                            scope.launch {
+                                DataStoreManager.saveDataGlobally()
+                                android.util.Log.d("GroceryCreationDialog", "Saved grocery deletion to DataStore")
+                            }
+                            onDismiss()
+                            showDeleteConfirmation = false
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red,
+                            contentColor = SuperCartColors.white
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete"
+                        )
+                    }
+                }
+            }
+        )
+    }
     
     // Get sorted categories for consistent display
     val sortedCategories = DataManagerObject.getSortedCategories()
@@ -101,12 +177,31 @@ fun GroceryCreationDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = if (groceryToEdit != null) "Edit Grocery" else "Create New Grocery",
-                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (groceryToEdit != null) "Edit Grocery" else "Create New Grocery",
+                    style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Delete Icon (only show in edit mode)
+                if (groceryToEdit != null) {
+                    IconButton(
+                        onClick = { showDeleteConfirmation = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Grocery",
+                            tint = Color.Red
+                        )
+                    }
+                }
+            }
         },
         text = {
             Column(
@@ -314,15 +409,27 @@ fun GroceryCreationDialog(
                                  // If category or sub-category changed, use updateGroceryLocation
                                  if (groceryToEdit.categoryId != selectedCategory!!.uuid || 
                                      groceryToEdit.subCategoryId != selectedSubCategory!!.uuid) {
-                                     DataManagerObject.updateGroceryLocation(
-                                         groceryToEdit.uuid,
-                                         selectedCategory!!.uuid,
-                                         selectedSubCategory!!.uuid
-                                     )
-                                 }
-                                 
-                                 // Update other properties
-                                 DataManagerObject.updateGrocery(groceryToEdit.uuid) { updatedGrocery }
+                                    DataManagerObject.updateGroceryLocation(
+                                        groceryToEdit.uuid,
+                                        selectedCategory!!.uuid,
+                                        selectedSubCategory!!.uuid
+                                    )
+                                    
+                                    // Save location change to DataStore
+                                    scope.launch {
+                                        DataStoreManager.saveDataGlobally()
+                                        android.util.Log.d("GroceryCreationDialog", "Saved grocery location change to DataStore")
+                                    }
+                                }
+
+                                // Update other properties
+                                DataManagerObject.updateGrocery(groceryToEdit.uuid) { updatedGrocery }
+                                
+                                // Save property updates to DataStore
+                                scope.launch {
+                                    DataStoreManager.saveDataGlobally()
+                                    android.util.Log.d("GroceryCreationDialog", "Saved grocery property updates to DataStore")
+                                }
                                  android.util.Log.d("GroceryCreationDialog", "Updated grocery date: ${updatedGrocery.date}")
                              } else {
                                  // Create mode - create new grocery
@@ -335,6 +442,12 @@ fun GroceryCreationDialog(
                                  
                                  // Add the new grocery using DataManagerObject helper
                                  DataManagerObject.addGrocery(newGrocery)
+                                
+                                // Save to DataStore
+                                scope.launch {
+                                    DataStoreManager.saveDataGlobally()
+                                    android.util.Log.d("GroceryCreationDialog", "Saved new grocery to DataStore")
+                                }
                                  android.util.Log.d("GroceryCreationDialog", "New grocery date: ${newGrocery.date}")
                              }
                              onDismiss()
