@@ -147,6 +147,14 @@ fun ShoppingListScreen() {
                         }
                     )
                 }
+
+                // Current date display
+                Text(
+                    text = java.time.LocalDate.now().toString(), // Format: yyyy-MM-dd
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SuperCartColors.primaryGreen,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
                 
                 // Add Grocery Button (+ icon) with left padding
                 Box(
