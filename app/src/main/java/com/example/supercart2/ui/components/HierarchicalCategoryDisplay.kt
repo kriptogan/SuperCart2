@@ -284,14 +284,14 @@ private fun GroceryItem(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (currentGrocery.isBought) SuperCartColors.lightGreen.copy(alpha = 0.1f) else Color.White,
+                if (isShoppingList && currentGrocery.isBought) SuperCartColors.lightGreen.copy(alpha = 0.1f) else Color.White,
                 shape = RoundedCornerShape(6.dp)
             )
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (currentGrocery.isBought) {
-            // Bought item layout: name -> category -> remove
+        if (isShoppingList && currentGrocery.isBought) {
+            // Bought item layout: name -> category -> remove (only in shopping list)
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -311,7 +311,6 @@ private fun GroceryItem(
             IconButton(
                 onClick = {
                     val newGrocery = currentGrocery.copy(
-                        inShoppingList = false,
                         isBought = false
                     )
 
@@ -322,13 +321,13 @@ private fun GroceryItem(
                             if (index != -1) {
                                 subCategory.groceries[index] = newGrocery
                                 android.util.Log.d("datastore test",
-                                    "Removed ${currentGrocery.name} from shopping list")
+                                    "Marked ${currentGrocery.name} as not bought")
                                 DataManagerObject.updateData()
                                 
                                 // Save to DataStore
                                 scope.launch {
                                     DataStoreManager.saveDataGlobally()
-                                    android.util.Log.d("datastore test", "Saved removal to DataStore")
+                                    android.util.Log.d("datastore test", "Saved bought status to DataStore")
                                 }
                                 return@forEach
                             }
@@ -339,7 +338,7 @@ private fun GroceryItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Remove from list",
+                    contentDescription = "Mark as not bought",
                     tint = Color.Red,
                     modifier = Modifier.size(20.dp)
                 )

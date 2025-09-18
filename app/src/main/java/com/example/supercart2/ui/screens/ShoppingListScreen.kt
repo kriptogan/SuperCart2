@@ -405,7 +405,8 @@ fun ShoppingListScreen() {
                             onClick = { /* TODO: Implement finish shopping action */ },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = SuperCartSpacing.md),
+                                .padding(horizontal = SuperCartSpacing.md)
+                                .padding(bottom = SuperCartSpacing.xxl),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = SuperCartColors.primaryGreen
                             )
