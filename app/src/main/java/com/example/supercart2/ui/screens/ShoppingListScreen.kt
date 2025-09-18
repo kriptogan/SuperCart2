@@ -1,6 +1,9 @@
 package com.example.supercart2.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -112,18 +115,17 @@ fun ShoppingListScreen() {
         showGroceryCreation = true
     }
     
-    Column(
+    Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Main content area with burger menu and add grocery button
+        // Fixed top bar
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .background(SuperCartColors.white)
                 .padding(
                     start = SuperCartSpacing.md,
                     end = SuperCartSpacing.md,
-                    bottom = SuperCartSpacing.md,
                     top = SuperCartSpacing.xl
                 )
         ) {
@@ -253,71 +255,97 @@ fun ShoppingListScreen() {
                 }
             }
             
-            // To Buy Section
-            if (toBuyCategories.isNotEmpty()) {
-                Text(
-                    text = "Things to Buy",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SuperCartColors.primaryGreen,
-                    modifier = Modifier.padding(vertical = SuperCartSpacing.sm)
-                )
-                HierarchicalCategoryDisplay(
-                    categories = toBuyCategories,
-                    searchQuery = searchQuery,
-                    isAllExpanded = isAllExpanded,
-                    onEditGrocery = { onEditGrocery(it) }
-                )
-            } else {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = SuperCartSpacing.sm),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SuperCartColors.lightGreen.copy(alpha = 0.1f)
-                    )
-                ) {
-                    Text(
-                        text = "No items to buy",
-                        modifier = Modifier.padding(SuperCartSpacing.md),
-                        color = SuperCartColors.gray
-                    )
-                }
             }
-            
-            Spacer(modifier = Modifier.height(SuperCartSpacing.lg))
-            
-            // Bought Section
-            if (boughtCategories.isNotEmpty()) {
-                Text(
-                    text = "Already Bought",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SuperCartColors.primaryGreen,
-                    modifier = Modifier.padding(vertical = SuperCartSpacing.sm)
+        }
+
+        // Scrollable content area
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = 180.dp, // Height of the top bar + extra gap
+                    bottom = 100.dp, // Height of the bottom navigation bar + extra gap
+                    start = SuperCartSpacing.md,
+                    end = SuperCartSpacing.md
                 )
-                HierarchicalCategoryDisplay(
-                    categories = boughtCategories,
-                    searchQuery = searchQuery,
-                    isAllExpanded = isAllExpanded,
-                    onEditGrocery = { onEditGrocery(it) }
-                )
-            } else {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = SuperCartSpacing.sm),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SuperCartColors.lightGreen.copy(alpha = 0.1f)
-                    )
-                ) {
-                    Text(
-                        text = "No bought items",
-                        modifier = Modifier.padding(SuperCartSpacing.md),
-                        color = SuperCartColors.gray
-                    )
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // To Buy Section
+                item {
+                    if (toBuyCategories.isNotEmpty()) {
+                        Text(
+                            text = "Things to Buy",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = SuperCartColors.primaryGreen,
+                            modifier = Modifier.padding(vertical = SuperCartSpacing.sm)
+                        )
+                        HierarchicalCategoryDisplay(
+                            categories = toBuyCategories,
+                            searchQuery = searchQuery,
+                            isAllExpanded = isAllExpanded,
+                            onEditGrocery = { onEditGrocery(it) },
+                            useScroll = false
+                        )
+                    } else {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = SuperCartSpacing.sm),
+                            colors = CardDefaults.cardColors(
+                                containerColor = SuperCartColors.lightGreen.copy(alpha = 0.1f)
+                            )
+                        ) {
+                            Text(
+                                text = "No items to buy",
+                                modifier = Modifier.padding(SuperCartSpacing.md),
+                                color = SuperCartColors.gray
+                            )
+                        }
+                    }
                 }
-            }
+
+                // Spacer between sections
+                item {
+                    Spacer(modifier = Modifier.height(SuperCartSpacing.lg))
+                }
+
+                // Bought Section
+                item {
+                    if (boughtCategories.isNotEmpty()) {
+                        Text(
+                            text = "Already Bought",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = SuperCartColors.primaryGreen,
+                            modifier = Modifier.padding(vertical = SuperCartSpacing.sm)
+                        )
+                        HierarchicalCategoryDisplay(
+                            categories = boughtCategories,
+                            searchQuery = searchQuery,
+                            isAllExpanded = isAllExpanded,
+                            onEditGrocery = { onEditGrocery(it) },
+                            useScroll = false
+                        )
+                    } else {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = SuperCartSpacing.sm),
+                            colors = CardDefaults.cardColors(
+                                containerColor = SuperCartColors.lightGreen.copy(alpha = 0.1f)
+                            )
+                        ) {
+                            Text(
+                                text = "No bought items",
+                                modifier = Modifier.padding(SuperCartSpacing.md),
+                                color = SuperCartColors.gray
+                            )
+                        }
+                    }
+                }
         }
     }
     

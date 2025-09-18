@@ -35,20 +35,37 @@ fun HierarchicalCategoryDisplay(
     categories: List<CategoryWithSubCategories>,
     searchQuery: String,
     isAllExpanded: Boolean,
-    onEditGrocery: (Grocery) -> Unit
+    onEditGrocery: (Grocery) -> Unit,
+    modifier: Modifier = Modifier,
+    useScroll: Boolean = true
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        items(categories) { categoryWithSubs ->
-            CategorySection(
-                categoryWithSubs = categoryWithSubs,
-                searchQuery = searchQuery,
-                isAllExpanded = isAllExpanded,
-                onEditGrocery = onEditGrocery
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
+    if (useScroll) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize()
+        ) {
+            items(categories) { categoryWithSubs ->
+                CategorySection(
+                    categoryWithSubs = categoryWithSubs,
+                    searchQuery = searchQuery,
+                    isAllExpanded = isAllExpanded,
+                    onEditGrocery = onEditGrocery
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    } else {
+        Column(modifier = modifier) {
+            categories.forEach { categoryWithSubs ->
+                CategorySection(
+                    categoryWithSubs = categoryWithSubs,
+                    searchQuery = searchQuery,
+                    isAllExpanded = isAllExpanded,
+                    onEditGrocery = onEditGrocery
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }
