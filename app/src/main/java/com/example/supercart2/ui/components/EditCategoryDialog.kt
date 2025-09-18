@@ -31,8 +31,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import kotlinx.coroutines.launch
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -57,6 +59,7 @@ fun EditCategoryDialog(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showCreateSubCategoryDialog by remember { mutableStateOf(false) }
     var editingSubCategory by remember { mutableStateOf<SubCategory?>(null) }
+    val scope = rememberCoroutineScope()
     
     if (showCreateSubCategoryDialog) {
         CreateSubCategoryDialog(
@@ -69,6 +72,13 @@ fun EditCategoryDialog(
                 )
                 // Add the new sub-category using DataManagerObject helper
                 DataManagerObject.addSubCategory(category.uuid, newSubCategory)
+                
+                // Save to DataStore
+                scope.launch {
+                    DataStoreManager.saveDataGlobally()
+                    android.util.Log.d("EditCategoryDialog", "Saved new sub-category to DataStore")
+                }
+                
                 showCreateSubCategoryDialog = false
             }
         )
@@ -241,14 +251,24 @@ fun EditCategoryDialog(
                 LazyColumn(
                     modifier = Modifier.height(200.dp)
                 ) {
-                    items(subCategories) { subCategoryWithGroceries ->
+                    items(
+                        items = subCategories,
+                        key = { it.subCategory.uuid } // Use stable UUID as key
+                    ) { subCategoryWithGroceries ->
                         SubCategoryCard(
                             subCategory = subCategoryWithGroceries.subCategory,
                             groceriesCount = subCategoryWithGroceries.groceries.size,
                             onEditClick = { editingSubCategory = subCategoryWithGroceries.subCategory },
                             onDeleteClick = {
                                 if (!subCategoryWithGroceries.subCategory.protected) {
+                                    // Delete the sub-category
                                     DataManagerObject.deleteSubCategory(category.uuid, subCategoryWithGroceries.subCategory.uuid)
+                                    
+                                    // Save to DataStore
+                                    scope.launch {
+                                        DataStoreManager.saveDataGlobally()
+                                        android.util.Log.d("EditCategoryDialog", "Saved sub-category deletion to DataStore")
+                                    }
                                 }
                             }
                         )

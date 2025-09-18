@@ -115,23 +115,45 @@ object DataManagerObject {
     fun addSubCategory(categoryUuid: String, subCategory: SubCategory) {
         val categoryIndex = categories.indexOfFirst { it.category.uuid == categoryUuid }
         if (categoryIndex != -1) {
-            categories[categoryIndex].subCategories.add(
-                SubCategoryWithGroceries(
+            val categoryWithSubs = categories[categoryIndex]
+            
+            // Create new list with the added sub-category
+            val updatedSubCategories = categoryWithSubs.subCategories.toMutableList().apply {
+                add(SubCategoryWithGroceries(
                     subCategory = subCategory,
                     groceries = mutableListOf()
-                )
+                ))
+            }
+            
+            // Update the category with the new sub-categories list
+            categories[categoryIndex] = CategoryWithSubCategories(
+                category = categoryWithSubs.category,
+                subCategories = updatedSubCategories
             )
+            
             updateData()
+            android.util.Log.d("DataManagerObject", "Added sub-category ${subCategory.name} to category $categoryUuid")
         }
     }
 
     fun deleteSubCategory(categoryUuid: String, subCategoryUuid: String) {
         val categoryIndex = categories.indexOfFirst { it.category.uuid == categoryUuid }
         if (categoryIndex != -1) {
-            categories[categoryIndex].subCategories.removeAll { 
+            val categoryWithSubs = categories[categoryIndex]
+            
+            // Create new list without the deleted sub-category
+            val updatedSubCategories = categoryWithSubs.subCategories.filterNot { 
                 it.subCategory.uuid == subCategoryUuid 
-            }
+            }.toMutableList()
+            
+            // Update the category with the new sub-categories list
+            categories[categoryIndex] = CategoryWithSubCategories(
+                category = categoryWithSubs.category,
+                subCategories = updatedSubCategories
+            )
+            
             updateData()
+            android.util.Log.d("DataManagerObject", "Deleted sub-category $subCategoryUuid from category $categoryUuid")
         }
     }
 

@@ -79,9 +79,17 @@ fun CategoriesManagementDialog(
     }
     
     if (editingCategory != null) {
+        // Observe version to trigger recomposition
+        val version = DataManagerObject.version
+        
+        // Get current sub-categories
+        val currentSubCategories = remember(version) {
+            DataManagerObject.categories.find { it.category.uuid == editingCategory!!.uuid }?.subCategories ?: emptyList()
+        }
+        
         EditCategoryDialog(
             category = editingCategory!!,
-            subCategories = DataManagerObject.categories.find { it.category.uuid == editingCategory!!.uuid }?.subCategories ?: emptyList(),
+            subCategories = currentSubCategories,
             onDismiss = { editingCategory = null },
             onCategoryUpdated = { updatedCategory ->
                 // Update the category using DataManagerObject helper
