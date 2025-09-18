@@ -111,19 +111,18 @@ fun HomeScreen() {
         showGroceryCreation = true
     }
     
-    Column(
+    Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Main content area with burger menu and add grocery button
+        // Fixed top bar
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f) // Take remaining space, leaving room for bottom navigation
+                .background(SuperCartColors.white)
                 .padding(
                     start = SuperCartSpacing.md,
                     end = SuperCartSpacing.md,
-                    bottom = SuperCartSpacing.md,
-                    top = SuperCartSpacing.xl // Much more space at the top
+                    top = SuperCartSpacing.xl
                 )
         ) {
             // Burger menu and add grocery button row
@@ -254,7 +253,20 @@ fun HomeScreen() {
                 }
             }
             
-            // Hierarchical Category Display (takes remaining space)
+            }
+        }
+
+        // Scrollable content
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = 160.dp, // Height of the top bar
+                    bottom = 80.dp, // Height of the bottom navigation bar
+                    start = SuperCartSpacing.md,
+                    end = SuperCartSpacing.md
+                )
+        ) {
             HierarchicalCategoryDisplay(
                 categories = displayData.value,
                 searchQuery = searchQuery,
@@ -262,7 +274,7 @@ fun HomeScreen() {
                 onEditGrocery = { grocery -> onEditGrocery(grocery) }
             )
         }
-    }
+
     
     // Categories Management Dialog
     if (showCategoriesManagement) {

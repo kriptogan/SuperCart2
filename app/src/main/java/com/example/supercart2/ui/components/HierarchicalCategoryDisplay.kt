@@ -2,6 +2,8 @@ package com.example.supercart2.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -35,14 +37,18 @@ fun HierarchicalCategoryDisplay(
     isAllExpanded: Boolean,
     onEditGrocery: (Grocery) -> Unit
 ) {
-    Column {
-        categories.forEach { categoryWithSubs ->
+    LazyColumn(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        items(categories) { categoryWithSubs ->
             CategorySection(
                 categoryWithSubs = categoryWithSubs,
                 searchQuery = searchQuery,
                 isAllExpanded = isAllExpanded,
                 onEditGrocery = onEditGrocery
             )
+            
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
