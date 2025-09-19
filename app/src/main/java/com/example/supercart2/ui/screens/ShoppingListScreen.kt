@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.supercart2.data.DataManagerObject
@@ -43,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 fun ShoppingListScreen() {
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
+    var showFinishConfirmation by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
     
@@ -389,7 +391,7 @@ fun ShoppingListScreen() {
                     item {
                         Spacer(modifier = Modifier.height(SuperCartSpacing.lg))
                         Button(
-                            onClick = { /* TODO: Implement finish shopping action */ },
+                            onClick = { showFinishConfirmation = true },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = SuperCartSpacing.md)
@@ -412,6 +414,91 @@ fun ShoppingListScreen() {
                     }
                 }
             }
+        }
+
+        // Finish Shopping Confirmation Dialog
+        if (showFinishConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showFinishConfirmation = false },
+                title = {
+                    Text(
+                        text = "Finish Shopping",
+                        style = MaterialTheme.typography.headlineMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Are you sure you want to finish shopping? This will:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(SuperCartSpacing.sm))
+                        Text(
+                            text = "• Add today's date to the buy history of all bought items",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Start
+                        )
+                        Text(
+                            text = "• Remove all bought items from the shopping list",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Start
+                        )
+                    }
+                },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+                    ) {
+                        // Cancel Button (left) - secondary styled
+                        Button(
+                            onClick = { showFinishConfirmation = false },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SuperCartColors.white,
+                                contentColor = SuperCartColors.primaryGreen
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Cancel"
+                            )
+                        }
+                        
+                        // Confirm Button (right) - primary styled
+                        Button(
+                            onClick = {
+                                // Confirm all bought items
+                                DataManagerObject.confirmBoughtItems()
+                                
+                                // Save to DataStore
+                                scope.launch {
+                                    DataStoreManager.saveDataGlobally()
+                                    android.util.Log.d("ShoppingListScreen", "Saved shopping completion to DataStore")
+                                }
+                                
+                                showFinishConfirmation = false
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SuperCartColors.primaryGreen,
+                                contentColor = SuperCartColors.white
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Confirm"
+                            )
+                        }
+                    }
+                }
+            )
         }
 
         // Categories Management Dialog

@@ -81,19 +81,12 @@ object DataManagerObject {
         android.util.Log.d("DataManagerObject", "Toggled shopping list status and reset bought status")
     }
 
-    // Helper function to toggle bought status
+    // Helper function to toggle bought status (just toggles isBought, doesn't affect buyEvents)
     fun toggleBoughtStatus(groceryUuid: String) {
         updateGrocery(groceryUuid) { grocery ->
-            // When marking as bought, add current date to buyEvents
-            val newBuyEvents = if (!grocery.isBought) {
-                grocery.buyEvents + LocalDate.now()
-            } else {
-                grocery.buyEvents
-            }
-            
             grocery.copy(
                 isBought = !grocery.isBought,
-                buyEvents = newBuyEvents,
+                buyEvents = grocery.buyEvents ?: emptyList(),
                 imageUUID = grocery.imageUUID
             )
         }
@@ -414,6 +407,56 @@ object DataManagerObject {
                 }
             }
         }
+    }
+
+    // Confirms all bought items - adds buyEvent and resets their status
+    fun confirmBoughtItems() {
+        val currentDate = LocalDate.now()
+        
+        // Find all bought items and update them
+        categories.forEachIndexed { categoryIndex, category ->
+            category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
+                // Find any bought items in this sub-category
+                val boughtItems = subCategory.groceries.filter { it.isBought }
+                if (boughtItems.isNotEmpty()) {
+                    // Create new list with updated items
+                    val updatedGroceries = subCategory.groceries.map { grocery ->
+                        if (grocery.isBought) {
+                            // For bought items: add buyEvent and reset status
+                            grocery.copy(
+                                isBought = false,
+                                inShoppingList = false,
+                                buyEvents = (grocery.buyEvents ?: emptyList()) + currentDate,
+                                imageUUID = grocery.imageUUID
+                            )
+                        } else {
+                            // For non-bought items: keep as is
+                            grocery
+                        }
+                    }.toMutableList()
+                    
+                    // Create new sub-category with updated groceries
+                    val updatedSubCategory = SubCategoryWithGroceries(
+                        subCategory = subCategory.subCategory,
+                        groceries = updatedGroceries
+                    )
+                    
+                    // Update sub-categories list
+                    val updatedSubCategories = category.subCategories.toMutableList().apply {
+                        set(subCategoryIndex, updatedSubCategory)
+                    }
+                    
+                    // Update category with new sub-categories list
+                    categories[categoryIndex] = CategoryWithSubCategories(
+                        category = category.category,
+                        subCategories = updatedSubCategories
+                    )
+                }
+            }
+        }
+        
+        updateData()
+        android.util.Log.d("DataManagerObject", "Confirmed bought items and added buyEvents")
     }
 
     // Call this after any data modification
