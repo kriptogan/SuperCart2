@@ -451,43 +451,84 @@ private fun GroceryItem(
                     )
                 }
             } else {
-                // Action icons for home screen (edit and cart)
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Edit icon
-                    IconButton(
-                        onClick = onEdit,
-                        modifier = Modifier.size(24.dp)
+                // Options menu for home screen
+                Box {
+                    var expanded by remember { mutableStateOf(false) }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit grocery",
-                            tint = SuperCartColors.primaryGreen,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        // Options menu
+                        IconButton(
+                            onClick = { expanded = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options",
+                                tint = SuperCartColors.primaryGreen,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        
+                        // Cart icon with dynamic color based on shopping list status
+                        IconButton(
+                            onClick = {
+                                // Toggle the shopping list status
+                                DataManagerObject.toggleShoppingListStatus(currentGrocery.uuid)
+                                
+                                // Save to DataStore
+                                scope.launch {
+                                    DataStoreManager.saveDataGlobally()
+                                    android.util.Log.d("datastore test", "Saved shopping list status to DataStore")
+                                }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = if (currentGrocery.inShoppingList) "Remove from shopping list" else "Add to shopping list",
+                                tint = if (currentGrocery.inShoppingList) SuperCartColors.primaryGreen else Color.Black,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
-                    
-                    // Cart icon with dynamic color based on shopping list status
-                    IconButton(
-                        onClick = {
-                            // Toggle the shopping list status
-                            DataManagerObject.toggleShoppingListStatus(currentGrocery.uuid)
-                            
-                            // Save to DataStore
-                            scope.launch {
-                                DataStoreManager.saveDataGlobally()
-                                android.util.Log.d("datastore test", "Saved shopping list status to DataStore")
-                            }
-                        },
-                        modifier = Modifier.size(24.dp)
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ShoppingCart,
-                            contentDescription = if (currentGrocery.inShoppingList) "Remove from shopping list" else "Add to shopping list",
-                            tint = if (currentGrocery.inShoppingList) SuperCartColors.primaryGreen else Color.Black,
-                            modifier = Modifier.size(20.dp)
+                        // Edit option
+                        DropdownMenuItem(
+                            text = { Text("Edit item") },
+                            onClick = {
+                                onEdit()
+                                expanded = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = null,
+                                    tint = SuperCartColors.primaryGreen
+                                )
+                            }
+                        )
+
+                        // View Buy History option
+                        DropdownMenuItem(
+                            text = { Text("View Buy History") },
+                            onClick = {
+                                showBuyHistory = true
+                                expanded = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.DateRange,
+                                    contentDescription = null,
+                                    tint = SuperCartColors.primaryGreen
+                                )
+                            }
                         )
                     }
                 }
