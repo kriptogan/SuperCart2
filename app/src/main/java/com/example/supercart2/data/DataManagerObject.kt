@@ -422,11 +422,20 @@ object DataManagerObject {
                     // Create new list with updated items
                     val updatedGroceries = subCategory.groceries.map { grocery ->
                         if (grocery.isBought) {
-                            // For bought items: add buyEvent and reset status
+                            // For bought items: add buyEvent (if not already exists for today) and reset status
+                            val existingEvents = grocery.buyEvents ?: emptyList()
+                            val updatedEvents = if (existingEvents.any { it == currentDate }) {
+                                // If today's date already exists, keep the list as is
+                                existingEvents
+                            } else {
+                                // Add today's date only if it doesn't exist
+                                existingEvents + currentDate
+                            }
+                            
                             grocery.copy(
                                 isBought = false,
                                 inShoppingList = false,
-                                buyEvents = (grocery.buyEvents ?: emptyList()) + currentDate,
+                                buyEvents = updatedEvents,
                                 imageUUID = grocery.imageUUID
                             )
                         } else {
@@ -455,6 +464,21 @@ object DataManagerObject {
             }
         }
         
+        // Log all groceries that were updated with their buyEvents
+        categories.forEach { category ->
+            category.subCategories.forEach { subCategory ->
+                subCategory.groceries.forEach { grocery ->
+                    if (grocery.buyEvents.isNotEmpty()) {
+                        android.util.Log.d("DataManagerObject", 
+                            "Grocery '${grocery.name}' buyEvents: ${grocery.buyEvents.joinToString(", ") { 
+                                it.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                            }}"
+                        )
+                    }
+                }
+            }
+        }
+
         updateData()
         android.util.Log.d("DataManagerObject", "Confirmed bought items and added buyEvents")
     }
