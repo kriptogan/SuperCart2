@@ -71,6 +71,11 @@ fun HomeScreen() {
     // Observe data version to trigger recomposition
     val dataVersion = DataManagerObject.version
     
+    // Check if there are any items that would match the alert filter
+    val hasAlertItems = derivedStateOf {
+        filterAlertData(DataManagerObject.getSortedCategories()).isNotEmpty()
+    }
+    
     // Get filtered and expanded data based on search query and alert filter
     val filteredData = derivedStateOf {
         // Use version to trigger recomposition
@@ -155,29 +160,34 @@ fun HomeScreen() {
                     )
                 }
 
-                // Alert Button (center)
-                Card(
-                    modifier = Modifier.size(56.dp),
-                    shape = CircleShape,
-                    colors = CardDefaults.cardColors(
-                        containerColor = SuperCartColors.white
-                    ),
-                    border = CardDefaults.outlinedCardBorder(),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
-                    )
-                ) {
-                    IconButton(
-                        onClick = { isAlertFilterActive = !isAlertFilterActive },
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Alerts",
-                            tint = if (isAlertFilterActive) SuperCartColors.primaryGreen else SuperCartColors.orange,
-                            modifier = Modifier.size(34.dp)
+                // Alert Button (center) - only shown if there are items to alert about
+                if (hasAlertItems.value) {
+                    Card(
+                        modifier = Modifier.size(56.dp),
+                        shape = CircleShape,
+                        colors = CardDefaults.cardColors(
+                            containerColor = SuperCartColors.white
+                        ),
+                        border = CardDefaults.outlinedCardBorder(),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 2.dp
                         )
+                    ) {
+                        IconButton(
+                            onClick = { isAlertFilterActive = !isAlertFilterActive },
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Alerts",
+                                tint = if (isAlertFilterActive) SuperCartColors.primaryGreen else SuperCartColors.orange,
+                                modifier = Modifier.size(34.dp)
+                            )
+                        }
                     }
+                } else {
+                    // Placeholder to maintain layout spacing
+                    Spacer(modifier = Modifier.size(56.dp))
                 }
                 
                 // Add Grocery Button (+ icon) with left padding
