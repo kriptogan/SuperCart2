@@ -7,13 +7,24 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.supercart2.data.CategoryWithSubCategories
@@ -257,6 +268,7 @@ private fun GroceryItem(
     // Observe version to trigger recomposition
     val version = DataManagerObject.version
     val scope = rememberCoroutineScope()
+    var showBuyHistory by remember { mutableStateOf(false) }
     
     // Get current grocery state to ensure we have latest data
     val currentGrocery = remember(grocery.uuid, version) {
@@ -382,6 +394,22 @@ private fun GroceryItem(
                             }
                         )
 
+                        // View Buy History option
+                        DropdownMenuItem(
+                            text = { Text("View Buy History") },
+                            onClick = {
+                                showBuyHistory = true
+                                expanded = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.DateRange,
+                                    contentDescription = null,
+                                    tint = SuperCartColors.primaryGreen
+                                )
+                            }
+                        )
+
                         // Edit option
                         DropdownMenuItem(
                             text = { Text("Edit item") },
@@ -465,5 +493,68 @@ private fun GroceryItem(
                 }
             }
         }
+    }
+
+    // Buy History Dialog
+    if (showBuyHistory) {
+        AlertDialog(
+            onDismissRequest = { showBuyHistory = false },
+            title = {
+                Text(
+                    text = "Buy History - ${currentGrocery.name}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                if (currentGrocery.buyEvents.isEmpty()) {
+                    // Empty state
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = SuperCartColors.gray,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No purchase history yet",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = SuperCartColors.gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    // List of buy events
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        currentGrocery.buyEvents.sortedDescending().forEach { date ->
+                            Text(
+                                text = date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy")),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showBuyHistory = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen,
+                        contentColor = SuperCartColors.white
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }
