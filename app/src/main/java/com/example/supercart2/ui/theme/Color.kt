@@ -19,3 +19,4 @@ val SuperCartGray = Color(0xFFBDBDBD)         // Border color
 val SuperCartDarkGray = Color(0xFF757575)     // Text color
 val SuperCartWhite = Color(0xFFFFFFFF)        // White
 val SuperCartBlack = Color(0xFF000000)        // Black
+val SuperCartOrange = Color(0xFFFF9800)      // Alert/Warning color

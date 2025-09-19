@@ -33,4 +33,5 @@ object SuperCartColors {
     val darkGray = SuperCartDarkGray
     val white = SuperCartWhite
     val black = SuperCartBlack
+    val orange = SuperCartOrange
 }

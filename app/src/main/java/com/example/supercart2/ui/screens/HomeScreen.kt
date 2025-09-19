@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -130,7 +131,7 @@ fun HomeScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = SuperCartSpacing.md),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Burger menu with right padding
@@ -142,6 +143,31 @@ fun HomeScreen() {
                             showCategoriesManagement = true
                         }
                     )
+                }
+
+                // Alert Button (center)
+                Card(
+                    modifier = Modifier.size(56.dp),
+                    shape = CircleShape,
+                    colors = CardDefaults.cardColors(
+                        containerColor = SuperCartColors.white
+                    ),
+                    border = CardDefaults.outlinedCardBorder(),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+                    IconButton(
+                        onClick = { /* TODO: Implement alert action */ },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Alerts",
+                            tint = SuperCartColors.orange,
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
                 }
                 
                 // Add Grocery Button (+ icon) with left padding
