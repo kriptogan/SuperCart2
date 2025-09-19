@@ -17,16 +17,21 @@ _________________________________________________________________________
 V 1. Turning cart icon off should set isBought to false.
 V 2. Change date property of groceries to expirationDate.
 V 3. Add buyEvents property of groceries as an array of dates.
-3. Confirm isBought items should add a new date (now()) to the buyEvents list of each item.
+V 3. Confirm isBought items should add a new date (now()) to the buyEvents list of each item.
 V 4. Add image property.
-5. Enable the option to upload image from galery or camera in the edit grocery screen.
-6. Add an option to view image.
-7. In home page, create options icon like in shopping list and set the options: edit, view image.
-8. Add an option to view buyEvents.
-V 9. add option to remove 
-V 10. open/collapse all row
+5. In home page, create options icon like in shopping list and set the options: edit, view image.
+V 6. Add an option to view buyEvents.
+V 7. add option to remove 
+V 8. open/collapse all row
 _________________________________________________________________________
 
 1. Impliment the buyEvents calculation analitics.
 2. Add option to filter by experation date and buyEvents estimation.
 * we need to add an estimatedBuyDate property.
+_________________________________________________________________________
+1. firebase connection.
+2. firebase management.
+3. Enable the option to upload image from galery or camera in the edit grocery screen.
+4. Add an option to view image.
+5. Group management.
+6. sync groups.
