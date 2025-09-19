@@ -19,13 +19,22 @@ V 2. Change date property of groceries to expirationDate.
 V 3. Add buyEvents property of groceries as an array of dates.
 V 3. Confirm isBought items should add a new date (now()) to the buyEvents list of each item.
 V 4. Add image property.
-5. In home page, create options icon like in shopping list and set the options: edit, view image.
+V 5. In home page, create options icon like in shopping list and set the options: edit, view image.
 V 6. Add an option to view buyEvents.
 V 7. add option to remove 
 V 8. open/collapse all row
 _________________________________________________________________________
 
 1. Impliment the buyEvents calculation analitics.
+#####
+In my app, I would like to find a pattern for buying items.
+I would like to use the buyEvent list to calculate that pattern.
+The rules should be as follows:
+1. A grocery item needs at least 2 buyEvents to calculate the average days.
+2. We take only the latest 4 buyEvents for the average calculation.
+3. When a buy event is created due to the user's confirmation in the bought list, we calculate the average of the last 4 buy events. we keep the result (rounded down to a natural number) in a new property called "averageBuyDays" (of type int).
+#####
+
 2. Add option to filter by experation date and buyEvents estimation.
 * we need to add an estimatedBuyDate property.
 _________________________________________________________________________

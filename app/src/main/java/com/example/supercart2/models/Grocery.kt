@@ -12,5 +12,6 @@ data class Grocery(
     val inShoppingList: Boolean = false,
     val isBought: Boolean = false,
     val buyEvents: List<LocalDate> = emptyList(),
-    val imageUUID: String? = null
+    val imageUUID: String? = null,
+    val averageBuyDays: Int? = null // null means not enough data to calculate
 )

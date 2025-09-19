@@ -409,6 +409,23 @@ object DataManagerObject {
         }
     }
 
+    // Calculate average days between buy events
+    private fun calculateAverageBuyDays(buyEvents: List<LocalDate>): Int? {
+        // Need at least 2 events to calculate average
+        if (buyEvents.size < 2) return null
+        
+        // Take up to last 4 events, sorted newest to oldest
+        val events = buyEvents.sortedDescending().take(4)
+        
+        // Calculate differences between consecutive dates
+        val differences = events.zipWithNext { newer, older ->
+            newer.toEpochDay() - older.toEpochDay()
+        }
+        
+        // Calculate average and round down
+        return differences.average().toInt()
+    }
+
     // Confirms all bought items - adds buyEvent and resets their status
     fun confirmBoughtItems() {
         val currentDate = LocalDate.now()
@@ -432,11 +449,19 @@ object DataManagerObject {
                                 existingEvents + currentDate
                             }
                             
+                            // Calculate new average buy days
+                            val newAverageBuyDays = calculateAverageBuyDays(updatedEvents)
+                            android.util.Log.d("DataManagerObject", 
+                                "Calculated average buy days for '${grocery.name}': $newAverageBuyDays" +
+                                " (from ${updatedEvents.size} events)"
+                            )
+                            
                             grocery.copy(
                                 isBought = false,
                                 inShoppingList = false,
                                 buyEvents = updatedEvents,
-                                imageUUID = grocery.imageUUID
+                                imageUUID = grocery.imageUUID,
+                                averageBuyDays = newAverageBuyDays
                             )
                         } else {
                             // For non-bought items: keep as is
