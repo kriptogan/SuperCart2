@@ -25,7 +25,7 @@ V 7. add option to remove
 V 8. open/collapse all row
 _________________________________________________________________________
 
-1. Impliment the buyEvents calculation analitics.
+V 1. Impliment the buyEvents calculation analitics.
 #####
 In my app, I would like to find a pattern for buying items.
 I would like to use the buyEvent list to calculate that pattern.
@@ -35,7 +35,7 @@ The rules should be as follows:
 3. When a buy event is created due to the user's confirmation in the bought list, we calculate the average of the last 4 buy events. we keep the result (rounded down to a natural number) in a new property called "averageBuyDays" (of type int).
 #####
 
-2. Add option to filter by experation date and buyEvents estimation.
+V 2. Add option to filter by experation date and buyEvents estimation.
 * we need to add an estimatedBuyDate property.
 _________________________________________________________________________
 1. firebase connection.

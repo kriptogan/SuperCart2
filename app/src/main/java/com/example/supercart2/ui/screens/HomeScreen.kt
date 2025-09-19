@@ -60,6 +60,7 @@ fun HomeScreen() {
     var showGroceryCreation by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
+    var isAlertFilterActive by remember { mutableStateOf(false) }
     var dataRefreshTrigger by remember { mutableStateOf(0) }
     
     // Edit mode state
@@ -70,17 +71,26 @@ fun HomeScreen() {
     // Observe data version to trigger recomposition
     val dataVersion = DataManagerObject.version
     
-    // Get filtered and expanded data based on search query
+    // Get filtered and expanded data based on search query and alert filter
     val filteredData = derivedStateOf {
         // Use version to trigger recomposition
         android.util.Log.d("datastore test", "Computing filtered data, version: $dataVersion")
-        if (searchQuery.isBlank()) {
-            // No search query - return all data as is
-            DataManagerObject.getSortedCategories()
-        } else {
-            // Filter data based on search query
-            filterAndExpandData(DataManagerObject.getSortedCategories(), searchQuery)
+        var data = DataManagerObject.getSortedCategories()
+        
+        // Apply filters in sequence
+        if (isAlertFilterActive) {
+            // Apply alert filter first if active
+            data = filterAlertData(data)
+            // Force expansion when alert filter is active
+            isAllExpanded = true
         }
+        
+        // Then apply search filter if query exists
+        if (searchQuery.isNotBlank()) {
+            data = filterAndExpandData(data, searchQuery)
+        }
+        
+        data
     }
     
     // Ensure we always have data to display
@@ -158,13 +168,13 @@ fun HomeScreen() {
                     )
                 ) {
                     IconButton(
-                        onClick = { /* TODO: Implement alert action */ },
+                        onClick = { isAlertFilterActive = !isAlertFilterActive },
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = "Alerts",
-                            tint = SuperCartColors.orange,
+                            tint = if (isAlertFilterActive) SuperCartColors.primaryGreen else SuperCartColors.orange,
                             modifier = Modifier.size(34.dp)
                         )
                     }
@@ -470,6 +480,52 @@ fun HomeScreen() {
  * - Automatically expands categories/sub-categories with matches
  * - Hides empty categories and sub-categories
  */
+// Filter data based on expiration dates and buy patterns
+private fun filterAlertData(categories: List<CategoryWithSubCategories>): List<CategoryWithSubCategories> {
+    val today = java.time.LocalDate.now()
+    val tomorrow = today.plusDays(1)
+    
+    return categories.mapNotNull { categoryWithSubs ->
+        // Filter sub-categories
+        val filteredSubCategories = categoryWithSubs.subCategories.mapNotNull { subCategoryWithGroceries ->
+            // Filter groceries based on alert conditions
+            val filteredGroceries = subCategoryWithGroceries.groceries.filter { grocery ->
+                // Check expiration date condition
+                val isExpiringSoon = grocery.expirationDate?.let { expDate ->
+                    expDate <= tomorrow // Due tomorrow or already passed
+                } ?: false
+                
+                // Check buy pattern condition
+                val needsToBuy = grocery.averageBuyDays?.let { avgDays ->
+                    grocery.buyEvents.maxOrNull()?.let { lastBuyDate ->
+                        val daysSinceLastBuy = today.toEpochDay() - lastBuyDate.toEpochDay()
+                        daysSinceLastBuy >= avgDays
+                    }
+                } ?: false
+                
+                // Show if either condition is met
+                isExpiringSoon || needsToBuy
+            }
+            
+            // Only include sub-category if it has matching groceries
+            if (filteredGroceries.isNotEmpty()) {
+                SubCategoryWithGroceries(
+                    subCategory = subCategoryWithGroceries.subCategory,
+                    groceries = mutableListOf<Grocery>().apply { addAll(filteredGroceries) }
+                )
+            } else null
+        }
+        
+        // Only include category if it has sub-categories with matching groceries
+        if (filteredSubCategories.isNotEmpty()) {
+            CategoryWithSubCategories(
+                category = categoryWithSubs.category,
+                subCategories = mutableListOf<SubCategoryWithGroceries>().apply { addAll(filteredSubCategories) }
+            )
+        } else null
+    }
+}
+
 private fun filterAndExpandData(
     categories: List<CategoryWithSubCategories>,
     searchQuery: String
