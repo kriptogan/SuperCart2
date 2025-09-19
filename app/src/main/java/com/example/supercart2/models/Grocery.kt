@@ -8,7 +8,7 @@ data class Grocery(
     val name: String,
     val categoryId: String,
     val subCategoryId: String,
-    val date: LocalDate? = null,
+    val expirationDate: LocalDate? = null,
     val inShoppingList: Boolean = false,
     val isBought: Boolean = false
 )

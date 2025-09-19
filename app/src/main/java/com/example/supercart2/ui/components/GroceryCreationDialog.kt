@@ -77,7 +77,7 @@ fun GroceryCreationDialog(
             selectedSubCategory = DataManagerObject.categories.find { categoryWithSubs ->
                 categoryWithSubs.category.uuid == groceryToEdit.categoryId
             }?.subCategories?.find { it.subCategory.uuid == groceryToEdit.subCategoryId }?.subCategory
-            selectedDate = groceryToEdit.date
+            selectedDate = groceryToEdit.expirationDate
         } else {
             // Create mode - auto-select first category and sub-category
             val sortedCategories = DataManagerObject.getSortedCategories()
@@ -403,7 +403,7 @@ fun GroceryCreationDialog(
                                      name = groceryName.trim(),
                                      categoryId = selectedCategory!!.uuid,
                                      subCategoryId = selectedSubCategory!!.uuid,
-                                     date = selectedDate
+                                     expirationDate = selectedDate
                                  )
                                  
                                  // If category or sub-category changed, use updateGroceryLocation
@@ -430,14 +430,14 @@ fun GroceryCreationDialog(
                                     DataStoreManager.saveDataGlobally()
                                     android.util.Log.d("GroceryCreationDialog", "Saved grocery property updates to DataStore")
                                 }
-                                 android.util.Log.d("GroceryCreationDialog", "Updated grocery date: ${updatedGrocery.date}")
+                                 android.util.Log.d("GroceryCreationDialog", "Updated grocery expiration date: ${updatedGrocery.expirationDate}")
                              } else {
                                  // Create mode - create new grocery
                                  val newGrocery = Grocery(
                                      name = groceryName.trim(),
                                      categoryId = selectedCategory!!.uuid,
                                      subCategoryId = selectedSubCategory!!.uuid,
-                                     date = selectedDate
+                                     expirationDate = selectedDate
                                  )
                                  
                                  // Add the new grocery using DataManagerObject helper
@@ -448,7 +448,7 @@ fun GroceryCreationDialog(
                                     DataStoreManager.saveDataGlobally()
                                     android.util.Log.d("GroceryCreationDialog", "Saved new grocery to DataStore")
                                 }
-                                 android.util.Log.d("GroceryCreationDialog", "New grocery date: ${newGrocery.date}")
+                                 android.util.Log.d("GroceryCreationDialog", "New grocery expiration date: ${newGrocery.expirationDate}")
                              }
                              onDismiss()
                          }

@@ -14,8 +14,8 @@ V 3. Edit groceries.
 
 _________________________________________________________________________
 
-1. Turning cart icon off should set isBought to false.
-2. Change date property of groceries to experationDate.
+V 1. Turning cart icon off should set isBought to false.
+V 2. Change date property of groceries to expirationDate.
 3. Add buyEvents property of groceries as an array of dates.
 3. Confirm isBought items should add a new date (now()) to the buyEvents list of each item.
 4. Add image property.
