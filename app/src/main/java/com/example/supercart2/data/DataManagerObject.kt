@@ -67,7 +67,14 @@ object DataManagerObject {
 
     // Helper function to toggle shopping list status
     fun toggleShoppingListStatus(groceryUuid: String) {
-        updateGrocery(groceryUuid) { it.copy(inShoppingList = !it.inShoppingList) }
+        updateGrocery(groceryUuid) { grocery ->
+            // When toggling shopping list status, also set isBought to false
+            grocery.copy(
+                inShoppingList = !grocery.inShoppingList,
+                isBought = false // Reset bought status whenever shopping list status changes
+            )
+        }
+        android.util.Log.d("DataManagerObject", "Toggled shopping list status and reset bought status")
     }
 
     // Helper function to toggle bought status
