@@ -10,5 +10,7 @@ data class Grocery(
     val subCategoryId: String,
     val expirationDate: LocalDate? = null,
     val inShoppingList: Boolean = false,
-    val isBought: Boolean = false
+    val isBought: Boolean = false,
+    val buyEvents: List<LocalDate> = emptyList(),
+    val imageUUID: String? = null
 )

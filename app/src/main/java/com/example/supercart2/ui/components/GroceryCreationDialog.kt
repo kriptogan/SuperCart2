@@ -403,7 +403,10 @@ fun GroceryCreationDialog(
                                      name = groceryName.trim(),
                                      categoryId = selectedCategory!!.uuid,
                                      subCategoryId = selectedSubCategory!!.uuid,
-                                     expirationDate = selectedDate
+                                     expirationDate = selectedDate,
+                                     // Preserve existing values for new properties
+                                     buyEvents = groceryToEdit.buyEvents,
+                                     imageUUID = groceryToEdit.imageUUID
                                  )
                                  
                                  // If category or sub-category changed, use updateGroceryLocation

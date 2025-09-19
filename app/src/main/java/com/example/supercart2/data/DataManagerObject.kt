@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
+import java.time.LocalDate
 
 object DataManagerObject {
     val categories: SnapshotStateList<CategoryWithSubCategories> = mutableStateListOf()
@@ -71,7 +72,10 @@ object DataManagerObject {
             // When toggling shopping list status, also set isBought to false
             grocery.copy(
                 inShoppingList = !grocery.inShoppingList,
-                isBought = false // Reset bought status whenever shopping list status changes
+                isBought = false, // Reset bought status whenever shopping list status changes
+                // Preserve existing values for new properties
+                buyEvents = grocery.buyEvents,
+                imageUUID = grocery.imageUUID
             )
         }
         android.util.Log.d("DataManagerObject", "Toggled shopping list status and reset bought status")
@@ -79,7 +83,20 @@ object DataManagerObject {
 
     // Helper function to toggle bought status
     fun toggleBoughtStatus(groceryUuid: String) {
-        updateGrocery(groceryUuid) { it.copy(isBought = !it.isBought) }
+        updateGrocery(groceryUuid) { grocery ->
+            // When marking as bought, add current date to buyEvents
+            val newBuyEvents = if (!grocery.isBought) {
+                grocery.buyEvents + LocalDate.now()
+            } else {
+                grocery.buyEvents
+            }
+            
+            grocery.copy(
+                isBought = !grocery.isBought,
+                buyEvents = newBuyEvents,
+                imageUUID = grocery.imageUUID
+            )
+        }
     }
 
     // Category Management Helpers
@@ -215,7 +232,10 @@ object DataManagerObject {
             val updatedGroceries = groceriesToMove.map { grocery ->
                 grocery.copy(
                     categoryId = targetSubCategory!!.subCategory.categoryId,
-                    subCategoryId = targetSubCategory!!.subCategory.uuid
+                    subCategoryId = targetSubCategory!!.subCategory.uuid,
+                    // Preserve existing values for new properties
+                    buyEvents = grocery.buyEvents,
+                    imageUUID = grocery.imageUUID
                 )
             }
 
