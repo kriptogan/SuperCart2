@@ -1,0 +1,14 @@
+In the burger button (top of home page) I want to add a new option:
+
+"Import groceries"
+
+1. Open a dialog with a free text input.
+2. option to Cancel and Import.
+3. clicking Import (disabled if no text), go over the text and execute the following for each item (separated by a new row):
+3.1. if grocery name already exist do nothing.
+3.2. if grocery name not exist, create a new grocery item under the category "Other" sub-category: "General" (should always exist).
+
+after that, promt a message to the user:
+"Should we add the items to the shopping list?"
+
+if the user chooses "Yes", change the inShoppingList value of all newly created items and the items with the existed names to true.
