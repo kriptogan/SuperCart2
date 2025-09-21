@@ -29,9 +29,12 @@ data class Grocery(
     val name: String,
     val categoryId: String,
     val subCategoryId: String,
-    val date: LocalDate? = null,
+    val expirationDate: LocalDate? = null,
     val inShoppingList: Boolean = false,
-    val isBought: Boolean = false
+    val isBought: Boolean = false,
+    val buyEvents: List<LocalDate> = emptyList(),
+    val averageBuyDays: Int? = null,
+    val imageUUID: String? = null
 )
 ```
 
@@ -86,9 +89,16 @@ data class SubCategoryWithGroceries(
 ### **3. Grocery Management**
 - ✅ Create new groceries
 - ✅ Edit existing groceries
+- ✅ Delete groceries with confirmation
 - ✅ Assign groceries to categories and sub-categories
 - ✅ Optional expiration date field
+- ✅ Buy history tracking with last 4 events
+- ✅ Average buy days calculation
 - ✅ Hierarchical display with expand/collapse
+- ✅ Bulk import with "Other/General" fallback
+- ✅ Alert system for:
+  - Expiring/expired items
+  - Items due for purchase based on buy history
 
 ### **4. Shopping List Management**
 - ✅ Add/remove groceries from shopping list (cart icon toggle)
@@ -97,6 +107,11 @@ data class SubCategoryWithGroceries(
   - **"Bought This Time"** - `inShoppingList = true, isBought = true`
 - ✅ Toggle bought status in shopping list screen
 - ✅ Real-time updates between home and shopping list
+- ✅ "Finish Shopping" functionality:
+  - Confirmation dialog
+  - Adds current date to `buyEvents` for bought items
+  - Calculates `averageBuyDays` based on last 4 events
+  - Resets `inShoppingList` and `isBought` to false
 
 ### **5. Search & Navigation**
 - ✅ Search functionality across all groceries
@@ -117,10 +132,14 @@ data class SubCategoryWithGroceries(
 - `ShoppingListScreen` - Shopping list management
 
 ### **Reusable Components**
-- `HierarchicalCategoryDisplay` - Category/grocery tree view
+- `HierarchicalCategoryDisplay` - Category/grocery tree view with:
+  - Clickable title rows for expand/collapse
+  - Buy history dialog
+  - Delete confirmation
 - `CategoriesManagementDialog` - Category management
 - `GroceryCreationDialog` - Grocery creation/editing
-- `BurgerMenu` - Navigation menu
+- `BurgerMenu` - Navigation menu with import option
+- `ImportGroceriesDialog` - Bulk grocery import
 - `BottomNavigationBar` - Bottom navigation
 - Various selection dialogs for categories/sub-categories
 
@@ -141,6 +160,10 @@ data class SubCategoryWithGroceries(
 - Automatic viewOrder management
 - UUID-based entity identification
 - Hierarchical data relationships
+- Single source of truth through DataManagerObject
+- Centralized data manipulation functions
+- Automatic UI updates through SnapshotStateList
+- Buy history tracking and calculations
 
 ### **Performance**
 - Efficient list rendering with Compose
@@ -151,10 +174,11 @@ data class SubCategoryWithGroceries(
 
 ### **Workflow**
 1. **Setup** - Create categories and sub-categories
-2. **Manage** - Add groceries to appropriate categories
+2. **Manage** - Add groceries manually or through bulk import
 3. **Shop** - Use cart icons to add items to shopping list
-4. **Track** - Mark items as bought in shopping list
-5. **Organize** - Search and filter groceries as needed
+4. **Track** - Mark items as bought and finish shopping
+5. **Monitor** - Track expiration dates and buying patterns
+6. **Organize** - Search and filter groceries as needed
 
 ### **Key Benefits**
 - Hierarchical organization system
@@ -162,6 +186,10 @@ data class SubCategoryWithGroceries(
 - Persistent data storage
 - Intuitive UI with Material Design
 - Efficient state management
+- Smart alerts for expiring items
+- Buy pattern tracking and suggestions
+- Bulk import capabilities
+- Comprehensive buy history
 
 ## 🚀 **Current Status**
 The app is fully functional with all core features implemented. The shopping list management system is working with proper reactive state binding, ensuring real-time updates across all screens.
