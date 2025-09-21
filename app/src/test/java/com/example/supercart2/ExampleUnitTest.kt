@@ -1,4 +1,4 @@
-package com.example.supercart2
+package com.kriptogan.supercart2
 
 import org.junit.Test
 

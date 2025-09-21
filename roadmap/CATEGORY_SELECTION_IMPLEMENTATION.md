@@ -35,7 +35,7 @@ data class Category(
 Create a new file: `app/src/main/java/com/example/supercart2/ui/components/CategorySelectionDialog.kt`
 
 ```kotlin
-package com.example.supercart2.ui.components
+package com.kriptogan.supercart2.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,8 +54,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.supercart2.ui.theme.SuperCartSpacing
-import com.example.supercart2.ui.theme.SuperCartShapes
+import com.kriptogan.supercart2.ui.theme.SuperCartSpacing
+import com.kriptogan.supercart2.ui.theme.SuperCartShapes
 
 @Composable
 fun CategorySelectionDialog(
@@ -174,7 +174,7 @@ private fun CategoryRow(
 Create: `app/src/main/java/com/example/supercart2/ui/components/CreateCategoryDialog.kt`
 
 ```kotlin
-package com.example.supercart2.ui.components
+package com.kriptogan.supercart2.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -183,7 +183,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import com.example.supercart2.ui.theme.SuperCartSpacing
+import com.kriptogan.supercart2.ui.theme.SuperCartSpacing
 
 @Composable
 fun CreateCategoryDialog(
