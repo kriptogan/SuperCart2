@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "329774817099",
+    "project_id": "supercart2-58caf",
+    "storage_bucket": "supercart2-58caf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:329774817099:android:86095f1384164265bf52ce",
+        "android_client_info": {
+          "package_name": "com.example.supercart2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbJfUXPg0KjWqOOheeQ_KRpP6o2NpxubA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
