@@ -156,7 +156,8 @@ fun ShoppingListScreen() {
                     BurgerMenu(
                         onCategoriesManagementClick = {
                             showCategoriesManagement = true
-                        }
+                        },
+                        onImportGroceriesClick = { /* Not needed in shopping list screen */ }
                     )
                 }
 

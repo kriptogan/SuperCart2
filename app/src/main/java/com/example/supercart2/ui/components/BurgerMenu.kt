@@ -27,7 +27,8 @@ import com.example.supercart2.ui.theme.SuperCartColors
 
 @Composable
 fun BurgerMenu(
-    onCategoriesManagementClick: () -> Unit
+    onCategoriesManagementClick: () -> Unit,
+    onImportGroceriesClick: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     
@@ -64,6 +65,13 @@ fun BurgerMenu(
             text = { Text("Categories Management") },
             onClick = {
                 onCategoriesManagementClick()
+                expanded = false
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Import Groceries") },
+            onClick = {
+                onImportGroceriesClick()
                 expanded = false
             }
         )

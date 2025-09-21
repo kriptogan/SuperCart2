@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.example.supercart2.ui.components.BurgerMenu
 import com.example.supercart2.ui.components.CategoriesManagementDialog
 import com.example.supercart2.ui.components.GroceryCreationDialog
+import com.example.supercart2.ui.components.ImportGroceriesDialog
 import com.example.supercart2.ui.components.HierarchicalCategoryDisplay
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartColors
@@ -58,6 +59,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen() {
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
+    var showImportGroceries by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
     var isAlertFilterActive by remember { mutableStateOf(false) }
@@ -156,6 +158,9 @@ fun HomeScreen() {
                     BurgerMenu(
                         onCategoriesManagementClick = {
                             showCategoriesManagement = true
+                        },
+                        onImportGroceriesClick = {
+                            showImportGroceries = true
                         }
                     )
                 }
@@ -326,6 +331,18 @@ fun HomeScreen() {
     if (showCategoriesManagement) {
         CategoriesManagementDialog(
             onDismiss = { showCategoriesManagement = false }
+        )
+    }
+    
+    // Import Groceries Dialog
+    if (showImportGroceries) {
+        ImportGroceriesDialog(
+            onDismiss = { showImportGroceries = false },
+            onImportComplete = {
+                showImportGroceries = false
+                // Trigger UI refresh
+                dataRefreshTrigger++
+            }
         )
     }
     
