@@ -19,11 +19,16 @@ import com.google.gson.JsonSerializer
 import java.lang.reflect.Type
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.example.supercart2.models.Category
+import com.example.supercart2.models.SubCategory
+import com.example.supercart2.models.Grocery
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "supercart_data")
 
 object DataStoreManager {
-    private const val CATEGORIES_KEY = "categories"
+    private val CATEGORIES_KEY = stringPreferencesKey("categories_flat")
+    private val SUBCATEGORIES_KEY = stringPreferencesKey("subcategories_flat")
+    private val GROCERIES_KEY = stringPreferencesKey("groceries_flat")
     
     // LocalDate adapter for Gson
     private class LocalDateAdapter : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
@@ -57,7 +62,6 @@ object DataStoreManager {
         globalContext = context
     }
     
-    // Global save function that can be called from anywhere
     suspend fun saveDataGlobally() {
         globalContext?.let { context ->
             saveData(context)
@@ -67,45 +71,63 @@ object DataStoreManager {
     }
     
     suspend fun saveData(context: Context) {
-        android.util.Log.d("DataStoreManager", "Saving data to storage...")
-        val json = gson.toJson(DataManagerObject.categories)
-        
-        context.dataStore.edit { preferences ->
-            preferences[stringPreferencesKey(CATEGORIES_KEY)] = json
+        try {
+            // Convert nested structure to flat lists
+            val (categories, subCategories, groceries) = DataConverter.flattenCategories(DataManagerObject.categories)
+            
+            // Save each list separately
+            context.dataStore.edit { preferences ->
+                preferences[CATEGORIES_KEY] = gson.toJson(categories)
+                preferences[SUBCATEGORIES_KEY] = gson.toJson(subCategories)
+                preferences[GROCERIES_KEY] = gson.toJson(groceries)
+            }
+            
+            android.util.Log.d("DataStoreManager", "Data saved successfully. Categories: ${categories.size}, SubCategories: ${subCategories.size}, Groceries: ${groceries.size}")
+        } catch (e: Exception) {
+            android.util.Log.e("DataStoreManager", "Error saving data", e)
+            throw e
         }
-        android.util.Log.d("DataStoreManager", "Data saved. Categories count: ${DataManagerObject.categories.size}")
     }
     
     suspend fun loadData(context: Context) {
-        android.util.Log.d("DataStoreManager", "Loading data from storage...")
-        val type = object : TypeToken<List<CategoryWithSubCategories>>() {}.type
-        
-        // Get the first value from the DataStore
-        val preferences = context.dataStore.data.first()
-        val json = preferences[stringPreferencesKey(CATEGORIES_KEY)]
-        
-        if (json != null) {
-            android.util.Log.d("DataStoreManager", "Found stored data, loading...")
-            try {
-                val loadedCategories = gson.fromJson<List<CategoryWithSubCategories>>(json, type)
+        try {
+            android.util.Log.d("DataStoreManager", "Loading data from storage...")
+            val preferences = context.dataStore.data.first()
+            
+            // Load each list
+            val categories = preferences[CATEGORIES_KEY]?.let {
+                gson.fromJson<List<Category>>(it, object : TypeToken<List<Category>>() {}.type)
+            } ?: emptyList()
+            
+            val subCategories = preferences[SUBCATEGORIES_KEY]?.let {
+                gson.fromJson<List<SubCategory>>(it, object : TypeToken<List<SubCategory>>() {}.type)
+            } ?: emptyList()
+            
+            val groceries = preferences[GROCERIES_KEY]?.let {
+                gson.fromJson<List<Grocery>>(it, object : TypeToken<List<Grocery>>() {}.type)
+            } ?: emptyList()
+            
+            // Validate relationships
+            if (DataConverter.validateRelationships(categories, subCategories, groceries)) {
+                // Convert to nested structure and update DataManagerObject
+                val nestedData = DataConverter.buildNestedStructure(categories, subCategories, groceries)
                 DataManagerObject.categories.clear()
-                DataManagerObject.categories.addAll(loadedCategories)
-                android.util.Log.d("DataStoreManager", "Loaded ${loadedCategories.size} categories")
-            } catch (e: Exception) {
-                android.util.Log.e("DataStoreManager", "Error loading data from JSON", e)
-                // If loading fails, initialize default data
+                DataManagerObject.categories.addAll(nestedData)
+                
+                android.util.Log.d("DataStoreManager", "Data loaded successfully. Categories: ${categories.size}, SubCategories: ${subCategories.size}, Groceries: ${groceries.size}")
+            } else {
+                android.util.Log.e("DataStoreManager", "Invalid data relationships detected")
                 DataInitializer.initializeDefaultData(context)
             }
-        } else {
-            android.util.Log.d("DataStoreManager", "No stored data found")
-        }
-        
-        // Initialize default data if no categories exist
-        if (DataManagerObject.categories.isEmpty()) {
-            android.util.Log.d("DataStoreManager", "No categories found, initializing defaults...")
+            
+            // Initialize default data if no categories exist
+            if (DataManagerObject.categories.isEmpty()) {
+                android.util.Log.d("DataStoreManager", "No data found, initializing defaults...")
+                DataInitializer.initializeDefaultData(context)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("DataStoreManager", "Error loading data", e)
             DataInitializer.initializeDefaultData(context)
-        } else {
-            android.util.Log.d("DataStoreManager", "Categories already loaded: ${DataManagerObject.categories.size}")
         }
     }
 }
