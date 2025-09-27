@@ -20,10 +20,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartColors
+import com.example.supercart2.data.FirebaseManager
+import kotlinx.coroutines.launch
 
 @Composable
 fun BurgerMenu(
@@ -31,6 +34,7 @@ fun BurgerMenu(
     onImportGroceriesClick: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     
     Card(
         modifier = Modifier
@@ -72,6 +76,36 @@ fun BurgerMenu(
             text = { Text("Import Groceries") },
             onClick = {
                 onImportGroceriesClick()
+                expanded = false
+            }
+        )
+        // Firebase Upload Option
+        DropdownMenuItem(
+            text = { Text("Upload to Cloud") },
+            onClick = {
+                scope.launch {
+                    try {
+                        FirebaseManager.uploadData()
+                    } catch (e: Exception) {
+                        // Handle error - in a real app, you'd want to show a proper error dialog
+                        android.util.Log.e("BurgerMenu", "Upload failed", e)
+                    }
+                }
+                expanded = false
+            }
+        )
+        // Firebase Download Option
+        DropdownMenuItem(
+            text = { Text("Download from Cloud") },
+            onClick = {
+                scope.launch {
+                    try {
+                        FirebaseManager.downloadData()
+                    } catch (e: Exception) {
+                        // Handle error - in a real app, you'd want to show a proper error dialog
+                        android.util.Log.e("BurgerMenu", "Download failed", e)
+                    }
+                }
                 expanded = false
             }
         )
