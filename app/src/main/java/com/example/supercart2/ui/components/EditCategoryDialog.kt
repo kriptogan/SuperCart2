@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.launch
@@ -60,6 +61,17 @@ fun EditCategoryDialog(
     var showCreateSubCategoryDialog by remember { mutableStateOf(false) }
     var editingSubCategory by remember { mutableStateOf<SubCategory?>(null) }
     val scope = rememberCoroutineScope()
+    
+    // Get current sub-categories directly from DataManagerObject to ensure fresh data
+    // Use derivedStateOf to automatically recompute when version changes
+    val currentSubCategories by remember {
+        derivedStateOf {
+            // Accessing DataManagerObject.version ensures this recomputes when data changes
+            // Accessing categories will also trigger recomposition when version changes
+            val currentVersion = DataManagerObject.version
+            DataManagerObject.categories.find { it.category.uuid == category.uuid }?.subCategories ?: subCategories
+        }
+    }
     
     if (showCreateSubCategoryDialog) {
         CreateSubCategoryDialog(
@@ -91,8 +103,8 @@ fun EditCategoryDialog(
             subCategory = editingSubCategory!!,
             onDismiss = { editingSubCategory = null },
             onSubCategoryUpdated = { updatedSubCategory ->
-                // Update the sub-category using DataManagerObject helper
-                DataManagerObject.updateSubCategory(category.uuid, updatedSubCategory.uuid) { updatedSubCategory }
+                // Data is already updated by EditSubCategoryDialog, just close the dialog
+                // The currentSubCategories will automatically update via version observation
                 editingSubCategory = null
             }
         )
@@ -254,7 +266,7 @@ fun EditCategoryDialog(
                     modifier = Modifier.height(200.dp)
                 ) {
                     items(
-                        items = subCategories,
+                        items = currentSubCategories,
                         key = { it.subCategory.uuid } // Use stable UUID as key
                     ) { subCategoryWithGroceries ->
                         SubCategoryCard(

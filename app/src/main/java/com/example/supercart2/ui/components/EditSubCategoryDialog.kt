@@ -200,16 +200,28 @@ fun EditSubCategoryDialog(
                 Button(
                     onClick = {
                         if (subCategoryName.isNotBlank()) {
+                            // Create updated sub-category preserving protected status
+                            val updatedSubCategory = subCategory.copy(
+                                name = subCategoryName.trim(),
+                                lastUpdate = java.time.LocalDateTime.now(),
+                                protected = subCategory.protected, // Preserve protected status
+                                deleted = subCategory.deleted
+                            )
+                            
+                            // Update using DataManagerObject helper
                             DataManagerObject.updateSubCategory(
                                 categoryId,
                                 subCategory.uuid
-                            ) { 
-                                it.copy(
-                                    name = subCategoryName.trim(),
-                                    lastUpdate = java.time.LocalDateTime.now(),
-                                    deleted = it.deleted
-                                )
+                            ) { updatedSubCategory }
+                            
+                            // Save to DataStore
+                            scope.launch {
+                                DataStoreManager.saveDataGlobally()
+                                android.util.Log.d("EditSubCategoryDialog", "Saved sub-category update to DataStore")
                             }
+                            
+                            // Notify parent component
+                            onSubCategoryUpdated(updatedSubCategory)
                             onDismiss()
                         }
                     },
