@@ -43,6 +43,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @Composable
 fun HierarchicalCategoryDisplay(
@@ -287,11 +288,40 @@ private fun GroceryItem(
             ?.category?.name ?: ""
     }
     
+    // Check if this grocery item has an alert (only for home screen, not shopping list)
+    val hasAlert = remember(currentGrocery, isShoppingList) {
+        if (isShoppingList) {
+            false // No alerts in shopping list
+        } else {
+            val today = java.time.LocalDate.now()
+            val tomorrow = today.plusDays(1)
+            
+            // Check expiration date condition
+            val isExpiringSoon = currentGrocery.expirationDate?.let { expDate ->
+                expDate <= tomorrow // Due tomorrow or already passed
+            } ?: false
+            
+            // Check buy pattern condition
+            val needsToBuy = currentGrocery.averageBuyDays?.let { avgDays ->
+                currentGrocery.buyEvents.maxOrNull()?.let { lastBuyDate ->
+                    val daysSinceLastBuy = today.toEpochDay() - lastBuyDate.toEpochDay()
+                    daysSinceLastBuy >= avgDays
+                }
+            } ?: false
+            
+            isExpiringSoon || needsToBuy
+        }
+    }
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (isShoppingList && currentGrocery.isBought) SuperCartColors.lightGreen.copy(alpha = 0.1f) else Color.White,
+                when {
+                    isShoppingList && currentGrocery.isBought -> SuperCartColors.lightGreen.copy(alpha = 0.1f)
+                    hasAlert -> SuperCartColors.orange.copy(alpha = 0.15f) // Orange background for alert items
+                    else -> Color.White
+                },
                 shape = RoundedCornerShape(6.dp)
             )
             .padding(horizontal = 12.dp, vertical = 8.dp),
