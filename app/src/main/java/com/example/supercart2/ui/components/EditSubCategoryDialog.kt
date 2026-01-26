@@ -204,7 +204,11 @@ fun EditSubCategoryDialog(
                                 categoryId,
                                 subCategory.uuid
                             ) { 
-                                it.copy(name = subCategoryName.trim())
+                                it.copy(
+                                    name = subCategoryName.trim(),
+                                    lastUpdate = java.time.LocalDateTime.now(),
+                                    deleted = it.deleted
+                                )
                             }
                             onDismiss()
                         }

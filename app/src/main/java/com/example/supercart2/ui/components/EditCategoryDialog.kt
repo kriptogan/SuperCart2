@@ -68,7 +68,9 @@ fun EditCategoryDialog(
                 val newSubCategory = SubCategory(
                     categoryId = category.uuid,
                     name = subCategoryName.trim(),
-                    protected = false
+                    protected = false,
+                    lastUpdate = java.time.LocalDateTime.now(),
+                    deleted = false
                 )
                 // Add the new sub-category using DataManagerObject helper
                 DataManagerObject.addSubCategory(category.uuid, newSubCategory)
@@ -301,7 +303,11 @@ fun EditCategoryDialog(
                     onClick = {
                         if (categoryName.isNotBlank()) {
                             DataManagerObject.updateCategory(category.uuid) { 
-                                it.copy(name = categoryName.trim())
+                                it.copy(
+                                    name = categoryName.trim(),
+                                    lastUpdate = java.time.LocalDateTime.now(),
+                                    deleted = it.deleted
+                                )
                             }
                             onDismiss()
                         }

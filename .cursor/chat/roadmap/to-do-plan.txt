@@ -1,0 +1,66 @@
+V 1. add isBought to groceries.
+V 2. update lastUpdate when cart/bought is clicked.
+ 
+ 
+ ____________________________________
+ 1. handle sync properly
+ V 3. better UI for "select category" + an option to create a new one on the fly
+ V 4. hide alert icon if there are no alerts
+ V 5. scroll bug in the shopping list page
+ V 6. when an item moves to bought list, don't alter the cart icon
+ V 7. when user adds an item with an existing name, alert about it, close the window, and filter by that name to show the item.
+ V 8. In the "import shopping list" process, after user clicks the checkmark, prompt a confirm message: "the following X items will be added to the system, do you want them to be placed in the shopping list as well?" with a yes/no options.
+
+
+timestamp-based sync method:
+I want to fix the sync with server problems I have.
+to do so, I need that each object in the app will have a timestamp property called `lastUpdate`
+
+When a user changes something in that object (category/item) we need to update that timestamp.
+After updating the timestamp, if the user is connected to a familyShare group, the app should upload the update to the server.
+The server than needs to check if this update is more recent that the one it has.
+In case the update is indeed more recent, update the database, and notify all other family members (except the origin sender). If not, send the more recent info back to the user.
+
+In case the server sends an update to a user, the app will compare the timestamp with their local data.
+If the info is indeed more updated, the local data and view will change.
+If not, the user will upload an update to the server.
+
+learn the current code regarding synchronization with the cloud database.
+Please summarize all that and suggest implementation. do not execute the changes yet.
+
+In case of a deleted item, keep a local list of deleted items with the timestamp.
+remove items from that list after 3 days.
+
+Use a pending list that sends the updates in a packet every 5 seconds.
+
+___________________________________________________________________________
+
+I have a complicated task for you, I will break it down into sections:
+1. After user creates or edit an item (category or grocery, from the home or shopping list page), the app will store the change as a pending change (this is just a record of the change).
+2. every 30 seconds, the app will send to the server all the pending changes.
+3. the server will go over the changes and compare the IDs of the items in those changes.
+4. if the item does not exist, the server will create it in the database.
+5. if the item exist, it will compare the lastUpdate proparty.
+6. if the server has the outdated data, it will update/delete (according to the action type)
+7. if the user has the outdated data, the server will send message to the user with the updated data.
+8. after going over all the ppending changes, the server will send an acknowledge message to the sender.
+9. when the ack message received, show a toaster message "sync succeeded."
+
+______________________________________________________________________________
+
+I would like to implement a sharing mechanism using Firebase.
+Here are the rules:
+
+1. In the settings burger, add an option called "Sharing group".
+2. Clicking the sharing group will open an alertDialog with 2 options:
+2.1. Create group.
+2.2. Join group.
+3. Creating a group will do the following:
+3.1. The server will generate a unique 8-digit code.
+3.2. show the user their share group number.
+3.3. upload his datastore to the Firebase.
+4. Join a group will do the following steps:
+4.1. The user will need to insert an 8-digit code.
+4.2. The server will look for an existing group with a matched code.
+4.3. The user will download the data of that group.
+4.4. The data will overwrite the local data and will be stored in the datastore.

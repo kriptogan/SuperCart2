@@ -18,9 +18,9 @@ object DataOperations {
             try {
                 // Find the category in DataManagerObject
                 DataManagerObject.categories.find { it.category.uuid == categoryId }?.let { categoryWithSubs ->
-                    // Create updated category with isDeleted = true and new lastUpdate
+                    // Create updated category with deleted = true and new lastUpdate
                     val updatedCategory = categoryWithSubs.category.copy(
-                        isDeleted = true,
+                        deleted = true,
                         lastUpdate = LocalDateTime.now()
                     )
                     
@@ -59,7 +59,7 @@ object DataOperations {
                     categoryWithSubs.subCategories.find { it.subCategory.uuid == subCategoryId }?.let { subCategoryWithGroceries ->
                         // Create updated subcategory
                         val updatedSubCategory = subCategoryWithGroceries.subCategory.copy(
-                            isDeleted = true,
+                            deleted = true,
                             lastUpdate = LocalDateTime.now()
                         )
                         
@@ -104,7 +104,7 @@ object DataOperations {
                         subCategoryWithGroceries.groceries.find { it.uuid == groceryId }?.let { grocery ->
                             // Create updated grocery
                             val updatedGrocery = grocery.copy(
-                                isDeleted = true,
+                                deleted = true,
                                 lastUpdate = LocalDateTime.now()
                             )
                             

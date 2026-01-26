@@ -11,5 +11,5 @@ data class Category(
     val groupId: String? = null,
     val protected: Boolean = false,
     val lastUpdate: LocalDateTime = LocalDateTime.now(),
-    val isDeleted: Boolean = false
+    val deleted: Boolean = false  // Changed from isDeleted to deleted
 )

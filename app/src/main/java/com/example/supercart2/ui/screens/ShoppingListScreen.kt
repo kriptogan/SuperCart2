@@ -185,7 +185,12 @@ fun ShoppingListScreen() {
                         )
                     ) {
                         IconButton(
-                            onClick = { showGroceryCreation = true },
+                            onClick = { 
+                                // Reset edit mode when creating new grocery
+                                isEditMode = false
+                                groceryToEdit = null
+                                showGroceryCreation = true 
+                            },
                             modifier = Modifier.fillMaxSize()
                         ) {
                             Icon(
@@ -513,6 +518,7 @@ fun ShoppingListScreen() {
         if (showGroceryCreation) {
             GroceryCreationDialog(
                 groceryToEdit = groceryToEdit,
+                initialGroceryName = if (isEditMode) "" else searchQuery,
                 onDismiss = { 
                     showGroceryCreation = false
                     isEditMode = false

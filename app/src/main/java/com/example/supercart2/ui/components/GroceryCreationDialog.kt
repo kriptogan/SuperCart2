@@ -59,7 +59,8 @@ import java.time.format.DateTimeFormatter
 fun GroceryCreationDialog(
     onDismiss: () -> Unit,
     onGroceryCreated: (Grocery) -> Unit,
-    groceryToEdit: Grocery? = null
+    groceryToEdit: Grocery? = null,
+    initialGroceryName: String = ""
 ) {
     var groceryName by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
@@ -67,7 +68,7 @@ fun GroceryCreationDialog(
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     
     // Initialize form with grocery data when editing, or auto-select first category/sub-category when creating
-    LaunchedEffect(groceryToEdit) {
+    LaunchedEffect(groceryToEdit, initialGroceryName) {
         if (groceryToEdit != null) {
             // Edit mode - populate form with existing grocery data
             groceryName = groceryToEdit.name
@@ -79,7 +80,9 @@ fun GroceryCreationDialog(
             }?.subCategories?.find { it.subCategory.uuid == groceryToEdit.subCategoryId }?.subCategory
             selectedDate = groceryToEdit.expirationDate
         } else {
-            // Create mode - auto-select first category and sub-category
+            // Create mode - use initialGroceryName if provided, otherwise empty string
+            groceryName = initialGroceryName
+            // Auto-select first category and sub-category
             val sortedCategories = DataManagerObject.getSortedCategories()
             if (sortedCategories.isNotEmpty()) {
                 selectedCategory = sortedCategories.first().category
@@ -410,7 +413,7 @@ fun GroceryCreationDialog(
                                     // Update lastUpdate timestamp
                                     lastUpdate = java.time.LocalDateTime.now(),
                                     // Preserve isDeleted status
-                                    isDeleted = groceryToEdit.isDeleted
+                                    deleted = groceryToEdit.deleted
                                 )
                                  
                                  // If category or sub-category changed, use updateGroceryLocation
@@ -446,7 +449,7 @@ fun GroceryCreationDialog(
                                     subCategoryId = selectedSubCategory!!.uuid,
                                     expirationDate = selectedDate,
                                     lastUpdate = java.time.LocalDateTime.now(),
-                                    isDeleted = false
+                                    deleted = false
                                 )
                                  
                                  // Add the new grocery using DataManagerObject helper

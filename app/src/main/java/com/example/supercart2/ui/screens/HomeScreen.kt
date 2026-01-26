@@ -211,7 +211,12 @@ fun HomeScreen() {
                         )
                     ) {
                         IconButton(
-                            onClick = { showGroceryCreation = true },
+                            onClick = { 
+                                // Reset edit mode when creating new grocery
+                                isEditMode = false
+                                groceryToEdit = null
+                                showGroceryCreation = true 
+                            },
                             modifier = Modifier.fillMaxSize()
                         ) {
                             Icon(
@@ -350,6 +355,7 @@ fun HomeScreen() {
     if (showGroceryCreation) {
         GroceryCreationDialog(
             groceryToEdit = groceryToEdit,
+            initialGroceryName = if (isEditMode) "" else searchQuery,
             onDismiss = { 
                 showGroceryCreation = false
                 // Reset edit mode when dialog is dismissed

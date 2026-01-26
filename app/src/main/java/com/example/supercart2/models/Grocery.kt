@@ -16,5 +16,5 @@ data class Grocery(
     val imageUUID: String? = null,
     val averageBuyDays: Int? = null, // null means not enough data to calculate
     val lastUpdate: LocalDateTime = LocalDateTime.now(),
-    val isDeleted: Boolean = false
-)
+    val deleted: Boolean = false  // Changed from isDeleted to deleted
+)        
