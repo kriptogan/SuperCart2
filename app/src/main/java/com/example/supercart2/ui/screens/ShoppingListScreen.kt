@@ -120,6 +120,23 @@ fun ShoppingListScreen() {
         }
     }
     
+    // Calculate item counts for each section
+    val toBuyCount = remember(version, searchQuery) {
+        toBuyCategories.sumOf { category ->
+            category.subCategories.sumOf { subCategory ->
+                subCategory.groceries.size
+            }
+        }
+    }
+    
+    val boughtCount = remember(version, searchQuery) {
+        boughtCategories.sumOf { category ->
+            category.subCategories.sumOf { subCategory ->
+                subCategory.groceries.size
+            }
+        }
+    }
+    
     // Function to handle editing a grocery
     fun onEditGrocery(grocery: Grocery) {
         groceryToEdit = grocery
@@ -299,13 +316,26 @@ fun ShoppingListScreen() {
                 // To Buy Section
                 item {
                     if (toBuyCategories.isNotEmpty()) {
-                        Text(
-                            text = "Things to Buy",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = SuperCartColors.primaryGreen,
-                            modifier = Modifier.padding(vertical = SuperCartSpacing.sm)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = SuperCartSpacing.sm),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Things to Buy",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SuperCartColors.primaryGreen
+                            )
+                            Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                            Text(
+                                text = "($toBuyCount)",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = SuperCartColors.gray
+                            )
+                        }
                         HierarchicalCategoryDisplay(
                             categories = toBuyCategories,
                             searchQuery = searchQuery,
@@ -340,13 +370,26 @@ fun ShoppingListScreen() {
                 // Bought Section
                 item {
                     if (boughtCategories.isNotEmpty()) {
-                        Text(
-                            text = "Already Bought",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = SuperCartColors.primaryGreen,
-                            modifier = Modifier.padding(vertical = SuperCartSpacing.sm)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = SuperCartSpacing.sm),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Already Bought",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SuperCartColors.primaryGreen
+                            )
+                            Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                            Text(
+                                text = "($boughtCount)",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = SuperCartColors.gray
+                            )
+                        }
                         // Flat list of bought groceries
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
