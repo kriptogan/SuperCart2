@@ -400,14 +400,18 @@ fun GroceryCreationDialog(
                              if (groceryToEdit != null) {
                                  // Edit mode - update existing grocery
                                  val updatedGrocery = groceryToEdit.copy(
-                                     name = groceryName.trim(),
-                                     categoryId = selectedCategory!!.uuid,
-                                     subCategoryId = selectedSubCategory!!.uuid,
-                                     expirationDate = selectedDate,
-                                     // Preserve existing values for new properties
-                                     buyEvents = groceryToEdit.buyEvents,
-                                     imageUUID = groceryToEdit.imageUUID
-                                 )
+                                    name = groceryName.trim(),
+                                    categoryId = selectedCategory!!.uuid,
+                                    subCategoryId = selectedSubCategory!!.uuid,
+                                    expirationDate = selectedDate,
+                                    // Preserve existing values for new properties
+                                    buyEvents = groceryToEdit.buyEvents,
+                                    imageUUID = groceryToEdit.imageUUID,
+                                    // Update lastUpdate timestamp
+                                    lastUpdate = java.time.LocalDateTime.now(),
+                                    // Preserve isDeleted status
+                                    isDeleted = groceryToEdit.isDeleted
+                                )
                                  
                                  // If category or sub-category changed, use updateGroceryLocation
                                  if (groceryToEdit.categoryId != selectedCategory!!.uuid || 
@@ -437,11 +441,13 @@ fun GroceryCreationDialog(
                              } else {
                                  // Create mode - create new grocery
                                  val newGrocery = Grocery(
-                                     name = groceryName.trim(),
-                                     categoryId = selectedCategory!!.uuid,
-                                     subCategoryId = selectedSubCategory!!.uuid,
-                                     expirationDate = selectedDate
-                                 )
+                                    name = groceryName.trim(),
+                                    categoryId = selectedCategory!!.uuid,
+                                    subCategoryId = selectedSubCategory!!.uuid,
+                                    expirationDate = selectedDate,
+                                    lastUpdate = java.time.LocalDateTime.now(),
+                                    isDeleted = false
+                                )
                                  
                                  // Add the new grocery using DataManagerObject helper
                                  DataManagerObject.addGrocery(newGrocery)

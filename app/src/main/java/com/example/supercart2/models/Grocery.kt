@@ -2,6 +2,7 @@ package com.example.supercart2.models
 
 import java.util.UUID
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class Grocery(
     val uuid: String = UUID.randomUUID().toString(),
@@ -13,5 +14,7 @@ data class Grocery(
     val isBought: Boolean = false,
     val buyEvents: List<LocalDate> = emptyList(),
     val imageUUID: String? = null,
-    val averageBuyDays: Int? = null // null means not enough data to calculate
+    val averageBuyDays: Int? = null, // null means not enough data to calculate
+    val lastUpdate: LocalDateTime = LocalDateTime.now(),
+    val isDeleted: Boolean = false
 )

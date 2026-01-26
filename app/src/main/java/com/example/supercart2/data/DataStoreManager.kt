@@ -18,6 +18,7 @@ import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import java.lang.reflect.Type
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
@@ -48,10 +49,30 @@ object DataStoreManager {
         }
     }
     
-    // Configured Gson instance with LocalDate support
+    // LocalDateTime adapter for Gson
+    private class LocalDateTimeAdapter : JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+        private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        
+        override fun serialize(src: LocalDateTime?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
+            return JsonPrimitive(src?.format(formatter))
+        }
+        
+        override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): LocalDateTime {
+            return try {
+                json?.asString?.let { LocalDateTime.parse(it, formatter) }
+                    ?: LocalDateTime.now()
+            } catch (e: Exception) {
+                android.util.Log.e("DataStoreManager", "Error deserializing LocalDateTime: ${json?.asString}", e)
+                LocalDateTime.now()
+            }
+        }
+    }
+    
+    // Configured Gson instance with LocalDate and LocalDateTime support
     private val gson: Gson by lazy {
         GsonBuilder()
             .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
+            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
             .create()
     }
     
@@ -94,7 +115,7 @@ object DataStoreManager {
             android.util.Log.d("DataStoreManager", "Loading data from storage...")
             val preferences = context.dataStore.data.first()
             
-            // Load each list
+            // Load each list with explicit type parameters
             val categories = preferences[CATEGORIES_KEY]?.let {
                 gson.fromJson<List<Category>>(it, object : TypeToken<List<Category>>() {}.type)
             } ?: emptyList()
@@ -109,7 +130,7 @@ object DataStoreManager {
             
             // Validate relationships
             if (DataConverter.validateRelationships(categories, subCategories, groceries)) {
-                // Convert to nested structure and update DataManagerObject
+                // Convert to nested structure
                 val nestedData = DataConverter.buildNestedStructure(categories, subCategories, groceries)
                 DataManagerObject.categories.clear()
                 DataManagerObject.categories.addAll(nestedData)

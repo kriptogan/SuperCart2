@@ -3,6 +3,7 @@ package com.example.supercart2.data
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDateTime
 
 /**
  * Handles data operations that need to be synchronized across both storage systems
@@ -10,79 +11,127 @@ import kotlinx.coroutines.tasks.await
 object DataOperations {
     
     /**
-     * Deletes a category and all its related items from both local and Firebase storage
+     * Marks a category as deleted and updates all related items
      */
     suspend fun deleteCategory(categoryId: String) {
         withContext(Dispatchers.IO) {
             try {
-                // Delete from Firebase first (includes cascade deletes)
-                FirebaseManager.deleteCategory(categoryId)
-                
-                // Update local data
-                val updatedCategories = DataManagerObject.categories.filter { 
-                    it.category.uuid != categoryId 
+                // Find the category in DataManagerObject
+                DataManagerObject.categories.find { it.category.uuid == categoryId }?.let { categoryWithSubs ->
+                    // Create updated category with isDeleted = true and new lastUpdate
+                    val updatedCategory = categoryWithSubs.category.copy(
+                        isDeleted = true,
+                        lastUpdate = LocalDateTime.now()
+                    )
+                    
+                    // Update Firebase
+                    FirebaseManager.db.collection(FirebaseManager.CATEGORIES_COLLECTION)
+                        .document(categoryId)
+                        .set(updatedCategory)
+                        .await()
+                    
+                    // Update local data
+                    val categoryIndex = DataManagerObject.categories.indexOfFirst { it.category.uuid == categoryId }
+                    if (categoryIndex >= 0) {
+                        DataManagerObject.categories[categoryIndex] = categoryWithSubs.copy(category = updatedCategory)
+                    }
+                    
+                    // Save to DataStore
+                    DataStoreManager.saveDataGlobally()
                 }
-                DataManagerObject.categories.clear()
-                DataManagerObject.categories.addAll(updatedCategories)
                 
-                // Save to DataStore
-                DataStoreManager.saveDataGlobally()
-                
-                android.util.Log.d("DataOperations", "Category deleted successfully from all storage systems")
+                android.util.Log.d("DataOperations", "Category marked as deleted successfully")
             } catch (e: Exception) {
-                android.util.Log.e("DataOperations", "Error deleting category", e)
+                android.util.Log.e("DataOperations", "Error marking category as deleted", e)
                 throw e
             }
         }
     }
     
     /**
-     * Deletes a subcategory and all its groceries from both local and Firebase storage
+     * Marks a subcategory as deleted
      */
     suspend fun deleteSubCategory(subCategoryId: String) {
         withContext(Dispatchers.IO) {
             try {
-                // Delete from Firebase first (includes cascade deletes)
-                FirebaseManager.deleteSubCategory(subCategoryId)
-                
-                // Update local data
+                // Find the subcategory
                 DataManagerObject.categories.forEach { categoryWithSubs ->
-                    categoryWithSubs.subCategories.removeAll { it.subCategory.uuid == subCategoryId }
+                    categoryWithSubs.subCategories.find { it.subCategory.uuid == subCategoryId }?.let { subCategoryWithGroceries ->
+                        // Create updated subcategory
+                        val updatedSubCategory = subCategoryWithGroceries.subCategory.copy(
+                            isDeleted = true,
+                            lastUpdate = LocalDateTime.now()
+                        )
+                        
+                        // Update Firebase
+                        FirebaseManager.db.collection(FirebaseManager.SUBCATEGORIES_COLLECTION)
+                            .document(subCategoryId)
+                            .set(updatedSubCategory)
+                            .await()
+                        
+                        // Update local data
+                        val subCategoryIndex = categoryWithSubs.subCategories.indexOfFirst { 
+                            it.subCategory.uuid == subCategoryId 
+                        }
+                        if (subCategoryIndex >= 0) {
+                            categoryWithSubs.subCategories[subCategoryIndex] = 
+                                subCategoryWithGroceries.copy(subCategory = updatedSubCategory)
+                        }
+                        
+                        // Save to DataStore
+                        DataStoreManager.saveDataGlobally()
+                        return@forEach
+                    }
                 }
                 
-                // Save to DataStore
-                DataStoreManager.saveDataGlobally()
-                
-                android.util.Log.d("DataOperations", "Subcategory deleted successfully from all storage systems")
+                android.util.Log.d("DataOperations", "Subcategory marked as deleted successfully")
             } catch (e: Exception) {
-                android.util.Log.e("DataOperations", "Error deleting subcategory", e)
+                android.util.Log.e("DataOperations", "Error marking subcategory as deleted", e)
                 throw e
             }
         }
     }
     
     /**
-     * Deletes a grocery item from both local and Firebase storage
+     * Marks a grocery item as deleted
      */
     suspend fun deleteGrocery(groceryId: String) {
         withContext(Dispatchers.IO) {
             try {
-                // Delete from Firebase
-                FirebaseManager.deleteGrocery(groceryId)
-                
-                // Update local data
+                // Find the grocery item
                 DataManagerObject.categories.forEach { categoryWithSubs ->
                     categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
-                        subCategoryWithGroceries.groceries.removeAll { it.uuid == groceryId }
+                        subCategoryWithGroceries.groceries.find { it.uuid == groceryId }?.let { grocery ->
+                            // Create updated grocery
+                            val updatedGrocery = grocery.copy(
+                                isDeleted = true,
+                                lastUpdate = LocalDateTime.now()
+                            )
+                            
+                            // Update Firebase
+                            FirebaseManager.db.collection(FirebaseManager.GROCERIES_COLLECTION)
+                                .document(groceryId)
+                                .set(updatedGrocery)
+                                .await()
+                            
+                            // Update local data
+                            val groceryIndex = subCategoryWithGroceries.groceries.indexOfFirst { 
+                                it.uuid == groceryId 
+                            }
+                            if (groceryIndex >= 0) {
+                                subCategoryWithGroceries.groceries[groceryIndex] = updatedGrocery
+                            }
+                            
+                            // Save to DataStore
+                            DataStoreManager.saveDataGlobally()
+                            return@forEach
+                        }
                     }
                 }
                 
-                // Save to DataStore
-                DataStoreManager.saveDataGlobally()
-                
-                android.util.Log.d("DataOperations", "Grocery deleted successfully from all storage systems")
+                android.util.Log.d("DataOperations", "Grocery marked as deleted successfully")
             } catch (e: Exception) {
-                android.util.Log.e("DataOperations", "Error deleting grocery", e)
+                android.util.Log.e("DataOperations", "Error marking grocery as deleted", e)
                 throw e
             }
         }
