@@ -2,10 +2,17 @@ package com.example.supercart2.data
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.tasks.await
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Date
 
 object FirebaseManager {
     val db = FirebaseFirestore.getInstance() // Made public
@@ -26,6 +33,50 @@ object FirebaseManager {
         }
     }
 
+    // Helper function to convert Category to Map for Firestore (with date serialization)
+    private fun categoryToMap(category: Category): Map<String, Any?> {
+        return mapOf(
+            "uuid" to category.uuid,
+            "name" to category.name,
+            "default" to category.default,
+            "viewOrder" to category.viewOrder,
+            "groupId" to category.groupId,
+            "protected" to category.protected,
+            "lastUpdate" to category.lastUpdate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            "deleted" to category.deleted
+        )
+    }
+    
+    // Helper function to convert SubCategory to Map for Firestore (with date serialization)
+    private fun subCategoryToMap(subCategory: SubCategory): Map<String, Any?> {
+        return mapOf(
+            "uuid" to subCategory.uuid,
+            "categoryId" to subCategory.categoryId,
+            "name" to subCategory.name,
+            "protected" to subCategory.protected,
+            "lastUpdate" to subCategory.lastUpdate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            "deleted" to subCategory.deleted
+        )
+    }
+    
+    // Helper function to convert Grocery to Map for Firestore (with date serialization)
+    private fun groceryToMap(grocery: Grocery): Map<String, Any?> {
+        return mapOf(
+            "uuid" to grocery.uuid,
+            "name" to grocery.name,
+            "categoryId" to grocery.categoryId,
+            "subCategoryId" to grocery.subCategoryId,
+            "expirationDate" to (grocery.expirationDate?.format(DateTimeFormatter.ISO_LOCAL_DATE) ?: null),
+            "inShoppingList" to grocery.inShoppingList,
+            "isBought" to grocery.isBought,
+            "buyEvents" to grocery.buyEvents.map { it.format(DateTimeFormatter.ISO_LOCAL_DATE) },
+            "imageUUID" to grocery.imageUUID,
+            "averageBuyDays" to grocery.averageBuyDays,
+            "lastUpdate" to grocery.lastUpdate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            "deleted" to grocery.deleted
+        )
+    }
+
     suspend fun uploadData() {
         try {
             // Convert nested structure to flat lists
@@ -34,22 +85,22 @@ object FirebaseManager {
             // Create a batch operation
             val batch = db.batch()
             
-            // Upload categories
+            // Upload categories (convert to Map for proper date serialization)
             categories.forEach { category ->
                 val docRef = db.collection(CATEGORIES_COLLECTION).document(category.uuid)
-                batch.set(docRef, category)
+                batch.set(docRef, categoryToMap(category))
             }
             
-            // Upload subcategories
+            // Upload subcategories (convert to Map for proper date serialization)
             subCategories.forEach { subCategory ->
                 val docRef = db.collection(SUBCATEGORIES_COLLECTION).document(subCategory.uuid)
-                batch.set(docRef, subCategory)
+                batch.set(docRef, subCategoryToMap(subCategory))
             }
             
-            // Upload groceries
+            // Upload groceries (convert to Map for proper date serialization)
             groceries.forEach { grocery ->
                 val docRef = db.collection(GROCERIES_COLLECTION).document(grocery.uuid)
-                batch.set(docRef, grocery)
+                batch.set(docRef, groceryToMap(grocery))
             }
             
             // Execute the batch
@@ -62,23 +113,102 @@ object FirebaseManager {
         }
     }
 
+    // Helper function to convert Firestore Timestamp to LocalDateTime
+    private fun timestampToLocalDateTime(timestamp: Any?): LocalDateTime {
+        return when (timestamp) {
+            is Timestamp -> timestamp.toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+            is String -> LocalDateTime.parse(timestamp)
+            is com.google.protobuf.Timestamp -> {
+                val millis = timestamp.seconds * 1000 + timestamp.nanos / 1_000_000
+                java.time.Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDateTime()
+            }
+            else -> LocalDateTime.now()
+        }
+    }
+    
+    // Helper function to convert Firestore value to LocalDate
+    private fun toLocalDate(value: Any?): LocalDate? {
+        if (value == null) return null
+        return when (value) {
+            is String -> LocalDate.parse(value)
+            is Timestamp -> value.toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+            else -> null
+        }
+    }
+    
+    // Helper function to convert Firestore value to List<LocalDate>
+    private fun toLocalDateList(value: Any?): List<LocalDate> {
+        if (value == null) return emptyList()
+        return when (value) {
+            is List<*> -> value.mapNotNull { item ->
+                when (item) {
+                    is String -> LocalDate.parse(item)
+                    is Timestamp -> item.toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                    else -> null
+                }
+            }
+            else -> emptyList()
+        }
+    }
+    
+    // Helper function to deserialize Category from Firestore document
+    private fun documentToCategory(doc: DocumentSnapshot): Category {
+        val data = doc.data ?: throw IllegalStateException("Document ${doc.id} has no data")
+        return Category(
+            uuid = doc.id,
+            name = data["name"] as? String ?: throw IllegalStateException("Category ${doc.id} missing name"),
+            default = (data["default"] as? Boolean) ?: false,
+            viewOrder = (data["viewOrder"] as? Long)?.toInt() ?: 0,
+            groupId = data["groupId"] as? String,
+            protected = (data["protected"] as? Boolean) ?: false,
+            lastUpdate = timestampToLocalDateTime(data["lastUpdate"]),
+            deleted = (data["deleted"] as? Boolean) ?: false
+        )
+    }
+    
+    // Helper function to deserialize SubCategory from Firestore document
+    private fun documentToSubCategory(doc: DocumentSnapshot): SubCategory {
+        val data = doc.data ?: throw IllegalStateException("Document ${doc.id} has no data")
+        return SubCategory(
+            uuid = doc.id,
+            categoryId = data["categoryId"] as? String ?: throw IllegalStateException("SubCategory ${doc.id} missing categoryId"),
+            name = data["name"] as? String ?: throw IllegalStateException("SubCategory ${doc.id} missing name"),
+            protected = (data["protected"] as? Boolean) ?: false,
+            lastUpdate = timestampToLocalDateTime(data["lastUpdate"]),
+            deleted = (data["deleted"] as? Boolean) ?: false
+        )
+    }
+    
+    // Helper function to deserialize Grocery from Firestore document
+    private fun documentToGrocery(doc: DocumentSnapshot): Grocery {
+        val data = doc.data ?: throw IllegalStateException("Document ${doc.id} has no data")
+        return Grocery(
+            uuid = doc.id,
+            name = data["name"] as? String ?: throw IllegalStateException("Grocery ${doc.id} missing name"),
+            categoryId = data["categoryId"] as? String ?: throw IllegalStateException("Grocery ${doc.id} missing categoryId"),
+            subCategoryId = data["subCategoryId"] as? String ?: throw IllegalStateException("Grocery ${doc.id} missing subCategoryId"),
+            expirationDate = toLocalDate(data["expirationDate"]),
+            inShoppingList = (data["inShoppingList"] as? Boolean) ?: false,
+            isBought = (data["isBought"] as? Boolean) ?: false,
+            buyEvents = toLocalDateList(data["buyEvents"]),
+            imageUUID = data["imageUUID"] as? String,
+            averageBuyDays = (data["averageBuyDays"] as? Long)?.toInt(),
+            lastUpdate = timestampToLocalDateTime(data["lastUpdate"]),
+            deleted = (data["deleted"] as? Boolean) ?: false
+        )
+    }
+
     suspend fun downloadData() {
         try {
-            // Download all collections
-            val categories = db.collection(CATEGORIES_COLLECTION)
-                .get()
-                .await()
-                .toObjects(Category::class.java)
+            // Download all collections and manually deserialize
+            val categoriesSnapshot = db.collection(CATEGORIES_COLLECTION).get().await()
+            val categories = categoriesSnapshot.documents.map { documentToCategory(it) }
             
-            val subCategories = db.collection(SUBCATEGORIES_COLLECTION)
-                .get()
-                .await()
-                .toObjects(SubCategory::class.java)
+            val subCategoriesSnapshot = db.collection(SUBCATEGORIES_COLLECTION).get().await()
+            val subCategories = subCategoriesSnapshot.documents.map { documentToSubCategory(it) }
             
-            val groceries = db.collection(GROCERIES_COLLECTION)
-                .get()
-                .await()
-                .toObjects(Grocery::class.java)
+            val groceriesSnapshot = db.collection(GROCERIES_COLLECTION).get().await()
+            val groceries = groceriesSnapshot.documents.map { documentToGrocery(it) }
             
             // Validate relationships
             if (DataConverter.validateRelationships(categories, subCategories, groceries)) {
@@ -88,6 +218,9 @@ object FirebaseManager {
                 // Update DataManagerObject
                 DataManagerObject.categories.clear()
                 DataManagerObject.categories.addAll(nestedData)
+                
+                // Trigger UI update
+                DataManagerObject.updateData()
                 
                 // Save to DataStore
                 DataStoreManager.saveDataGlobally()
