@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -92,7 +93,7 @@ fun CreateSubCategoryDialog(
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Icons.Default.Check,
                         contentDescription = "Create Sub-Category"
                     )
                 }

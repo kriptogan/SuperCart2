@@ -60,7 +60,8 @@ fun GroceryCreationDialog(
     onDismiss: () -> Unit,
     onGroceryCreated: (Grocery) -> Unit,
     groceryToEdit: Grocery? = null,
-    initialGroceryName: String = ""
+    initialGroceryName: String = "",
+    addToShoppingList: Boolean = false
 ) {
     var groceryName by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
@@ -448,6 +449,8 @@ fun GroceryCreationDialog(
                                     categoryId = selectedCategory!!.uuid,
                                     subCategoryId = selectedSubCategory!!.uuid,
                                     expirationDate = selectedDate,
+                                    inShoppingList = addToShoppingList,
+                                    isBought = false,
                                     lastUpdate = java.time.LocalDateTime.now(),
                                     deleted = false
                                 )

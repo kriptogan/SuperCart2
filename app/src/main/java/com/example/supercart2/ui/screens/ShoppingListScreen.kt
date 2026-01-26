@@ -519,6 +519,7 @@ fun ShoppingListScreen() {
             GroceryCreationDialog(
                 groceryToEdit = groceryToEdit,
                 initialGroceryName = if (isEditMode) "" else searchQuery,
+                addToShoppingList = !isEditMode, // Add to shopping list when creating from shopping list screen
                 onDismiss = { 
                     showGroceryCreation = false
                     isEditMode = false
