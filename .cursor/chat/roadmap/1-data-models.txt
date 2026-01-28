@@ -1,0 +1,117 @@
+═══════════════════════════════════════════════════════════════════
+TASK 1: CREATE STORE MODEL & UPDATE GROCERY MODEL
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 1
+Phase: 1 - Foundation
+Estimated Time: 2-3 hours
+Status: ☐ Not Started
+Dependencies: None
+Priority: High (Foundation)
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Create the Store data model and update the Grocery model to support
+many-to-many relationships between groceries and stores. This forms
+the foundation for all store-related features.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create Store.kt model file
+☐ Add storeIds field to Grocery model
+☐ Update Grocery.kt imports if needed
+☐ Verify model compiles without errors
+☐ Test model serialization/deserialization locally
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/models/Store.kt
+
+EDIT:
+- app/src/main/java/com/example/supercart2/models/Grocery.kt
+
+
+🏗️ TECHNICAL DETAILS
+═══════════════════════════════════════════════════════════════════
+
+Store Model Structure:
+---
+package com.example.supercart2.models
+
+import java.util.UUID
+import java.time.LocalDateTime
+
+data class Store(
+    val uuid: String = UUID.randomUUID().toString(),
+    val name: String,
+    val viewOrder: Int = 0,
+    val lastUpdate: LocalDateTime = LocalDateTime.now(),
+    val deleted: Boolean = false
+)
+---
+
+Grocery Model Update:
+---
+Add this field to existing Grocery data class:
+val storeIds: List<String> = emptyList()
+
+This allows groceries to be linked to multiple stores.
+Defaults to empty list for backward compatibility.
+---
+
+
+📐 DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+1. Store Model:
+   - Similar structure to Category/SubCategory models
+   - viewOrder for custom ordering (like categories)
+   - No protected field (all stores can be deleted)
+   - deleted field for soft deletion (Firebase sync pattern)
+
+2. Grocery-Store Relationship:
+   - Using List<String> storeIds (denormalized)
+   - Alternative considered: Separate junction table
+   - Chosen for simplicity and consistency with existing patterns
+
+3. Default Values:
+   - Empty storeIds list = not linked to any store
+   - Will appear in "Not Linked to Any Store" section
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Store model compiles
+☐ Grocery model compiles with new field
+☐ No breaking changes to existing code
+☐ Can create Store instances with defaults
+☐ Can create Grocery instances with/without storeIds
+☐ Existing groceries work with empty storeIds
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ Store.kt file created in models package
+☐ Store model has all required fields
+☐ Grocery model has storeIds field
+☐ Default value (emptyList()) is set
+☐ No compilation errors
+☐ Existing grocery creation still works
+☐ Models follow existing code patterns
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 2: Add Store Support to Data Layer
+This will integrate the new models into DataManagerObject, DataStore,
+and Firebase.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 1
+═══════════════════════════════════════════════════════════════════

@@ -1,0 +1,339 @@
+═══════════════════════════════════════════════════════════════════
+TASK 4: IMPLEMENT STORE SELECTION IN GROCERY DIALOG
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 4
+Phase: 3 - Grocery-Store Linking
+Estimated Time: 3-4 hours
+Status: ☐ Not Started
+Dependencies: Task 3 (Stores Management UI)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Enable users to link groceries to multiple stores during creation
+and editing. Add store selection UI with multi-select checkboxes.
+Display linked stores in grocery items.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create StoreSelectionDialog.kt component
+☐ Add store selector to GroceryCreationDialog
+☐ Update grocery creation logic to save storeIds
+☐ Update grocery editing logic to preserve/update storeIds
+☐ Display linked stores in GroceryItem component
+☐ Handle empty stores list (show message)
+☐ Test multi-select functionality
+☐ Test persistence of store links
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/ui/components/StoreSelectionDialog.kt
+
+EDIT:
+- app/src/main/java/com/example/supercart2/ui/components/GroceryCreationDialog.kt
+- app/src/main/java/com/example/supercart2/ui/components/HierarchicalCategoryDisplay.kt
+
+
+🏗️ TECHNICAL DETAILS - StoreSelectionDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+Component Structure:
+---
+@Composable
+fun StoreSelectionDialog(
+    selectedStoreIds: List<String>,
+    onDismiss: () -> Unit,
+    onStoresSelected: (List<String>) -> Unit
+) {
+    val version = DataManagerObject.version
+    val allStores = remember(version) {
+        DataManagerObject.getSortedStores()
+    }
+    
+    var selectedIds by remember { 
+        mutableStateOf(selectedStoreIds.toMutableSet()) 
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Stores") },
+        text = {
+            if (allStores.isEmpty()) {
+                Text(
+                    "No stores available. Create stores in Manage Stores first.",
+                    color = SuperCartColors.gray,
+                    fontStyle = FontStyle.Italic
+                )
+            } else {
+                LazyColumn {
+                    items(allStores) { store ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (selectedIds.contains(store.uuid)) {
+                                        selectedIds.remove(store.uuid)
+                                    } else {
+                                        selectedIds.add(store.uuid)
+                                    }
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = selectedIds.contains(store.uuid),
+                                onCheckedChange = { checked ->
+                                    if (checked) {
+                                        selectedIds.add(store.uuid)
+                                    } else {
+                                        selectedIds.remove(store.uuid)
+                                    }
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = store.name)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onStoresSelected(selectedIds.toList())
+                    onDismiss()
+                },
+                enabled = allStores.isNotEmpty()
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+---
+
+Key Features:
+- Multi-select checkboxes
+- Show all available stores
+- Pre-select currently linked stores
+- Handle empty stores list gracefully
+- Return selected store IDs
+
+
+🏗️ TECHNICAL DETAILS - GroceryCreationDialog Updates
+═══════════════════════════════════════════════════════════════════
+
+Add State Variables:
+---
+var selectedStoreIds by remember { 
+    mutableStateOf(groceryToEdit?.storeIds ?: emptyList()) 
+}
+var showStoreSelection by remember { mutableStateOf(false) }
+---
+
+Add Store Selector UI (after Sub-Category selector):
+---
+Spacer(modifier = Modifier.height(SuperCartSpacing.md))
+
+// Store Selector
+Column {
+    Text(
+        text = "Stores",
+        style = MaterialTheme.typography.bodyMedium,
+        color = SuperCartColors.black,
+        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+    )
+    
+    Button(
+        onClick = { showStoreSelection = true },
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = SuperCartColors.white,
+            contentColor = SuperCartColors.primaryGreen
+        ),
+        shape = SuperCartShapes.small
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val storeNames = remember(selectedStoreIds, DataManagerObject.version) {
+                selectedStoreIds.mapNotNull { storeId ->
+                    DataManagerObject.stores.find { it.uuid == storeId }?.name
+                }
+            }
+            
+            Text(
+                text = when {
+                    storeNames.isEmpty() -> "Select Stores (Optional)"
+                    storeNames.size == 1 -> storeNames[0]
+                    else -> "${storeNames.size} stores selected"
+                },
+                color = if (storeNames.isNotEmpty()) 
+                    SuperCartColors.black else SuperCartColors.gray
+            )
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Select Stores"
+            )
+        }
+    }
+    
+    // Show selected stores as chips
+    if (selectedStoreIds.isNotEmpty()) {
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = SuperCartSpacing.xs)
+        ) {
+            storeNames.forEach { storeName ->
+                AssistChip(
+                    onClick = { /* Optional: remove store */ },
+                    label = { Text(storeName, fontSize = 12.sp) },
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+            }
+        }
+    }
+}
+---
+
+Add Store Selection Dialog:
+---
+if (showStoreSelection) {
+    StoreSelectionDialog(
+        selectedStoreIds = selectedStoreIds,
+        onDismiss = { showStoreSelection = false },
+        onStoresSelected = { newSelectedIds ->
+            selectedStoreIds = newSelectedIds
+        }
+    )
+}
+---
+
+Update Grocery Creation/Update Logic:
+---
+val newGrocery = Grocery(
+    uuid = groceryToEdit?.uuid ?: UUID.randomUUID().toString(),
+    name = groceryName.trim(),
+    categoryId = selectedCategory!!.uuid,
+    subCategoryId = selectedSubCategory!!.uuid,
+    expirationDate = expirationDate,
+    inShoppingList = addToShoppingList || (groceryToEdit?.inShoppingList ?: false),
+    isBought = groceryToEdit?.isBought ?: false,
+    buyEvents = groceryToEdit?.buyEvents ?: emptyList(),
+    storeIds = selectedStoreIds,  // NEW
+    imageUUID = groceryToEdit?.imageUUID,
+    averageBuyDays = groceryToEdit?.averageBuyDays,
+    lastUpdate = LocalDateTime.now()
+)
+---
+
+
+🏗️ TECHNICAL DETAILS - Display Stores in GroceryItem
+═══════════════════════════════════════════════════════════════════
+
+Add Store Display in HierarchicalCategoryDisplay.kt:
+---
+// After grocery name, add store badges
+if (currentGrocery.storeIds.isNotEmpty()) {
+    Row(
+        modifier = Modifier
+            .padding(top = 4.dp)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        currentGrocery.storeIds.take(3).forEach { storeId ->
+            val storeName = remember(storeId, DataManagerObject.version) {
+                DataManagerObject.stores
+                    .find { it.uuid == storeId }?.name ?: "Unknown"
+            }
+            
+            AssistChip(
+                onClick = { /* Read-only */ },
+                label = { 
+                    Text(
+                        text = storeName, 
+                        fontSize = 10.sp
+                    ) 
+                },
+                modifier = Modifier.padding(end = 4.dp),
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = SuperCartColors.lightGray.copy(alpha = 0.3f)
+                )
+            )
+        }
+        
+        // Show "+X more" if more than 3 stores
+        if (currentGrocery.storeIds.size > 3) {
+            Text(
+                text = "+${currentGrocery.storeIds.size - 3} more",
+                fontSize = 10.sp,
+                color = SuperCartColors.gray,
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }
+    }
+}
+---
+
+
+🎨 UI DESIGN NOTES
+═══════════════════════════════════════════════════════════════════
+- Multi-select checkboxes follow Material 3 design
+- Selected stores shown as chips below selector
+- Limit displayed stores to 3 + "more" indicator
+- Optional text for stores (groceries can have no stores)
+- Store chips should be small and subtle
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Can open store selection dialog
+☐ Can select multiple stores
+☐ Can deselect stores
+☐ Pre-selected stores show correctly when editing
+☐ Selected stores display in grocery item
+☐ Store links persist after save
+☐ Works with 0 stores selected
+☐ Works with 1 store selected
+☐ Works with many stores selected
+☐ Empty stores list handled gracefully
+☐ Deleted stores don't break display
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ StoreSelectionDialog created and working
+☐ Store selector added to GroceryCreationDialog
+☐ Multi-select functionality works
+☐ Selected stores persist when creating grocery
+☐ Selected stores persist when editing grocery
+☐ Store badges display in grocery items
+☐ Empty stores list handled gracefully
+☐ Store links save to DataStore and Firebase
+☐ UI is intuitive and matches design patterns
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 5: Create Store View Toggle
+This will enable viewing the shopping list organized by stores.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 4
+═══════════════════════════════════════════════════════════════════

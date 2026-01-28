@@ -1,0 +1,129 @@
+═══════════════════════════════════════════════════════════════════
+STORES MANAGEMENT FEATURE - MASTER TRACKER
+═══════════════════════════════════════════════════════════════════
+
+📊 OVERALL PROGRESS
+═══════════════════════════════════════════════════════════════════
+Total Tasks: 4 phases
+Completed: 0
+In Progress: 0
+Remaining: 4
+
+Estimated Total Time: 20-28 hours
+Actual Time Spent: 0 hours
+
+Current Phase: Phase 1 - Foundation
+Current Status: Not Started
+
+
+🎯 FEATURE OVERVIEW
+═══════════════════════════════════════════════════════════════════
+Enable users to:
+- Link grocery items to multiple stores
+- Manage stores (create, edit, delete, reorder)
+- View shopping list organized by stores
+- Hide/unhide stores in store view mode
+- Plan shopping trips efficiently
+
+
+📋 TASK LIST BY PHASE
+═══════════════════════════════════════════════════════════════════
+
+PHASE 1: FOUNDATION (Data Models & Persistence)
+═══════════════════════════════════════════════════════════════════
+☐ Task 1: Create Store Model & Update Grocery Model
+   File: 1-data-models.txt
+   Estimate: 2-3 hours
+   Status: Not Started
+   Dependencies: None
+   
+☐ Task 2: Add Store Support to Data Layer
+   File: 2-data-layer.txt
+   Estimate: 3-4 hours
+   Status: Not Started
+   Dependencies: Task 1
+
+PHASE 2: STORE MANAGEMENT UI
+═══════════════════════════════════════════════════════════════════
+☐ Task 3: Create Stores Management Dialog
+   File: 3-stores-management-ui.txt
+   Estimate: 4-5 hours
+   Status: Not Started
+   Dependencies: Task 2
+
+PHASE 3: GROCERY-STORE LINKING
+═══════════════════════════════════════════════════════════════════
+☐ Task 4: Implement Store Selection in Grocery Dialog
+   File: 4-grocery-store-linking.txt
+   Estimate: 3-4 hours
+   Status: Not Started
+   Dependencies: Task 3
+
+PHASE 4: STORE VIEW MODE
+═══════════════════════════════════════════════════════════════════
+☐ Task 5: Create Store View Toggle & Display
+   File: 5-store-view-mode.txt
+   Estimate: 5-7 hours
+   Status: Not Started
+   Dependencies: Task 4
+   
+☐ Task 6: Implement Hide/Unhide Stores Feature
+   File: 6-hide-unhide-stores.txt
+   Estimate: 3-5 hours
+   Status: Not Started
+   Dependencies: Task 5
+
+
+🔄 CURRENT FOCUS
+═══════════════════════════════════════════════════════════════════
+Next Task: Task 1 - Create Store Model & Update Grocery Model
+Focus Area: Data models foundation
+Blockers: None
+Notes: Start with Phase 1 to ensure data structure is solid
+
+
+⚠️ IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════
+- Single source of truth: All "duplicates" are same object reference
+- Bought items appear once (no store grouping in Already Bought)
+- Hidden stores persist across navigation
+- Store deletion requires confirmation and unlinks groceries
+- No protected stores or default stores
+- Full hierarchy maintained in all views
+
+
+🧪 TESTING STRATEGY
+═══════════════════════════════════════════════════════════════════
+After Each Phase:
+- Manual testing of new features
+- Test data persistence (DataStore)
+- Test Firebase sync
+- Test edge cases (empty data, multiple items, etc.)
+
+Final Testing:
+- Test with no stores
+- Test with multiple stores per grocery
+- Test hiding/unhiding stores
+- Test deletion with linked groceries
+- Test search in store view mode
+- Test bought items behavior
+
+
+📝 COMPLETION CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ All 6 tasks completed
+☐ All acceptance criteria met
+☐ Manual testing completed
+☐ No linter errors
+☐ Firebase sync tested
+☐ Edge cases handled
+☐ User can manage stores
+☐ User can link groceries to stores
+☐ Store view mode working
+☐ Hide/unhide feature working
+☐ Documentation updated
+
+
+═══════════════════════════════════════════════════════════════════
+END OF MASTER TRACKER
+═══════════════════════════════════════════════════════════════════

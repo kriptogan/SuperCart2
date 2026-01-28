@@ -1,0 +1,250 @@
+═══════════════════════════════════════════════════════════════════
+TASK 2: ADD STORE SUPPORT TO DATA LAYER
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 2
+Phase: 1 - Foundation
+Estimated Time: 3-4 hours
+Status: ☐ Not Started
+Dependencies: Task 1 (Data Models)
+Priority: High (Foundation)
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Integrate Store model into the data layer: DataManagerObject,
+DataStoreManager, FirebaseManager, and DataConverter. Enable
+stores to be persisted locally and synced with Firebase.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Add stores SnapshotStateList to DataManagerObject
+☐ Add hiddenStoreIds SnapshotStateList to DataManagerObject
+☐ Add store CRUD operations to DataManagerObject
+☐ Update DataStoreManager to save/load stores
+☐ Update FirebaseManager to upload/download stores
+☐ Update DataConverter (if needed)
+☐ Add store ordering/reordering functions
+☐ Add store deletion with grocery unlinking
+☐ Test local persistence
+☐ Test Firebase sync
+
+
+📝 FILES TO EDIT
+═══════════════════════════════════════════════════════════════════
+EDIT:
+- app/src/main/java/com/example/supercart2/data/DataManagerObject.kt
+- app/src/main/java/com/example/supercart2/data/DataStoreManager.kt
+- app/src/main/java/com/example/supercart2/data/FirebaseManager.kt
+- app/src/main/java/com/example/supercart2/data/DataConverter.kt (if needed)
+
+
+🏗️ TECHNICAL DETAILS - DataManagerObject.kt
+═══════════════════════════════════════════════════════════════════
+
+Add State Lists:
+---
+val stores: SnapshotStateList<Store> = mutableStateListOf()
+val hiddenStoreIds: SnapshotStateList<String> = mutableStateListOf()
+---
+
+Store CRUD Operations to Add:
+---
+// Get stores sorted by viewOrder
+fun getSortedStores(): List<Store>
+
+// Add new store
+fun addStore(store: Store)
+
+// Update store
+fun updateStore(storeUuid: String, update: (Store) -> Store)
+
+// Delete store (with grocery unlinking)
+fun deleteStore(storeUuid: String)
+
+// Swap store order
+fun swapStoreOrder(store1Uuid: String, store2Uuid: String)
+
+// Toggle store visibility in shopping list
+fun toggleStoreHidden(storeUuid: String)
+
+// Check if store is hidden
+fun isStoreHidden(storeUuid: String): Boolean
+
+// Unlink store from all groceries (called before deletion)
+fun unlinkStoreFromAllGroceries(storeUuid: String)
+---
+
+
+🏗️ TECHNICAL DETAILS - DataStoreManager.kt
+═══════════════════════════════════════════════════════════════════
+
+Add Preference Keys:
+---
+private val STORES_KEY = stringPreferencesKey("stores_flat")
+private val HIDDEN_STORES_KEY = stringPreferencesKey("hidden_stores")
+---
+
+Update saveDataGlobally():
+---
+// Serialize stores list to JSON
+val storesJson = gson.toJson(DataManagerObject.stores.toList())
+preferences[STORES_KEY] = storesJson
+
+// Serialize hidden store IDs
+val hiddenStoresJson = gson.toJson(DataManagerObject.hiddenStoreIds.toList())
+preferences[HIDDEN_STORES_KEY] = hiddenStoresJson
+---
+
+Update loadData():
+---
+// Deserialize stores
+val stores = preferences[STORES_KEY]?.let {
+    gson.fromJson<List<Store>>(it, object : TypeToken<List<Store>>() {}.type)
+} ?: emptyList()
+
+// Deserialize hidden store IDs
+val hiddenStoreIds = preferences[HIDDEN_STORES_KEY]?.let {
+    gson.fromJson<List<String>>(it, object : TypeToken<List<String>>() {}.type)
+} ?: emptyList()
+
+// Add to DataManagerObject
+DataManagerObject.stores.clear()
+DataManagerObject.stores.addAll(stores.filter { !it.deleted })
+DataManagerObject.hiddenStoreIds.clear()
+DataManagerObject.hiddenStoreIds.addAll(hiddenStoreIds)
+---
+
+
+🏗️ TECHNICAL DETAILS - FirebaseManager.kt
+═══════════════════════════════════════════════════════════════════
+
+Add Collection Constant:
+---
+const val STORES_COLLECTION = "stores"
+---
+
+Update uploadData():
+---
+// Add store upload logic (similar to categories)
+DataManagerObject.stores.forEach { store ->
+    val docRef = db.collection(STORES_COLLECTION).document(store.uuid)
+    batch.set(docRef, storeToMap(store))
+}
+---
+
+Add storeToMap() Helper:
+---
+private fun storeToMap(store: Store): Map<String, Any?> {
+    return mapOf(
+        "uuid" to store.uuid,
+        "name" to store.name,
+        "viewOrder" to store.viewOrder,
+        "lastUpdate" to store.lastUpdate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        "deleted" to store.deleted
+    )
+}
+---
+
+Update downloadData():
+---
+// Add store download logic
+val storesSnapshot = db.collection(STORES_COLLECTION).get().await()
+val stores = storesSnapshot.documents.map { documentToStore(it) }
+
+// Add to DataManagerObject
+DataManagerObject.stores.clear()
+DataManagerObject.stores.addAll(stores.filter { !it.deleted })
+---
+
+Add documentToStore() Helper:
+---
+private fun documentToStore(document: DocumentSnapshot): Store {
+    val data = document.data ?: throw IllegalStateException("Store document has no data")
+    return Store(
+        uuid = data["uuid"] as? String ?: throw IllegalStateException("Store missing uuid"),
+        name = data["name"] as? String ?: "",
+        viewOrder = (data["viewOrder"] as? Long)?.toInt() ?: 0,
+        lastUpdate = timestampToLocalDateTime(data["lastUpdate"]),
+        deleted = (data["deleted"] as? Boolean) ?: false
+    )
+}
+---
+
+Note: Hidden stores are local preference only (not synced to Firebase)
+
+
+🏗️ TECHNICAL DETAILS - Store Deletion Logic
+═══════════════════════════════════════════════════════════════════
+
+unlinkStoreFromAllGroceries() Implementation:
+---
+fun unlinkStoreFromAllGroceries(storeUuid: String) {
+    categories.forEach { categoryWithSubs ->
+        categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+            subCategoryWithGroceries.groceries.forEachIndexed { index, grocery ->
+                if (grocery.storeIds.contains(storeUuid)) {
+                    val updatedStoreIds = grocery.storeIds.filter { it != storeUuid }
+                    val updatedGrocery = grocery.copy(storeIds = updatedStoreIds)
+                    subCategoryWithGroceries.groceries[index] = updatedGrocery
+                }
+            }
+        }
+    }
+    updateData()
+}
+---
+
+deleteStore() Implementation:
+---
+fun deleteStore(storeUuid: String) {
+    // First unlink from all groceries
+    unlinkStoreFromAllGroceries(storeUuid)
+    
+    // Soft delete (for Firebase sync)
+    updateStore(storeUuid) { it.copy(deleted = true) }
+    
+    // Remove from hidden list if present
+    hiddenStoreIds.remove(storeUuid)
+}
+---
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Can add stores to DataManagerObject
+☐ Stores persist after app restart (DataStore)
+☐ Stores sync to Firebase correctly
+☐ Can download stores from Firebase
+☐ Store ordering works (swap, viewOrder)
+☐ Store deletion unlinks groceries correctly
+☐ Hidden stores persist across navigation
+☐ Grocery storeIds field persists correctly
+☐ No data loss for existing groceries
+☐ Version counter increments on store changes
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ DataManagerObject has stores and hiddenStoreIds lists
+☐ All store CRUD operations implemented
+☐ DataStoreManager saves/loads stores
+☐ FirebaseManager uploads/downloads stores
+☐ Store deletion unlinks from groceries
+☐ Hidden stores persist across app restarts
+☐ No breaking changes to existing functionality
+☐ All tests pass
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 3: Create Stores Management Dialog
+This will build the UI for managing stores (create, edit, delete, reorder).
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 2
+═══════════════════════════════════════════════════════════════════

@@ -1,0 +1,370 @@
+═══════════════════════════════════════════════════════════════════
+TASK 6: IMPLEMENT HIDE/UNHIDE STORES FEATURE
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 6
+Phase: 4 - Store View Mode
+Estimated Time: 3-5 hours
+Status: ☐ Not Started
+Dependencies: Task 5 (Store View Mode)
+Priority: Medium
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Add functionality to hide/unhide stores in store view mode. Hidden
+stores persist across navigation. Provide clear UI for managing
+store visibility.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create HideStoresDialog.kt component
+☐ Add hide/unhide button to ShoppingListScreen
+☐ Implement store visibility toggle logic
+☐ Update StoreBasedDisplay to respect hidden stores
+☐ Add visual indicator for hidden stores count
+☐ Persist hidden stores across app restarts
+☐ Test hide/unhide functionality
+☐ Test persistence
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/ui/components/HideStoresDialog.kt
+
+EDIT:
+- app/src/main/java/com/example/supercart2/ui/screens/ShoppingListScreen.kt
+- app/src/main/java/com/example/supercart2/data/DataManagerObject.kt (already has hiddenStoreIds)
+- app/src/main/java/com/example/supercart2/ui/components/StoreBasedDisplay.kt
+
+
+🏗️ TECHNICAL DETAILS - HideStoresDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+Component Structure:
+---
+@Composable
+fun HideStoresDialog(
+    onDismiss: () -> Unit
+) {
+    val version = DataManagerObject.version
+    val scope = rememberCoroutineScope()
+    
+    val allStores = remember(version) {
+        DataManagerObject.getSortedStores()
+    }
+    
+    val hiddenStoreIds = remember(version) {
+        DataManagerObject.hiddenStoreIds.toList()
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { 
+            Text("Show/Hide Stores") 
+        },
+        text = {
+            if (allStores.isEmpty()) {
+                Text(
+                    "No stores available.",
+                    color = SuperCartColors.gray,
+                    fontStyle = FontStyle.Italic
+                )
+            } else {
+                Column {
+                    Text(
+                        "Unchecked stores will be hidden from the store view.",
+                        fontSize = 12.sp,
+                        color = SuperCartColors.gray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(allStores) { store ->
+                            val isVisible = !hiddenStoreIds.contains(store.uuid)
+                            
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        scope.launch {
+                                            DataManagerObject.toggleStoreHidden(store.uuid)
+                                            DataStoreManager.saveDataGlobally()
+                                        }
+                                    }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = isVisible,
+                                    onCheckedChange = { visible ->
+                                        scope.launch {
+                                            if (visible) {
+                                                // Show store (remove from hidden list)
+                                                DataManagerObject.hiddenStoreIds.remove(store.uuid)
+                                            } else {
+                                                // Hide store (add to hidden list)
+                                                if (!DataManagerObject.hiddenStoreIds.contains(store.uuid)) {
+                                                    DataManagerObject.hiddenStoreIds.add(store.uuid)
+                                                }
+                                            }
+                                            DataManagerObject.updateData()
+                                            DataStoreManager.saveDataGlobally()
+                                        }
+                                    },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = SuperCartColors.primaryGreen
+                                    )
+                                )
+                                
+                                Spacer(modifier = Modifier.width(8.dp))
+                                
+                                Text(
+                                    text = store.name,
+                                    color = if (isVisible) {
+                                        SuperCartColors.black
+                                    } else {
+                                        SuperCartColors.gray
+                                    },
+                                    style = if (isVisible) {
+                                        MaterialTheme.typography.bodyMedium
+                                    } else {
+                                        MaterialTheme.typography.bodyMedium.copy(
+                                            textDecoration = TextDecoration.LineThrough
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Done")
+            }
+        }
+    )
+}
+---
+
+Key Features:
+- Checkbox list of all stores
+- Checked = visible, unchecked = hidden
+- Toggle by clicking row or checkbox
+- Visual indication (strikethrough) for hidden stores
+- Changes save immediately to DataStore
+
+
+🏗️ TECHNICAL DETAILS - ShoppingListScreen Integration
+═══════════════════════════════════════════════════════════════════
+
+Add State Variable:
+---
+var showHideStoresDialog by remember { mutableStateOf(false) }
+---
+
+Add Hide/Unhide Button (show only in store view mode):
+---
+// Add after view mode toggle
+if (viewMode == ShoppingListViewMode.STORE) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = SuperCartSpacing.md, vertical = SuperCartSpacing.sm),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val hiddenCount = DataManagerObject.hiddenStoreIds.size
+        
+        Button(
+            onClick = { showHideStoresDialog = true },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = SuperCartColors.primaryGreen.copy(alpha = 0.1f),
+                contentColor = SuperCartColors.primaryGreen
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = if (hiddenCount > 0) {
+                    Icons.Default.VisibilityOff
+                } else {
+                    Icons.Default.Visibility
+                },
+                contentDescription = null
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (hiddenCount > 0) {
+                    "Show/Hide Stores ($hiddenCount hidden)"
+                } else {
+                    "Show/Hide Stores"
+                }
+            )
+        }
+    }
+}
+---
+
+Add Dialog:
+---
+if (showHideStoresDialog) {
+    HideStoresDialog(
+        onDismiss = { showHideStoresDialog = false }
+    )
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - Update Store Grouping Logic
+═══════════════════════════════════════════════════════════════════
+
+Update groupGroceriesByStore() in DataManagerObject.kt:
+---
+// Already implemented in Task 2, just verify it filters hidden stores:
+if (storeCategories.isNotEmpty() && !isStoreHidden(store.uuid)) {
+    result.add(StoreWithCategories(store = store, categories = storeCategories))
+}
+---
+
+Ensure isStoreHidden() is implemented:
+---
+fun isStoreHidden(storeUuid: String): Boolean {
+    return hiddenStoreIds.contains(storeUuid)
+}
+---
+
+Ensure toggleStoreHidden() is implemented:
+---
+fun toggleStoreHidden(storeUuid: String) {
+    if (hiddenStoreIds.contains(storeUuid)) {
+        hiddenStoreIds.remove(storeUuid)
+    } else {
+        hiddenStoreIds.add(storeUuid)
+    }
+    updateData()
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - Persistence
+═══════════════════════════════════════════════════════════════════
+
+DataStoreManager already updated in Task 2:
+---
+// Save
+private val HIDDEN_STORES_KEY = stringPreferencesKey("hidden_stores")
+val hiddenStoresJson = gson.toJson(DataManagerObject.hiddenStoreIds.toList())
+preferences[HIDDEN_STORES_KEY] = hiddenStoresJson
+
+// Load
+val hiddenStoreIds = preferences[HIDDEN_STORES_KEY]?.let {
+    gson.fromJson<List<String>>(it, object : TypeToken<List<String>>() {}.type)
+} ?: emptyList()
+DataManagerObject.hiddenStoreIds.clear()
+DataManagerObject.hiddenStoreIds.addAll(hiddenStoreIds)
+---
+
+Note: Hidden stores are NOT synced to Firebase (local preference only)
+
+
+📐 USE CASE SCENARIOS
+═══════════════════════════════════════════════════════════════════
+
+Scenario 1: Planning a Shopping Trip
+---
+User has items linked to:
+- Store A (milk, bread)
+- Store B (apples, milk)
+- Store C (bread)
+
+User plans to only go to Store A and Store B today.
+User hides Store C.
+
+Result:
+- Store A shows: milk, bread
+- Store B shows: apples, milk (milk appears in both)
+- Store C is hidden
+- User can easily plan which items to buy from which store
+---
+
+Scenario 2: Unhiding Stores
+---
+User later decides to visit Store C after all.
+User opens "Show/Hide Stores" dialog.
+User checks Store C.
+Store C now appears in the list.
+---
+
+Scenario 3: Empty Store View
+---
+User hides all stores.
+Only "Not Linked to Any Store" section appears.
+User can still see unlinked items.
+---
+
+
+🎨 UI DESIGN NOTES
+═══════════════════════════════════════════════════════════════════
+- Button should be prominent when in store view
+- Show hidden count as indicator
+- Use visibility icons (Visibility/VisibilityOff)
+- Strikethrough text for hidden stores in dialog
+- Checkbox colors match theme
+- Clear explanatory text in dialog
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Can open hide/unhide dialog
+☐ Can hide stores
+☐ Can unhide stores
+☐ Hidden stores don't appear in store view
+☐ Hidden count displays correctly
+☐ Hidden stores persist after app restart
+☐ Hidden stores persist after navigation
+☐ Unhiding store immediately shows it
+☐ Works with all stores hidden
+☐ Works with no stores hidden
+☐ Deleting a hidden store works correctly
+☐ UI is intuitive and responsive
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ HideStoresDialog created and working
+☐ Hide/unhide button added to ShoppingListScreen
+☐ Button only shows in store view mode
+☐ Can hide individual stores
+☐ Can unhide individual stores
+☐ Hidden stores don't appear in store view
+☐ Hidden count indicator works
+☐ Hidden stores persist across navigation
+☐ Hidden stores persist across app restarts
+☐ Changes save to DataStore immediately
+☐ UI is clear and intuitive
+
+
+🎉 FEATURE COMPLETION
+═══════════════════════════════════════════════════════════════════
+This is the final task for the Stores Management feature!
+
+After completion:
+☐ Perform full end-to-end testing
+☐ Test all edge cases
+☐ Verify Firebase sync works with stores
+☐ Check performance with large datasets
+☐ Update 0-to-do.txt with completion status
+☐ Document any known issues or future enhancements
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 6 - STORES MANAGEMENT FEATURE COMPLETE
+═══════════════════════════════════════════════════════════════════

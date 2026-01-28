@@ -1,0 +1,464 @@
+═══════════════════════════════════════════════════════════════════
+TASK 5: CREATE STORE VIEW TOGGLE & DISPLAY
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 5
+Phase: 4 - Store View Mode
+Estimated Time: 5-7 hours
+Status: ☐ Not Started
+Dependencies: Task 4 (Grocery-Store Linking)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Implement store view mode in the shopping list screen. Create a
+toggle to switch between category view and store view. Display
+groceries grouped by stores with full category/subcategory hierarchy
+within each store. Include "Not Linked to Any Store" section.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Add view mode state to ShoppingListScreen
+☐ Create view mode toggle UI
+☐ Create StoreBasedDisplay.kt component
+☐ Implement store grouping logic
+☐ Implement "Not Linked" section
+☐ Maintain category/subcategory hierarchy within stores
+☐ Handle grocery duplicates across stores
+☐ Update "Already Bought" to stay in category view
+☐ Test view mode switching
+☐ Test with various store configurations
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/ui/components/StoreBasedDisplay.kt
+
+EDIT:
+- app/src/main/java/com/example/supercart2/ui/screens/ShoppingListScreen.kt
+- app/src/main/java/com/example/supercart2/data/DataManagerObject.kt (helper functions)
+
+
+🏗️ TECHNICAL DETAILS - ShoppingListScreen View Toggle
+═══════════════════════════════════════════════════════════════════
+
+Add View Mode Enum:
+---
+enum class ShoppingListViewMode {
+    CATEGORY,  // Default hierarchical view
+    STORE      // Grouped by stores
+}
+---
+
+Add State Variable:
+---
+var viewMode by remember { mutableStateOf(ShoppingListViewMode.CATEGORY) }
+---
+
+Add Toggle Button (below search bar):
+---
+Row(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = SuperCartSpacing.md, vertical = SuperCartSpacing.sm),
+    horizontalArrangement = Arrangement.Center
+) {
+    SegmentedButton(
+        selected = viewMode == ShoppingListViewMode.CATEGORY,
+        onClick = { viewMode = ShoppingListViewMode.CATEGORY },
+        label = { Text("Category View") }
+    )
+    
+    SegmentedButton(
+        selected = viewMode == ShoppingListViewMode.STORE,
+        onClick = { viewMode = ShoppingListViewMode.STORE },
+        label = { Text("Store View") }
+    )
+}
+
+// Alternative: Simple toggle button
+Button(
+    onClick = { 
+        viewMode = if (viewMode == ShoppingListViewMode.CATEGORY) {
+            ShoppingListViewMode.STORE
+        } else {
+            ShoppingListViewMode.CATEGORY
+        }
+    },
+    modifier = Modifier.fillMaxWidth()
+) {
+    Icon(
+        imageVector = if (viewMode == ShoppingListViewMode.CATEGORY) {
+            Icons.Default.Store
+        } else {
+            Icons.Default.Category
+        },
+        contentDescription = null
+    )
+    Spacer(modifier = Modifier.width(8.dp))
+    Text(
+        text = if (viewMode == ShoppingListViewMode.CATEGORY) {
+            "Switch to Store View"
+        } else {
+            "Switch to Category View"
+        }
+    )
+}
+---
+
+Update "Things to Buy" Section:
+---
+// Things to Buy Section
+item {
+    if (toBuyCategories.isNotEmpty() || viewMode == ShoppingListViewMode.STORE) {
+        Row(/* ... title row ... */) {
+            Text("Things to Buy")
+            Text("($toBuyCount)")
+        }
+        
+        when (viewMode) {
+            ShoppingListViewMode.CATEGORY -> {
+                HierarchicalCategoryDisplay(
+                    categories = toBuyCategories,
+                    searchQuery = searchQuery,
+                    isAllExpanded = isAllExpanded,
+                    onEditGrocery = { onEditGrocery(it) },
+                    useScroll = false,
+                    isShoppingList = true
+                )
+            }
+            ShoppingListViewMode.STORE -> {
+                StoreBasedDisplay(
+                    categories = toBuyCategories,
+                    searchQuery = searchQuery,
+                    isAllExpanded = isAllExpanded,
+                    onEditGrocery = { onEditGrocery(it) },
+                    useScroll = false
+                )
+            }
+        }
+    }
+}
+
+// Already Bought Section (always category view)
+item {
+    if (boughtCategories.isNotEmpty()) {
+        Row(/* ... title row ... */) {
+            Text("Already Bought")
+            Text("($boughtCount)")
+        }
+        
+        // ALWAYS use category view for bought items
+        HierarchicalCategoryDisplay(
+            categories = boughtCategories,
+            searchQuery = searchQuery,
+            isAllExpanded = isAllExpanded,
+            onEditGrocery = { onEditGrocery(it) },
+            useScroll = false,
+            isShoppingList = true
+        )
+    }
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - StoreBasedDisplay.kt
+═══════════════════════════════════════════════════════════════════
+
+Data Structure for Store Grouping:
+---
+data class StoreWithCategories(
+    val store: Store?,  // null for "Not Linked" section
+    val categories: List<CategoryWithSubCategories>
+)
+---
+
+Main Component Structure:
+---
+@Composable
+fun StoreBasedDisplay(
+    categories: List<CategoryWithSubCategories>,
+    searchQuery: String,
+    isAllExpanded: Boolean,
+    onEditGrocery: (Grocery) -> Unit,
+    modifier: Modifier = Modifier,
+    useScroll: Boolean = true
+) {
+    val version = DataManagerObject.version
+    
+    // Group groceries by store
+    val storesWithCategories = remember(categories, version) {
+        groupGroceriesByStore(categories)
+    }
+    
+    if (useScroll) {
+        LazyColumn(modifier = modifier.fillMaxSize()) {
+            items(storesWithCategories) { storeWithCats ->
+                StoreSection(
+                    storeWithCategories = storeWithCats,
+                    searchQuery = searchQuery,
+                    isAllExpanded = isAllExpanded,
+                    onEditGrocery = onEditGrocery
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    } else {
+        Column(modifier = modifier) {
+            storesWithCategories.forEach { storeWithCats ->
+                StoreSection(
+                    storeWithCategories = storeWithCats,
+                    searchQuery = searchQuery,
+                    isAllExpanded = isAllExpanded,
+                    onEditGrocery = onEditGrocery
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - Store Grouping Logic
+═══════════════════════════════════════════════════════════════════
+
+Add to DataManagerObject.kt:
+---
+fun groupGroceriesByStore(
+    categories: List<CategoryWithSubCategories>
+): List<StoreWithCategories> {
+    val result = mutableListOf<StoreWithCategories>()
+    val processedGroceries = mutableSetOf<String>()
+    
+    // Group by each store
+    getSortedStores().forEach { store ->
+        val storeCategories = mutableListOf<CategoryWithSubCategories>()
+        
+        categories.forEach { categoryWithSubs ->
+            val categorySubCategories = mutableListOf<SubCategoryWithGroceries>()
+            
+            categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                val groceriesForStore = subCategoryWithGroceries.groceries
+                    .filter { grocery ->
+                        grocery.storeIds.contains(store.uuid)
+                    }
+                
+                if (groceriesForStore.isNotEmpty()) {
+                    categorySubCategories.add(
+                        SubCategoryWithGroceries(
+                            subCategory = subCategoryWithGroceries.subCategory,
+                            groceries = groceriesForStore.toMutableList()
+                        )
+                    )
+                    // Track that we've shown these groceries
+                    groceriesForStore.forEach { 
+                        processedGroceries.add("${it.uuid}-${store.uuid}") 
+                    }
+                }
+            }
+            
+            if (categorySubCategories.isNotEmpty()) {
+                storeCategories.add(
+                    CategoryWithSubCategories(
+                        category = categoryWithSubs.category,
+                        subCategories = categorySubCategories.toMutableList()
+                    )
+                )
+            }
+        }
+        
+        if (storeCategories.isNotEmpty() && !isStoreHidden(store.uuid)) {
+            result.add(StoreWithCategories(store = store, categories = storeCategories))
+        }
+    }
+    
+    // Add "Not Linked to Any Store" section
+    val notLinkedCategories = mutableListOf<CategoryWithSubCategories>()
+    categories.forEach { categoryWithSubs ->
+        val categorySubCategories = mutableListOf<SubCategoryWithGroceries>()
+        
+        categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+            val notLinkedGroceries = subCategoryWithGroceries.groceries
+                .filter { grocery ->
+                    grocery.storeIds.isEmpty()
+                }
+            
+            if (notLinkedGroceries.isNotEmpty()) {
+                categorySubCategories.add(
+                    SubCategoryWithGroceries(
+                        subCategory = subCategoryWithGroceries.subCategory,
+                        groceries = notLinkedGroceries.toMutableList()
+                    )
+                )
+            }
+        }
+        
+        if (categorySubCategories.isNotEmpty()) {
+            notLinkedCategories.add(
+                CategoryWithSubCategories(
+                    category = categoryWithSubs.category,
+                    subCategories = categorySubCategories.toMutableList()
+                )
+            )
+        }
+    }
+    
+    if (notLinkedCategories.isNotEmpty()) {
+        result.add(StoreWithCategories(store = null, categories = notLinkedCategories))
+    }
+    
+    return result
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - StoreSection Component
+═══════════════════════════════════════════════════════════════════
+
+---
+@Composable
+private fun StoreSection(
+    storeWithCategories: StoreWithCategories,
+    searchQuery: String,
+    isAllExpanded: Boolean,
+    onEditGrocery: (Grocery) -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(true) }
+    
+    val totalItems = remember(storeWithCategories) {
+        storeWithCategories.categories.sumOf { it.getGroceriesCount() }
+    }
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = SuperCartColors.white
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column {
+            // Store Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded }
+                    .background(
+                        if (storeWithCategories.store == null) {
+                            SuperCartColors.lightGray.copy(alpha = 0.3f)
+                        } else {
+                            SuperCartColors.primaryGreen.copy(alpha = 0.1f)
+                        }
+                    )
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (storeWithCategories.store == null) {
+                            Icons.Default.ShoppingCart
+                        } else {
+                            Icons.Default.Store
+                        },
+                        contentDescription = null,
+                        tint = SuperCartColors.primaryGreen,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = storeWithCategories.store?.name ?: "Not Linked to Any Store",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (storeWithCategories.store == null) {
+                                SuperCartColors.gray
+                            } else {
+                                SuperCartColors.black
+                            }
+                        )
+                        Text(
+                            text = "$totalItems items",
+                            fontSize = 12.sp,
+                            color = SuperCartColors.gray
+                        )
+                    }
+                }
+                
+                Icon(
+                    imageVector = if (isExpanded) {
+                        Icons.Default.KeyboardArrowUp
+                    } else {
+                        Icons.Default.KeyboardArrowDown
+                    },
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = SuperCartColors.darkGray,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            // Categories within store (when expanded)
+            if (isExpanded) {
+                Divider(color = SuperCartColors.lightGray)
+                
+                // Use HierarchicalCategoryDisplay for categories within store
+                HierarchicalCategoryDisplay(
+                    categories = storeWithCategories.categories,
+                    searchQuery = searchQuery,
+                    isAllExpanded = isAllExpanded,
+                    onEditGrocery = onEditGrocery,
+                    useScroll = false,
+                    isShoppingList = true,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+    }
+}
+---
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ View mode toggle works
+☐ Can switch between category and store view
+☐ Store view displays stores correctly
+☐ Categories/subcategories maintained within stores
+☐ Groceries with multiple stores appear in each
+☐ "Not Linked" section appears when needed
+☐ Already Bought always uses category view
+☐ Search works in store view
+☐ Expand/collapse works in store view
+☐ Empty states handled correctly
+☐ No duplicate keys in LazyColumn
+☐ Performance is acceptable with many items
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ View mode toggle added to ShoppingListScreen
+☐ StoreBasedDisplay component created
+☐ Store grouping logic implemented
+☐ Stores display with full hierarchy
+☐ "Not Linked" section works correctly
+☐ Groceries appear in multiple stores correctly
+☐ Already Bought stays in category view
+☐ View mode switching is smooth
+☐ Search filter works in store view
+☐ UI is intuitive and matches design
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 6: Implement Hide/Unhide Stores
+This will add the ability to hide stores in store view mode.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 5
+═══════════════════════════════════════════════════════════════════

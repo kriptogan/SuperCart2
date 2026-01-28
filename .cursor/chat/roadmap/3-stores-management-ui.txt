@@ -1,0 +1,281 @@
+═══════════════════════════════════════════════════════════════════
+TASK 3: CREATE STORES MANAGEMENT DIALOG
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 3
+Phase: 2 - Store Management UI
+Estimated Time: 4-5 hours
+Status: ☐ Not Started
+Dependencies: Task 2 (Data Layer)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Create a comprehensive UI for managing stores: creating, editing,
+deleting, and reordering stores. Integrate with burger menu.
+Follow existing patterns from CategoriesManagementDialog.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create StoresManagementDialog.kt component
+☐ Create CreateStoreDialog.kt component
+☐ Create EditStoreDialog.kt component
+☐ Add "Manage Stores" option to BurgerMenu
+☐ Implement store list display
+☐ Implement create store functionality
+☐ Implement edit store functionality
+☐ Implement delete store with confirmation
+☐ Implement reorder (move up/down) functionality
+☐ Test all CRUD operations
+☐ Test UI responsiveness
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/ui/components/StoresManagementDialog.kt
+- app/src/main/java/com/example/supercart2/ui/components/CreateStoreDialog.kt
+- app/src/main/java/com/example/supercart2/ui/components/EditStoreDialog.kt
+
+EDIT:
+- app/src/main/java/com/example/supercart2/ui/components/BurgerMenu.kt
+- app/src/main/java/com/example/supercart2/ui/screens/HomeScreen.kt
+- app/src/main/java/com/example/supercart2/ui/screens/ShoppingListScreen.kt
+
+
+🏗️ TECHNICAL DETAILS - StoresManagementDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+Component Structure:
+---
+@Composable
+fun StoresManagementDialog(
+    onDismiss: () -> Unit
+) {
+    val version = DataManagerObject.version
+    val stores = remember(version) {
+        DataManagerObject.getSortedStores()
+    }
+    val scope = rememberCoroutineScope()
+    
+    var showCreateStore by remember { mutableStateOf(false) }
+    var storeToEdit by remember { mutableStateOf<Store?>(null) }
+    var showDeleteConfirmation by remember { mutableStateOf<Store?>(null) }
+    
+    // Main dialog with full-screen height
+    // List of stores with:
+    //   - Store name
+    //   - Move up/down buttons (like categories)
+    //   - Edit button
+    //   - Delete button (with confirmation)
+    // + Add New Store button at bottom
+}
+---
+
+Key Features:
+- LazyColumn for store list
+- Reorder buttons (up/down arrows)
+- Edit icon button
+- Delete icon button with confirmation dialog
+- Empty state when no stores
+- Save to DataStore after operations
+
+
+🏗️ TECHNICAL DETAILS - CreateStoreDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+Component Structure:
+---
+@Composable
+fun CreateStoreDialog(
+    onDismiss: () -> Unit,
+    onStoreCreated: (Store) -> Unit = {}
+) {
+    var storeName by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    
+    // Simple dialog with:
+    //   - Store name text field
+    //   - Cancel button
+    //   - Create button (check icon)
+}
+---
+
+Validation:
+- Store name cannot be empty
+- Trim whitespace
+- Check for duplicate names (optional)
+
+On Create:
+- Calculate next viewOrder
+- Create Store instance
+- Call DataManagerObject.addStore()
+- Save to DataStore
+- Call onStoreCreated callback
+- Dismiss dialog
+
+
+🏗️ TECHNICAL DETAILS - EditStoreDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+Component Structure:
+---
+@Composable
+fun EditStoreDialog(
+    store: Store,
+    onDismiss: () -> Unit,
+    onStoreUpdated: (Store) -> Unit = {}
+) {
+    var storeName by remember { mutableStateOf(store.name) }
+    val scope = rememberCoroutineScope()
+    
+    // Similar to CreateStoreDialog but with:
+    //   - Pre-filled store name
+    //   - Update instead of create
+    //   - Preserve viewOrder and other fields
+}
+---
+
+On Update:
+- Update store name
+- Update lastUpdate timestamp
+- Call DataManagerObject.updateStore()
+- Save to DataStore
+- Call onStoreUpdated callback
+- Dismiss dialog
+
+
+🏗️ TECHNICAL DETAILS - BurgerMenu Integration
+═══════════════════════════════════════════════════════════════════
+
+Add to BurgerMenu.kt:
+---
+// Add parameter
+@Composable
+fun BurgerMenu(
+    // ... existing parameters ...
+    onManageStoresClick: () -> Unit = {}
+) {
+    // Add menu item after "Manage Categories"
+    DropdownMenuItem(
+        text = { Text("Manage Stores") },
+        onClick = {
+            onManageStoresClick()
+            expanded = false
+        }
+    )
+}
+---
+
+Add to HomeScreen.kt and ShoppingListScreen.kt:
+---
+var showStoresManagement by remember { mutableStateOf(false) }
+
+// Update BurgerMenu call
+BurgerMenu(
+    // ... existing parameters ...
+    onManageStoresClick = { showStoresManagement = true }
+)
+
+// Add dialog
+if (showStoresManagement) {
+    StoresManagementDialog(
+        onDismiss = { showStoresManagement = false }
+    )
+}
+---
+
+
+🏗️ DELETE CONFIRMATION LOGIC
+═══════════════════════════════════════════════════════════════════
+
+Delete Confirmation Dialog:
+---
+if (showDeleteConfirmation != null) {
+    AlertDialog(
+        onDismissRequest = { showDeleteConfirmation = null },
+        title = { Text("Delete Store") },
+        text = { 
+            Text("Are you sure you want to delete ${showDeleteConfirmation?.name}? " +
+                 "This will unlink all groceries from this store.") 
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    scope.launch {
+                        showDeleteConfirmation?.let { store ->
+                            DataManagerObject.deleteStore(store.uuid)
+                            DataStoreManager.saveDataGlobally()
+                        }
+                        showDeleteConfirmation = null
+                    }
+                }
+            ) {
+                Text("Delete", color = Color.Red)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { showDeleteConfirmation = null }) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+---
+
+
+🎨 UI DESIGN PATTERNS TO FOLLOW
+═══════════════════════════════════════════════════════════════════
+- Match CategoriesManagementDialog layout
+- Use SuperCartColors for consistency
+- Use SuperCartSpacing for padding
+- Use SuperCartShapes for rounded corners
+- Use Icons.Default.Add for create button
+- Use Icons.Default.Edit for edit button
+- Use Icons.Default.Delete for delete button
+- Use Icons.Default.ArrowUpward / ArrowDownward for reorder
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Can open stores management dialog
+☐ Can create new store
+☐ Store name validation works
+☐ Can edit existing store
+☐ Can delete store with confirmation
+☐ Deletion unlinks groceries correctly
+☐ Can reorder stores (move up/down)
+☐ Changes persist after app restart
+☐ Empty state displays correctly
+☐ UI matches existing patterns
+☐ No memory leaks or crashes
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ StoresManagementDialog created and working
+☐ CreateStoreDialog created and working
+☐ EditStoreDialog created and working
+☐ "Manage Stores" in burger menu
+☐ Can create stores successfully
+☐ Can edit stores successfully
+☐ Can delete stores with confirmation
+☐ Deletion unlinks groceries
+☐ Can reorder stores
+☐ All changes persist locally
+☐ UI matches existing design patterns
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 4: Implement Store Selection
+This will enable linking groceries to stores during creation/editing.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 3
+═══════════════════════════════════════════════════════════════════

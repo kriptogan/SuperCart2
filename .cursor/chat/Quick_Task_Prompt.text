@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════════════════════════
+QUICK TASK PLAN GENERATOR PROMPT
+═══════════════════════════════════════════════════════════════════
+
+Copy-paste this prompt to AI and fill in the [BRACKETS]:
+
+---
+
+I need you to create a comprehensive implementation task plan for: [FEATURE NAME]
+
+REQUIREMENTS:
+[Paste your requirements here]
+
+
+STRUCTURE FOR TASK PLAN REQUIRED:
+
+1. Main tracker file: 0-to-do.txt
+   - Overall progress section
+   - Task list organized by phases
+   - Time estimates and status tracking
+   - Current focus section
+
+2. Individual task files: 1-[name].txt, 2-[name].txt, etc.
+   Each file must include:
+   - Header with task metadata (number, time, status, dependencies)
+   - 🎯 OBJECTIVE section
+   - 📋 CHECKLIST section (with ☐ checkboxes)
+   - 📝 FILES TO CREATE/EDIT section
+   - Technical details sections (custom based on task type)
+   - 🧪 TESTING CHECKLIST section
+   - ✅ ACCEPTANCE CRITERIA section
+   - End separator
+
+FORMATTING RULES:
+- Use ═══ for major separators (67 chars wide)
+- Use emoji icons for section headers
+- Use ☐/✅ for checkboxes
+- Include time estimates (X-Y hours format)
+- Number all tasks sequentially
+- Show dependencies clearly
+
+PROJECT CONTEXT:
+[Describe existing patterns to follow, coding standards, etc.]
+
+OUTPUT:
+- Generate 0-to-do.txt with full tracker
+- Generate individual task files (1-*.txt, 2-*.txt, etc.)
+- Make all tasks actionable and measurable
+
+---
+
+═══════════════════════════════════════════════════════════════════
+EXAMPLE USAGE:
+═══════════════════════════════════════════════════════════════════
+
+FEATURE NAME: User Notification System
+REQUIREMENTS:
+- Push notifications for ticket updates
+- Email notifications with templates
+- In-app notification center
+- User preferences for notification types
+- Mark as read/unread functionality
+- Real-time updates using WebSocket
+
+PROJECT CONTEXT:
+- Follow patterns from Team Tickets module
+- Use existing AuthService for authentication
+- Follow KISS principle
+- Ask permission before each phase
+- Write tests first (TDD approach)
+
+═══════════════════════════════════════════════════════════════════
+
