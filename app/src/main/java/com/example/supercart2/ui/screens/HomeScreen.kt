@@ -45,6 +45,9 @@ import com.example.supercart2.ui.components.CategoriesManagementDialog
 import com.example.supercart2.ui.components.GroceryCreationDialog
 import com.example.supercart2.ui.components.ImportGroceriesDialog
 import com.example.supercart2.ui.components.HierarchicalCategoryDisplay
+import com.example.supercart2.ui.components.SettingsDialog
+import com.example.supercart2.data.SettingsManager
+import androidx.compose.runtime.collectAsState
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.data.DataManagerObject
@@ -60,6 +63,7 @@ fun HomeScreen() {
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
     var showImportGroceries by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
     var isAlertFilterActive by remember { mutableStateOf(false) }
@@ -70,12 +74,26 @@ fun HomeScreen() {
     var isEditMode by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
+    // Observe settings
+    val showAlerts by SettingsManager.showAlerts.collectAsState(initial = true)
+    
+    // Disable alert filter if alerts are disabled
+    LaunchedEffect(showAlerts) {
+        if (!showAlerts && isAlertFilterActive) {
+            isAlertFilterActive = false
+        }
+    }
+    
     // Observe data version to trigger recomposition
     val dataVersion = DataManagerObject.version
     
-    // Check if there are any items that would match the alert filter
+    // Check if there are any items that would match the alert filter (only if alerts are enabled)
     val hasAlertItems = derivedStateOf {
-        filterAlertData(DataManagerObject.getSortedCategories()).isNotEmpty()
+        if (!showAlerts) {
+            false
+        } else {
+            filterAlertData(DataManagerObject.getSortedCategories()).isNotEmpty()
+        }
     }
     
     // Get filtered and expanded data based on search query and alert filter
@@ -85,8 +103,8 @@ fun HomeScreen() {
         var data = DataManagerObject.getSortedCategories()
         
         // Apply filters in sequence
-        if (isAlertFilterActive) {
-            // Apply alert filter first if active
+        if (isAlertFilterActive && showAlerts) {
+            // Apply alert filter first if active and alerts are enabled
             data = filterAlertData(data)
             // Force expansion when alert filter is active
             isAllExpanded = true
@@ -161,6 +179,9 @@ fun HomeScreen() {
                         },
                         onImportGroceriesClick = {
                             showImportGroceries = true
+                        },
+                        onSettingsClick = {
+                            showSettings = true
                         }
                     )
                 }
@@ -327,7 +348,8 @@ fun HomeScreen() {
                 categories = displayData.value,
                 searchQuery = searchQuery,
                 isAllExpanded = isAllExpanded,
-                onEditGrocery = { grocery -> onEditGrocery(grocery) }
+                onEditGrocery = { grocery -> onEditGrocery(grocery) },
+                showAlerts = showAlerts
             )
         }
 
@@ -336,6 +358,13 @@ fun HomeScreen() {
     if (showCategoriesManagement) {
         CategoriesManagementDialog(
             onDismiss = { showCategoriesManagement = false }
+        )
+    }
+    
+    // Settings Dialog
+    if (showSettings) {
+        SettingsDialog(
+            onDismiss = { showSettings = false }
         )
     }
     

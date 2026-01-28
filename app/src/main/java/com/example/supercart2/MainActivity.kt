@@ -22,6 +22,7 @@ import com.example.supercart2.ui.screens.HomeScreen
 import com.example.supercart2.ui.screens.ShoppingListScreen
 import com.example.supercart2.ui.theme.SuperCart2Theme
 import com.example.supercart2.data.DataStoreManager
+import com.example.supercart2.data.SettingsManager
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -44,8 +45,9 @@ fun MainApp() {
     
     // Initialize data on app startup
     DisposableEffect(Unit) {
-        // Set global context for DataStoreManager
+        // Set global context for DataStoreManager and SettingsManager
         DataStoreManager.setGlobalContext(context)
+        SettingsManager.setGlobalContext(context)
         
         scope.launch {
             DataStoreManager.loadData(context)

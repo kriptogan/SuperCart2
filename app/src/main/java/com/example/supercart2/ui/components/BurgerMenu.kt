@@ -29,7 +29,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun BurgerMenu(
     onCategoriesManagementClick: () -> Unit,
-    onImportGroceriesClick: () -> Unit
+    onImportGroceriesClick: () -> Unit,
+    onSettingsClick: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -82,6 +83,13 @@ fun BurgerMenu(
             text = { Text("Import Groceries") },
             onClick = {
                 onImportGroceriesClick()
+                expanded = false
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Settings") },
+            onClick = {
+                onSettingsClick()
                 expanded = false
             }
         )

@@ -37,6 +37,8 @@ import com.example.supercart2.ui.components.HierarchicalCategoryDisplay
 import com.example.supercart2.ui.components.BurgerMenu
 import com.example.supercart2.ui.components.CategoriesManagementDialog
 import com.example.supercart2.ui.components.GroceryCreationDialog
+import com.example.supercart2.ui.components.ImportGroceriesDialog
+import com.example.supercart2.ui.components.SettingsDialog
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 
@@ -45,6 +47,8 @@ fun ShoppingListScreen() {
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
     var showFinishConfirmation by remember { mutableStateOf(false) }
+    var showImportGroceries by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
     
@@ -174,7 +178,12 @@ fun ShoppingListScreen() {
                         onCategoriesManagementClick = {
                             showCategoriesManagement = true
                         },
-                        onImportGroceriesClick = { /* Not needed in shopping list screen */ }
+                        onImportGroceriesClick = {
+                            showImportGroceries = true
+                        },
+                        onSettingsClick = {
+                            showSettings = true
+                        }
                     )
                 }
 
@@ -554,6 +563,23 @@ fun ShoppingListScreen() {
         if (showCategoriesManagement) {
             CategoriesManagementDialog(
                 onDismiss = { showCategoriesManagement = false }
+            )
+        }
+        
+        // Settings Dialog
+        if (showSettings) {
+            SettingsDialog(
+                onDismiss = { showSettings = false }
+            )
+        }
+        
+        // Import Groceries Dialog
+        if (showImportGroceries) {
+            ImportGroceriesDialog(
+                onDismiss = { showImportGroceries = false },
+                onImportComplete = {
+                    showImportGroceries = false
+                }
             )
         }
         

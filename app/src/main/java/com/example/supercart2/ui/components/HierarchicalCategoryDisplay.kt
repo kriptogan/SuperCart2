@@ -53,7 +53,8 @@ fun HierarchicalCategoryDisplay(
     onEditGrocery: (Grocery) -> Unit,
     modifier: Modifier = Modifier,
     useScroll: Boolean = true,
-    isShoppingList: Boolean = false
+    isShoppingList: Boolean = false,
+    showAlerts: Boolean = true
 ) {
     if (useScroll) {
         LazyColumn(
@@ -65,7 +66,8 @@ fun HierarchicalCategoryDisplay(
                     searchQuery = searchQuery,
                     isAllExpanded = isAllExpanded,
                     onEditGrocery = onEditGrocery,
-                    isShoppingList = isShoppingList
+                    isShoppingList = isShoppingList,
+                    showAlerts = showAlerts
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -79,7 +81,8 @@ fun HierarchicalCategoryDisplay(
                     searchQuery = searchQuery,
                     isAllExpanded = isAllExpanded,
                     onEditGrocery = onEditGrocery,
-                    isShoppingList = isShoppingList
+                    isShoppingList = isShoppingList,
+                    showAlerts = showAlerts
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -94,7 +97,8 @@ private fun CategorySection(
     searchQuery: String,
     isAllExpanded: Boolean,
     onEditGrocery: (Grocery) -> Unit,
-    isShoppingList: Boolean = false
+    isShoppingList: Boolean = false,
+    showAlerts: Boolean = true
 ) {
     var isExpanded by remember { mutableStateOf(isAllExpanded) }
     var subCategoriesExpanded by remember { mutableStateOf(isAllExpanded) }
@@ -155,8 +159,9 @@ private fun CategorySection(
                     SubCategorySection(
                         subCategoryWithGroceries = subCategoryWithGroceries,
                         onEditGrocery = onEditGrocery,
-                    isShoppingList = isShoppingList,
-                        isAllExpanded = subCategoriesExpanded
+                        isShoppingList = isShoppingList,
+                        isAllExpanded = subCategoriesExpanded,
+                        showAlerts = showAlerts
                     )
                 }
             }
@@ -169,7 +174,8 @@ private fun SubCategorySection(
     subCategoryWithGroceries: SubCategoryWithGroceries,
     onEditGrocery: (Grocery) -> Unit,
     isAllExpanded: Boolean,
-    isShoppingList: Boolean
+    isShoppingList: Boolean,
+    showAlerts: Boolean = true
 ) {
     var isExpanded by remember { mutableStateOf(isAllExpanded) }
     
@@ -227,7 +233,8 @@ private fun SubCategorySection(
                             GroceryItem(
                                 grocery = grocery,
                                 onEdit = { onEditGrocery(grocery) },
-                                isShoppingList = isShoppingList
+                                isShoppingList = isShoppingList,
+                                showAlerts = showAlerts
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                         }
@@ -264,7 +271,8 @@ private fun SubCategorySection(
 private fun GroceryItem(
     grocery: Grocery,
     onEdit: () -> Unit,
-    isShoppingList: Boolean = false
+    isShoppingList: Boolean = false,
+    showAlerts: Boolean = true
 ) {
     // Observe version to trigger recomposition
     val version = DataManagerObject.version
@@ -288,10 +296,10 @@ private fun GroceryItem(
             ?.category?.name ?: ""
     }
     
-    // Check if this grocery item has an alert (only for home screen, not shopping list)
-    val hasAlert = remember(currentGrocery, isShoppingList) {
-        if (isShoppingList) {
-            false // No alerts in shopping list
+    // Check if this grocery item has an alert (only for home screen, not shopping list, and if alerts are enabled)
+    val hasAlert = remember(currentGrocery, isShoppingList, showAlerts) {
+        if (isShoppingList || !showAlerts) {
+            false // No alerts in shopping list or if alerts are disabled
         } else {
             val today = java.time.LocalDate.now()
             val tomorrow = today.plusDays(1)
