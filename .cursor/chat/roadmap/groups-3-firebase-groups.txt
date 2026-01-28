@@ -1,0 +1,421 @@
+═══════════════════════════════════════════════════════════════════
+TASK 3: UPDATE FIREBASE MANAGER FOR GROUPS
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 3
+Phase: 3 - Firebase Group Integration
+Estimated Time: 2-3 hours
+Status: ☐ Not Started
+Dependencies: Task 2 (Group Manager)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Update FirebaseManager to use group-based Firestore paths,
+implement conflict resolution using lastUpdate timestamps,
+and add group existence checking.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Add checkGroupExists() function
+☐ Update uploadData() to use group paths
+☐ Update downloadData() to use group paths
+☐ Implement conflict resolution (lastUpdate)
+☐ Filter data by groupId
+☐ Add group-based collection references
+☐ Update error handling
+☐ Add logging for group operations
+☐ Test upload/download with groups
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+EDIT:
+- app/src/main/java/com/example/supercart2/data/FirebaseManager.kt
+
+
+🏗️ TECHNICAL DETAILS - Firebase Path Structure
+═══════════════════════════════════════════════════════════════════
+
+OLD Structure:
+---
+/categories/{uuid}
+/subcategories/{uuid}
+/groceries/{uuid}
+/stores/{uuid}
+---
+
+NEW Structure (Group-Based):
+---
+/groups/{groupCode}/categories/{uuid}
+/groups/{groupCode}/subcategories/{uuid}
+/groups/{groupCode}/groceries/{uuid}
+/groups/{groupCode}/stores/{uuid}
+---
+
+
+🏗️ TECHNICAL DETAILS - FirebaseManager.kt Updates
+═══════════════════════════════════════════════════════════════════
+
+Add helper function for group collections:
+---
+/**
+ * Get Firestore collection reference for a group
+ */
+private fun getGroupCollection(groupCode: String, collection: String): CollectionReference {
+    return db.collection("groups")
+        .document(groupCode)
+        .collection(collection)
+}
+---
+
+Add checkGroupExists function:
+---
+/**
+ * Check if a group exists in Firestore
+ * Returns true if group has at least one document
+ */
+suspend fun checkGroupExists(groupCode: String): Boolean {
+    return try {
+        android.util.Log.d("FirebaseManager", "Checking if group exists: $groupCode")
+        
+        // Check if any categories exist in this group
+        val snapshot = getGroupCollection(groupCode, CATEGORIES_COLLECTION)
+            .limit(1)
+            .get()
+            .await()
+        
+        val exists = !snapshot.isEmpty
+        android.util.Log.d("FirebaseManager", "Group exists: $exists")
+        exists
+    } catch (e: Exception) {
+        android.util.Log.e("FirebaseManager", "Error checking group existence", e)
+        false
+    }
+}
+---
+
+Update uploadData function:
+---
+suspend fun uploadData() {
+    try {
+        // Get group code
+        val context = DataStoreManager.globalContext
+        val groupCode = context?.let { DataStoreManager.loadGroupCode(it) }
+        
+        if (groupCode == null) {
+            android.util.Log.e("FirebaseManager", "❌ Cannot upload: No group code set")
+            throw IllegalStateException("Group code required for upload")
+        }
+        
+        android.util.Log.d("FirebaseManager", "Uploading data to group: $groupCode")
+        
+        // Convert nested structure to flat lists
+        val (categories, subCategories, groceries) = DataConverter.flattenCategories(
+            DataManagerObject.categories
+        )
+        val stores = DataManagerObject.stores.toList()
+        
+        // Filter only items with matching groupId
+        val groupCategories = categories.filter { it.groupId == groupCode && !it.deleted }
+        val groupSubCategories = subCategories.filter { 
+            val category = categories.find { cat -> cat.uuid == it.categoryId }
+            category?.groupId == groupCode && !it.deleted
+        }
+        val groupGroceries = groceries.filter { it.groupId == groupCode && !it.deleted }
+        val groupStores = stores.filter { it.groupId == groupCode && !it.deleted }
+        
+        android.util.Log.d("FirebaseManager", "Uploading: ${groupCategories.size} categories, " +
+            "${groupSubCategories.size} subcategories, ${groupGroceries.size} groceries, " +
+            "${groupStores.size} stores")
+        
+        // Create batch operation
+        val batch = db.batch()
+        
+        // Upload to group-based paths
+        groupCategories.forEach { category ->
+            val docRef = getGroupCollection(groupCode, CATEGORIES_COLLECTION)
+                .document(category.uuid)
+            batch.set(docRef, categoryToMap(category))
+        }
+        
+        groupSubCategories.forEach { subCategory ->
+            val docRef = getGroupCollection(groupCode, SUBCATEGORIES_COLLECTION)
+                .document(subCategory.uuid)
+            batch.set(docRef, subCategoryToMap(subCategory))
+        }
+        
+        groupGroceries.forEach { grocery ->
+            val docRef = getGroupCollection(groupCode, GROCERIES_COLLECTION)
+                .document(grocery.uuid)
+            batch.set(docRef, groceryToMap(grocery))
+        }
+        
+        groupStores.forEach { store ->
+            val docRef = getGroupCollection(groupCode, STORES_COLLECTION)
+                .document(store.uuid)
+            batch.set(docRef, storeToMap(store))
+        }
+        
+        // Commit batch
+        batch.commit().await()
+        
+        android.util.Log.d("FirebaseManager", "✅ Data uploaded successfully to group: $groupCode")
+        
+        // Upload images (if Storage enabled)
+        if (context != null) {
+            try {
+                android.util.Log.d("FirebaseManager", "Starting image upload...")
+                val uploadedCount = FirebaseStorageManager.batchUploadImages(context)
+                android.util.Log.d("FirebaseManager", "✅ Uploaded $uploadedCount images")
+            } catch (e: Exception) {
+                android.util.Log.e("FirebaseManager", "❌ Error uploading images", e)
+            }
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("FirebaseManager", "❌ Error uploading data", e)
+        throw e
+    }
+}
+---
+
+Update downloadData function with conflict resolution:
+---
+suspend fun downloadData() {
+    try {
+        // Get group code
+        val context = DataStoreManager.globalContext
+        val groupCode = context?.let { DataStoreManager.loadGroupCode(it) }
+        
+        if (groupCode == null) {
+            android.util.Log.e("FirebaseManager", "❌ Cannot download: No group code set")
+            throw IllegalStateException("Group code required for download")
+        }
+        
+        android.util.Log.d("FirebaseManager", "Downloading data from group: $groupCode")
+        
+        // Download from group-based paths
+        val categoriesSnapshot = getGroupCollection(groupCode, CATEGORIES_COLLECTION).get().await()
+        val downloadedCategories = categoriesSnapshot.documents.map { documentToCategory(it) }
+        
+        val subCategoriesSnapshot = getGroupCollection(groupCode, SUBCATEGORIES_COLLECTION).get().await()
+        val downloadedSubCategories = subCategoriesSnapshot.documents.map { documentToSubCategory(it) }
+        
+        val groceriesSnapshot = getGroupCollection(groupCode, GROCERIES_COLLECTION).get().await()
+        val downloadedGroceries = groceriesSnapshot.documents.map { documentToGrocery(it) }
+        
+        val storesSnapshot = getGroupCollection(groupCode, STORES_COLLECTION).get().await()
+        val downloadedStores = storesSnapshot.documents.map { documentToStore(it) }
+        
+        android.util.Log.d("FirebaseManager", "Downloaded: ${downloadedCategories.size} categories, " +
+            "${downloadedSubCategories.size} subcategories, ${downloadedGroceries.size} groceries, " +
+            "${downloadedStores.size} stores")
+        
+        // Validate relationships
+        if (DataConverter.validateRelationships(downloadedCategories, downloadedSubCategories, downloadedGroceries)) {
+            // Build nested structure
+            val nestedCategories = DataConverter.buildNestedStructure(
+                downloadedCategories,
+                downloadedSubCategories,
+                downloadedGroceries
+            )
+            
+            // Merge with conflict resolution (latest lastUpdate wins)
+            val mergedCategories = mergeWithConflictResolution(
+                local = DataManagerObject.categories,
+                downloaded = nestedCategories
+            )
+            
+            // Update DataManagerObject
+            DataManagerObject.categories.clear()
+            DataManagerObject.categories.addAll(mergedCategories)
+            
+            // Merge stores
+            val mergedStores = mergeStores(
+                local = DataManagerObject.stores.toList(),
+                downloaded = downloadedStores
+            )
+            DataManagerObject.stores.clear()
+            DataManagerObject.stores.addAll(mergedStores.filter { !it.deleted })
+            
+            DataManagerObject.updateData()
+            DataStoreManager.saveDataGlobally()
+            
+            android.util.Log.d("FirebaseManager", "✅ Data downloaded and merged successfully")
+            
+            // Download images (if Storage enabled)
+            if (context != null) {
+                try {
+                    android.util.Log.d("FirebaseManager", "Starting image download...")
+                    val downloadedCount = FirebaseStorageManager.batchDownloadImages(context)
+                    android.util.Log.d("FirebaseManager", "✅ Downloaded $downloadedCount images")
+                } catch (e: Exception) {
+                    android.util.Log.e("FirebaseManager", "❌ Error downloading images", e)
+                }
+            }
+        } else {
+            throw IllegalStateException("Invalid data relationships in downloaded data")
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("FirebaseManager", "❌ Error downloading data", e)
+        throw e
+    }
+}
+---
+
+Add conflict resolution helper:
+---
+/**
+ * Merge categories with conflict resolution
+ * Latest lastUpdate wins
+ */
+private fun mergeWithConflictResolution(
+    local: List<CategoryWithSubCategories>,
+    downloaded: List<CategoryWithSubCategories>
+): List<CategoryWithSubCategories> {
+    android.util.Log.d("FirebaseManager", "Merging data with conflict resolution...")
+    
+    val result = mutableListOf<CategoryWithSubCategories>()
+    val downloadedMap = downloaded.associateBy { it.category.uuid }
+    val localMap = local.associateBy { it.category.uuid }
+    
+    // All unique category UUIDs
+    val allCategoryIds = (downloadedMap.keys + localMap.keys).toSet()
+    
+    allCategoryIds.forEach { categoryId ->
+        val downloadedCategory = downloadedMap[categoryId]
+        val localCategory = localMap[categoryId]
+        
+        when {
+            // Only in downloaded
+            downloadedCategory != null && localCategory == null -> {
+                result.add(downloadedCategory)
+            }
+            // Only in local
+            localCategory != null && downloadedCategory == null -> {
+                result.add(localCategory)
+            }
+            // In both - resolve conflict
+            downloadedCategory != null && localCategory != null -> {
+                // Compare lastUpdate timestamps
+                val useDownloaded = downloadedCategory.category.lastUpdate.isAfter(
+                    localCategory.category.lastUpdate
+                )
+                
+                if (useDownloaded) {
+                    android.util.Log.d("FirebaseManager", "Using downloaded version of ${downloadedCategory.category.name}")
+                    result.add(downloadedCategory)
+                } else {
+                    android.util.Log.d("FirebaseManager", "Keeping local version of ${localCategory.category.name}")
+                    result.add(localCategory)
+                }
+            }
+        }
+    }
+    
+    return result
+}
+
+/**
+ * Merge stores with conflict resolution
+ */
+private fun mergeStores(
+    local: List<Store>,
+    downloaded: List<Store>
+): List<Store> {
+    val result = mutableListOf<Store>()
+    val downloadedMap = downloaded.associateBy { it.uuid }
+    val localMap = local.associateBy { it.uuid }
+    
+    val allStoreIds = (downloadedMap.keys + localMap.keys).toSet()
+    
+    allStoreIds.forEach { storeId ->
+        val downloadedStore = downloadedMap[storeId]
+        val localStore = localMap[storeId]
+        
+        when {
+            downloadedStore != null && localStore == null -> result.add(downloadedStore)
+            localStore != null && downloadedStore == null -> result.add(localStore)
+            downloadedStore != null && localStore != null -> {
+                val useDownloaded = downloadedStore.lastUpdate.isAfter(localStore.lastUpdate)
+                result.add(if (useDownloaded) downloadedStore else localStore)
+            }
+        }
+    }
+    
+    return result
+}
+---
+
+
+📐 KEY DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+
+1. **Path Structure:**
+   - All data under `/groups/{groupCode}/`
+   - Keeps groups isolated
+   - Easy to query per-group
+
+2. **Conflict Resolution:**
+   - Compare `lastUpdate` timestamps
+   - Latest timestamp wins
+   - Applied to all model types
+
+3. **Upload Filtering:**
+   - Only upload items with matching groupId
+   - Exclude deleted items
+
+4. **Download Merging:**
+   - Merge local + downloaded
+   - Use conflict resolution
+   - Preserve local changes if newer
+
+5. **Group Validation:**
+   - Check if at least one document exists
+   - Simple and fast check
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ checkGroupExists() works for valid groups
+☐ checkGroupExists() returns false for invalid
+☐ Upload with group code succeeds
+☐ Upload without group code fails
+☐ Download with group code succeeds
+☐ Download without group code fails
+☐ Conflict resolution chooses latest
+☐ Group-based paths created correctly
+☐ Data isolated per group
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ checkGroupExists() implemented
+☐ getGroupCollection() helper added
+☐ uploadData() uses group paths
+☐ downloadData() uses group paths
+☐ Conflict resolution implemented
+☐ mergeWithConflictResolution() working
+☐ mergeStores() working
+☐ Upload requires group code
+☐ Download requires group code
+☐ Data filtered by groupId
+☐ Logging shows group operations
+☐ No compilation errors
+☐ Ready for UI integration
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 4: Create Group Management UI
+This will implement the user interface for creating, joining,
+and leaving groups.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 3
+═══════════════════════════════════════════════════════════════════

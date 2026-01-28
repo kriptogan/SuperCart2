@@ -1,0 +1,455 @@
+═══════════════════════════════════════════════════════════════════
+TASK 4: CREATE GROUP MANAGEMENT UI
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 4
+Phase: 4 - UI Components
+Estimated Time: 2-3 hours
+Status: ☐ Not Started
+Dependencies: Task 2 (Group Manager), Task 3 (Firebase Groups)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Create UI components for group management: main screen with options
+to create, join, or leave a group, plus dialogs for each operation.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create GroupManagementDialog.kt
+☐ Create CreateGroupDialog.kt
+☐ Create JoinGroupDialog.kt
+☐ Add "Family Group" menu item to BurgerMenu
+☐ Implement copy to clipboard for group code
+☐ Add success/error messages
+☐ Add loading indicators
+☐ Test all dialogs
+☐ Test navigation flow
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/ui/components/GroupManagementDialog.kt
+- app/src/main/java/com/example/supercart2/ui/components/CreateGroupDialog.kt
+- app/src/main/java/com/example/supercart2/ui/components/JoinGroupDialog.kt
+
+EDIT:
+- app/src/main/java/com/example/supercart2/ui/components/BurgerMenu.kt
+- app/src/main/java/com/example/supercart2/ui/screens/HomeScreen.kt
+
+
+🏗️ COMPONENT 1: GroupManagementDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+Main dialog that shows current status and options:
+---
+@Composable
+fun GroupManagementDialog(
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var groupCode by remember { mutableStateOf<String?>(null) }
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var showJoinDialog by remember { mutableStateOf(false) }
+    var showLeaveConfirmation by remember { mutableStateOf(false) }
+    
+    // Load group code on open
+    LaunchedEffect(Unit) {
+        groupCode = GroupManager.getCurrentGroupCode(context)
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Family Group") },
+        text = {
+            Column {
+                if (groupCode != null) {
+                    // Already in a group - show code and leave option
+                    Text("You're in a family group!")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Group code with copy button
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.LightGray.copy(alpha = 0.3f))
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = groupCode!!,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(onClick = {
+                            copyToClipboard(context, groupCode!!)
+                        }) {
+                            Icon(Icons.Default.ContentCopy, "Copy")
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Leave group button
+                    Button(
+                        onClick = { showLeaveConfirmation = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.ExitToApp, "Leave")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Leave Group")
+                    }
+                } else {
+                    // Not in a group - show create/join options
+                    Text("Share groceries with family members!")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Button(
+                        onClick = { showCreateDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Add, "Create")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Create New Group")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Button(
+                        onClick = { showJoinDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.GroupAdd, "Join")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Join Existing Group")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+    
+    // Show create dialog
+    if (showCreateDialog) {
+        CreateGroupDialog(
+            onDismiss = { showCreateDialog = false },
+            onGroupCreated = { code ->
+                groupCode = code
+                showCreateDialog = false
+            }
+        )
+    }
+    
+    // Show join dialog
+    if (showJoinDialog) {
+        JoinGroupDialog(
+            onDismiss = { showJoinDialog = false },
+            onGroupJoined = { code ->
+                groupCode = code
+                showJoinDialog = false
+            }
+        )
+    }
+    
+    // Leave confirmation
+    if (showLeaveConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showLeaveConfirmation = false },
+            title = { Text("Leave Group?") },
+            text = { Text("Your local data will be kept, but you'll stop syncing with the group.") },
+            confirmButton = {
+                Button(onClick = {
+                    scope.launch {
+                        GroupManager.leaveGroup(context)
+                        groupCode = null
+                        showLeaveConfirmation = false
+                    }
+                }) {
+                    Text("Leave")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLeaveConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+private fun copyToClipboard(context: Context, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clip = ClipData.newPlainText("Group Code", text)
+    clipboard.setPrimaryClip(clip)
+    Toast.makeText(context, "Group code copied!", Toast.LENGTH_SHORT).show()
+}
+---
+
+
+🏗️ COMPONENT 2: CreateGroupDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+---
+@Composable
+fun CreateGroupDialog(
+    onDismiss: () -> Unit,
+    onGroupCreated: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var isCreating by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Create Family Group") },
+        text = {
+            Column {
+                if (isCreating) {
+                    CircularProgressIndicator()
+                    Text("Creating group and uploading data...")
+                } else {
+                    Text("This will create a new family group and upload your current data to the cloud.")
+                    if (errorMessage != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = errorMessage!!,
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    scope.launch {
+                        isCreating = true
+                        errorMessage = null
+                        try {
+                            val groupCode = GroupManager.createGroup(context)
+                            FirebaseManager.uploadData()
+                            onGroupCreated(groupCode)
+                            Toast.makeText(context, "Group created!", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            errorMessage = "Failed to create group: ${e.message}"
+                            isCreating = false
+                        }
+                    }
+                },
+                enabled = !isCreating
+            ) {
+                Text("Create & Upload")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isCreating
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+---
+
+
+🏗️ COMPONENT 3: JoinGroupDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+---
+@Composable
+fun JoinGroupDialog(
+    onDismiss: () -> Unit,
+    onGroupJoined: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var groupCode by remember { mutableStateOf("") }
+    var isJoining by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Join Family Group") },
+        text = {
+            Column {
+                if (isJoining) {
+                    CircularProgressIndicator()
+                    Text("Joining group and downloading data...")
+                } else {
+                    Text("Enter the group code shared by a family member.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    OutlinedTextField(
+                        value = groupCode,
+                        onValueChange = { 
+                            groupCode = it
+                            errorMessage = null
+                        },
+                        label = { Text("Group Code") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    if (errorMessage != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = errorMessage!!,
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "⚠️ Warning: Your local data will be replaced with the group's data.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Red
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    scope.launch {
+                        isJoining = true
+                        errorMessage = null
+                        try {
+                            val success = GroupManager.joinGroup(context, groupCode.trim())
+                            if (success) {
+                                onGroupJoined(groupCode.trim())
+                                Toast.makeText(context, "Joined group!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                errorMessage = "Group not found or invalid code"
+                                isJoining = false
+                            }
+                        } catch (e: Exception) {
+                            errorMessage = "Failed to join: ${e.message}"
+                            isJoining = false
+                        }
+                    }
+                },
+                enabled = !isJoining && groupCode.isNotBlank()
+            ) {
+                Text("Join & Download")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isJoining
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+---
+
+
+🏗️ INTEGRATION: BurgerMenu.kt
+═══════════════════════════════════════════════════════════════════
+
+Add parameter and menu item:
+---
+@Composable
+fun BurgerMenu(
+    onManageCategoriesClick: () -> Unit = {},
+    onManageStoresClick: () -> Unit = {},
+    onManageGroupClick: () -> Unit = {},  // NEW
+    onUploadClick: () -> Unit = {},
+    onDownloadClick: () -> Unit = {}
+) {
+    // ... existing code ...
+    
+    DropdownMenuItem(
+        text = { Text("Family Group") },  // NEW
+        onClick = {
+            expanded = false
+            onManageGroupClick()
+        }
+    )
+    
+    // ... rest of menu items ...
+}
+---
+
+
+🏗️ INTEGRATION: HomeScreen.kt
+═══════════════════════════════════════════════════════════════════
+
+Add state and dialog:
+---
+var showGroupManagement by remember { mutableStateOf(false) }
+
+BurgerMenu(
+    onManageCategoriesClick = { showCategoriesManagement = true },
+    onManageStoresClick = { showStoresManagement = true },
+    onManageGroupClick = { showGroupManagement = true },  // NEW
+    onUploadClick = { /* ... */ },
+    onDownloadClick = { /* ... */ }
+)
+
+if (showGroupManagement) {
+    GroupManagementDialog(
+        onDismiss = { showGroupManagement = false }
+    )
+}
+---
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ "Family Group" menu item appears
+☐ GroupManagementDialog opens
+☐ Create group dialog works
+☐ Join group dialog works
+☐ Copy to clipboard works
+☐ Leave group confirmation works
+☐ Success messages show
+☐ Error messages show
+☐ Loading indicators show
+☐ Navigation flow smooth
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ GroupManagementDialog created and working
+☐ CreateGroupDialog created and working
+☐ JoinGroupDialog created and working
+☐ "Family Group" in burger menu
+☐ Copy to clipboard functional
+☐ All dialogs show proper states
+☐ Error handling works
+☐ Success messages appear
+☐ Warning messages clear
+☐ UI follows app design patterns
+☐ No compilation errors
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 5: Block Cloud Operations Without Code
+This will enforce that serial codes are mandatory for uploads/downloads.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 4
+═══════════════════════════════════════════════════════════════════

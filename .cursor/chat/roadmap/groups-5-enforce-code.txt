@@ -1,0 +1,207 @@
+═══════════════════════════════════════════════════════════════════
+TASK 5: BLOCK CLOUD OPERATIONS WITHOUT CODE
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 5
+Phase: 5 - Enforce Serial Code Requirement
+Estimated Time: 1 hour
+Status: ☐ Not Started
+Dependencies: Task 1 (DataStore), Task 3 (Firebase Groups)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Make serial code mandatory for all cloud operations. Block upload
+and download in the UI if no group code is set, and provide clear
+feedback to users.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Update BurgerMenu upload button logic
+☐ Update BurgerMenu download button logic
+☐ Show message when code missing
+☐ Disable buttons when no code
+☐ Update button text to indicate requirement
+☐ Test upload blocking
+☐ Test download blocking
+☐ Test user feedback
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+EDIT:
+- app/src/main/java/com/example/supercart2/ui/components/BurgerMenu.kt
+
+
+🏗️ TECHNICAL DETAILS - BurgerMenu.kt Updates
+═══════════════════════════════════════════════════════════════════
+
+Update BurgerMenu composable:
+---
+@Composable
+fun BurgerMenu(
+    onManageCategoriesClick: () -> Unit = {},
+    onManageStoresClick: () -> Unit = {},
+    onManageGroupClick: () -> Unit = {},
+    onUploadClick: () -> Unit = {},
+    onDownloadClick: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var expanded by remember { mutableStateOf(false) }
+    var hasGroupCode by remember { mutableStateOf(false) }
+    
+    // Check if group code exists
+    LaunchedEffect(Unit) {
+        hasGroupCode = DataStoreManager.hasGroupCode(context)
+    }
+    
+    // ... existing code ...
+    
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        // ... existing menu items ...
+        
+        Divider()
+        
+        // Upload to Cloud
+        DropdownMenuItem(
+            text = {
+                Column {
+                    Text("Upload to Cloud")
+                    if (!hasGroupCode) {
+                        Text(
+                            "Requires family group",
+                            fontSize = 10.sp,
+                            color = Color.Red
+                        )
+                    }
+                }
+            },
+            onClick = {
+                if (hasGroupCode) {
+                    expanded = false
+                    onUploadClick()
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Please create or join a family group first",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            },
+            enabled = hasGroupCode  // Disable if no code
+        )
+        
+        // Download from Cloud
+        DropdownMenuItem(
+            text = {
+                Column {
+                    Text("Download from Cloud")
+                    if (!hasGroupCode) {
+                        Text(
+                            "Requires family group",
+                            fontSize = 10.sp,
+                            color = Color.Red
+                        )
+                    }
+                }
+            },
+            onClick = {
+                if (hasGroupCode) {
+                    expanded = false
+                    onDownloadClick()
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Please create or join a family group first",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            },
+            enabled = hasGroupCode  // Disable if no code
+        )
+    }
+}
+---
+
+
+📐 KEY DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+
+1. **UI Approach:**
+   - Disable buttons (grayed out)
+   - Show "Requires family group" hint in red
+   - Toast message if clicked when disabled
+
+2. **Check Timing:**
+   - LaunchedEffect when menu opens
+   - Fresh check each time
+
+3. **User Guidance:**
+   - Clear message about what's needed
+   - Direct user to "Family Group" menu item
+
+4. **Backend Safety:**
+   - FirebaseManager already checks for code
+   - UI is first line of defense
+   - Backend still validates
+
+
+🎨 UI STATES
+═══════════════════════════════════════════════════════════════════
+
+With Group Code:
+---
+[✓] Upload to Cloud
+[✓] Download from Cloud
+---
+
+Without Group Code:
+---
+[✗] Upload to Cloud
+    Requires family group
+[✗] Download from Cloud
+    Requires family group
+---
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ No group code → buttons disabled
+☐ No group code → hint text shows
+☐ Click disabled button → toast message
+☐ Create group → buttons enabled
+☐ Upload works when enabled
+☐ Download works when enabled
+☐ Leave group → buttons disabled again
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ Upload button disabled without code
+☐ Download button disabled without code
+☐ Red hint text shows requirement
+☐ Toast message guides user
+☐ Buttons enabled when code exists
+☐ Upload/download work when enabled
+☐ UI updates when group status changes
+☐ No compilation errors
+☐ Ready for final testing
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 6: Integration Testing
+This will test the entire group sharing feature end-to-end.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 5
+═══════════════════════════════════════════════════════════════════

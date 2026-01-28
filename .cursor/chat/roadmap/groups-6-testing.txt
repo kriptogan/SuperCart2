@@ -1,0 +1,274 @@
+═══════════════════════════════════════════════════════════════════
+TASK 6: INTEGRATION TESTING
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 6
+Phase: 6 - Testing & Polish
+Estimated Time: 1-2 hours
+Status: ☐ Not Started
+Dependencies: All previous tasks (1-5)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Perform comprehensive end-to-end testing of the group sharing feature.
+Test create, join, sync, conflict resolution, and leave group flows.
+Verify data integrity and user experience.
+
+
+📋 TESTING SCENARIOS
+═══════════════════════════════════════════════════════════════════
+
+SCENARIO 1: CREATE GROUP (Single Device)
+☐ Open app with fresh data
+☐ Add some groceries locally
+☐ Open burger menu → "Family Group"
+☐ Click "Create New Group"
+☐ Verify group code generated (UUID format)
+☐ Verify "Creating group and uploading..." shows
+☐ Verify upload completes successfully
+☐ Verify success toast appears
+☐ Verify group code displayed with copy button
+☐ Click copy button → verify toast "Group code copied!"
+☐ Check Logcat for upload confirmation
+☐ Check Firebase Console for data under /groups/{code}/
+
+
+SCENARIO 2: JOIN GROUP (Second Device/User)
+☐ Open app on second device (or clear app data)
+☐ Add different local groceries
+☐ Open burger menu → "Family Group"
+☐ Click "Join Existing Group"
+☐ Paste group code from Scenario 1
+☐ Verify warning message about overwriting data
+☐ Click "Join & Download"
+☐ Verify "Joining group..." shows
+☐ Verify download completes
+☐ Verify success toast "Joined group!"
+☐ Verify local data replaced with group data
+☐ Check Logcat for download confirmation
+
+
+SCENARIO 3: SYNC DATA (Bidirectional)
+☐ Device A: Edit a grocery (change name)
+☐ Device A: Upload to Cloud
+☐ Verify upload success
+☐ Device B: Download from Cloud
+☐ Verify Device B sees the updated grocery name
+☐ Device B: Add new grocery
+☐ Device B: Upload to Cloud
+☐ Device A: Download from Cloud
+☐ Verify Device A sees the new grocery
+
+
+SCENARIO 4: CONFLICT RESOLUTION
+☐ Both devices offline
+☐ Device A: Edit grocery "Milk" → change to "Whole Milk"
+☐ Device B: Edit same grocery "Milk" → change to "Skim Milk"
+☐ Device A comes online first → Upload
+☐ Device B comes online → Upload
+☐ Download on both devices
+☐ Verify latest upload wins (by lastUpdate timestamp)
+☐ Both devices should have same data
+
+
+SCENARIO 5: LEAVE GROUP
+☐ Device B: Open "Family Group"
+☐ Click "Leave Group"
+☐ Verify confirmation dialog
+☐ Confirm leave
+☐ Verify success message
+☐ Verify group code cleared
+☐ Verify local data still present
+☐ Verify upload/download buttons disabled
+☐ Try to upload → verify blocked with message
+☐ Device B data no longer syncs to group
+
+
+SCENARIO 6: REJOIN GROUP
+☐ Device B: Click "Join Existing Group"
+☐ Enter same group code
+☐ Join successfully
+☐ Download group data
+☐ Verify back in sync with Device A
+
+
+SCENARIO 7: NO GROUP CODE
+☐ Fresh install or leave group
+☐ Open burger menu
+☐ Verify "Upload to Cloud" disabled + red text
+☐ Verify "Download from Cloud" disabled + red text
+☐ Click disabled upload → verify toast message
+☐ Create or join group → verify buttons enabled
+
+
+SCENARIO 8: DATA INTEGRITY
+☐ Create group with:
+  - 5 categories
+  - 10 subcategories
+  - 20 groceries
+  - 3 stores
+☐ Upload
+☐ Join from another device
+☐ Download
+☐ Verify ALL data present:
+  - All categories with correct names
+  - All subcategories under correct categories
+  - All groceries with correct properties
+  - All stores with correct names
+☐ Verify groupId populated in all items
+
+
+SCENARIO 9: HIDDEN STORES (Per-User Setting)
+☐ Device A: Hide 2 stores in shopping list
+☐ Device A: Upload
+☐ Device B: Download
+☐ Verify Device B sees all stores (not hidden)
+☐ Verify hidden stores are per-user setting
+
+
+SCENARIO 10: VIEW MODE (Per-User Setting)
+☐ Device A: Switch to "Store View" in shopping list
+☐ Device A: Upload
+☐ Device B: Download
+☐ Verify Device B still in "Category View"
+☐ Verify view mode is per-user setting
+
+
+═══════════════════════════════════════════════════════════════════
+
+🔍 LOGCAT CHECKS
+═══════════════════════════════════════════════════════════════════
+
+During Create:
+☐ "GroupManager: Generated group code: ..."
+☐ "GroupManager: Creating group with code: ..."
+☐ "GroupManager: ✅ Group created successfully"
+☐ "DataStoreManager: ✅ Group code saved"
+☐ "GroupManager: ✅ GroupId populated in all data"
+☐ "FirebaseManager: Uploading data to group: ..."
+☐ "FirebaseManager: ✅ Data uploaded successfully"
+
+During Join:
+☐ "GroupManager: Attempting to join group: ..."
+☐ "FirebaseManager: Checking if group exists: ..."
+☐ "FirebaseManager: Group exists: true"
+☐ "DataStoreManager: ✅ Group code saved"
+☐ "FirebaseManager: Downloading data from group: ..."
+☐ "FirebaseManager: Merging data with conflict resolution..."
+☐ "FirebaseManager: ✅ Data downloaded and merged successfully"
+
+During Leave:
+☐ "GroupManager: Leaving group: ..."
+☐ "DataStoreManager: ✅ Group code cleared"
+☐ "GroupManager: ✅ GroupId cleared from all data"
+☐ "GroupManager: ✅ Successfully left group"
+
+
+🐛 BUG CHECKS
+═══════════════════════════════════════════════════════════════════
+
+☐ No crashes when creating group
+☐ No crashes when joining group
+☐ No crashes when leaving group
+☐ No data loss when leaving
+☐ No duplicate data after sync
+☐ No orphaned data
+☐ Conflict resolution works correctly
+☐ Invalid group code handled gracefully
+☐ Network errors handled gracefully
+☐ UI updates correctly on state changes
+
+
+📊 FIREBASE CONSOLE VERIFICATION
+═══════════════════════════════════════════════════════════════════
+
+Navigate to Firestore in Firebase Console:
+
+Expected Structure:
+---
+/groups
+  /{groupCode}
+    /categories
+      /{uuid1}
+      /{uuid2}
+      ...
+    /subcategories
+      /{uuid1}
+      /{uuid2}
+      ...
+    /groceries
+      /{uuid1}
+      /{uuid2}
+      ...
+    /stores
+      /{uuid1}
+      /{uuid2}
+      ...
+---
+
+Verify:
+☐ Group code document exists
+☐ All collections under group path
+☐ Data has groupId field
+☐ lastUpdate timestamps present
+☐ No data outside group paths
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ All 10 scenarios pass
+☐ Create group works end-to-end
+☐ Join group works end-to-end
+☐ Sync bidirectional
+☐ Conflict resolution working
+☐ Leave group works correctly
+☐ Upload/download blocked without code
+☐ Data integrity maintained
+☐ Per-user settings not synced
+☐ No crashes or errors
+☐ Logcat shows expected messages
+☐ Firebase structure correct
+☐ User experience smooth
+☐ All bugs fixed
+☐ Feature ready for production
+
+
+🎉 COMPLETION CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ All tasks (1-6) completed
+☐ All acceptance criteria met
+☐ All scenarios tested
+☐ Documentation updated
+☐ Roadmap marked complete
+☐ Ready to demo
+
+
+📝 KNOWN LIMITATIONS (As Designed)
+═══════════════════════════════════════════════════════════════════
+✓ Images not synced (local only)
+✓ Hidden stores not synced (per-user)
+✓ View mode not synced (per-user)
+✓ No member visibility
+✓ No activity log
+✓ Anyone with code can join
+✓ Data persists if all leave
+
+
+🔗 FUTURE ENHANCEMENTS (Out of Scope)
+═══════════════════════════════════════════════════════════════════
+- Group names
+- Member list
+- Activity feed
+- Multiple groups per user
+- Group owner controls
+- Image syncing
+- Invite links
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 6 - GROUP SHARING FEATURE COMPLETE
+═══════════════════════════════════════════════════════════════════

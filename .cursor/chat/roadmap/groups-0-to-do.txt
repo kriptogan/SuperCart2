@@ -1,0 +1,191 @@
+═══════════════════════════════════════════════════════════════════
+GROUP SHARING FEATURE - MASTER TRACKER
+═══════════════════════════════════════════════════════════════════
+
+📊 OVERALL PROGRESS
+═══════════════════════════════════════════════════════════════════
+Total Tasks: 6 phases
+Completed: 0
+In Progress: 0
+Remaining: 6
+
+Estimated Total Time: 8-12 hours
+Actual Time Spent: 0 hours
+
+Current Phase: Phase 1 - Data Layer
+Current Status: Not Started
+
+
+📝 TASK LIST BY PHASE
+═══════════════════════════════════════════════════════════════════
+
+PHASE 1: DATA LAYER - GROUP CODE STORAGE
+═══════════════════════════════════════════════════════════════════
+☐ Task 1: Add Group Code to DataStore
+   File: groups-1-datastore.txt
+   Estimate: 1-2 hours
+   Status: Not Started
+   Dependencies: None
+
+PHASE 2: GROUP MANAGEMENT LOGIC
+═══════════════════════════════════════════════════════════════════
+☐ Task 2: Create Group Manager
+   File: groups-2-group-manager.txt
+   Estimate: 2-3 hours
+   Status: Not Started
+   Dependencies: Task 1
+
+PHASE 3: FIREBASE GROUP INTEGRATION
+═══════════════════════════════════════════════════════════════════
+☐ Task 3: Update Firebase Manager for Groups
+   File: groups-3-firebase-groups.txt
+   Estimate: 2-3 hours
+   Status: Not Started
+   Dependencies: Task 2
+
+PHASE 4: UI COMPONENTS
+═══════════════════════════════════════════════════════════════════
+☐ Task 4: Create Group Management UI
+   File: groups-4-ui-components.txt
+   Estimate: 2-3 hours
+   Status: Not Started
+   Dependencies: Task 2, Task 3
+
+PHASE 5: ENFORCE SERIAL CODE REQUIREMENT
+═══════════════════════════════════════════════════════════════════
+☐ Task 5: Block Cloud Operations Without Code
+   File: groups-5-enforce-code.txt
+   Estimate: 1 hour
+   Status: Not Started
+   Dependencies: Task 1, Task 3
+
+PHASE 6: TESTING & POLISH
+═══════════════════════════════════════════════════════════════════
+☐ Task 6: Integration Testing
+   File: groups-6-testing.txt
+   Estimate: 1-2 hours
+   Status: Not Started
+   Dependencies: All previous tasks
+
+
+🔄 CURRENT FOCUS
+═══════════════════════════════════════════════════════════════════
+Next Task: Task 1 - Add Group Code to DataStore
+Focus Area: Local storage for group serial code
+Blockers: None
+Notes: Start with DataStore integration for group code persistence
+
+
+⚠️ IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════
+- Serial code is a random UUID (e.g., abc-123-def-456)
+- One group per user at a time
+- No owner role - all members equal
+- Create group = upload current data
+- Join group = download and overwrite local data
+- Leave group = clear code, keep local data
+- Conflict resolution: latest lastUpdate wins
+- Anyone with code can join (no verification)
+- Serial code MANDATORY for all cloud operations
+- Images NOT synced (local only)
+- Hidden stores and view mode NOT synced (per-user)
+- Existing cloud data will be deleted before implementation
+
+
+📐 DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+1. Group Code Format: Random UUID (standard format)
+2. Storage: DataStore for local, Firestore path: /groups/{code}/
+3. Conflict Resolution: lastUpdate timestamp (latest wins)
+4. Access Control: Anyone with UUID can join
+5. Leave Behavior: Clear code, preserve local data
+6. Orphaned Groups: Data persists in cloud even if all leave
+7. UI Location: New "Family Group" menu in burger menu
+8. No Member Visibility: Users cannot see group members
+9. No Activity Log: No "last edited" information
+10. Images: Local only (not synced for now)
+
+
+🏗️ TECHNICAL ARCHITECTURE
+═══════════════════════════════════════════════════════════════════
+
+DataStore (Local):
+- currentGroupCode: String? (null = not in group)
+
+Existing Model Fields (Already Present):
+- Category.groupId: String?
+- SubCategory.groupId: String? (via categoryId)
+- Grocery.groupId: String?
+- Store.groupId: String?
+- All have lastUpdate: LocalDateTime
+
+Firebase Structure:
+/groups/{groupCode}/
+  ├── categories/{uuid}
+  ├── subcategories/{uuid}
+  ├── groceries/{uuid}
+  └── stores/{uuid}
+
+UI Flow:
+1. User clicks "Family Group" in burger menu
+2. Options: Create Group | Join Group | Leave Group (if in one)
+3. Create: Generate UUID → Auto-upload → Show code with copy button
+4. Join: Enter UUID → Validate → Download & overwrite → Success
+5. Leave: Confirm → Clear code → Keep local data
+
+
+🧪 TESTING STRATEGY
+═══════════════════════════════════════════════════════════════════
+After Each Phase:
+- Test data persistence
+- Test UUID generation
+- Test Firebase paths
+- Test UI navigation
+- Test error handling
+
+Final Testing:
+- Create group → Copy code → Verify upload
+- Join group from another device → Verify download
+- Edit data on both devices → Upload → Verify conflict resolution
+- Leave group → Verify local data preserved
+- Try upload without code → Verify blocked
+- Try invalid code → Verify error message
+
+
+📝 COMPLETION CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ All 6 tasks completed
+☐ Group code stored in DataStore
+☐ UUID generation working
+☐ Create group uploads data
+☐ Join group downloads and overwrites
+☐ Leave group clears code
+☐ Conflict resolution working (lastUpdate)
+☐ Firebase uses group-based paths
+☐ Upload blocked without code
+☐ Download blocked without code
+☐ Group Management UI complete
+☐ Copy to clipboard working
+☐ Success/error messages shown
+☐ Local data preserved when leaving
+☐ Images stay local (not synced)
+☐ Hidden stores stay local
+☐ All acceptance criteria met
+
+
+🔗 MIGRATION NOTES
+═══════════════════════════════════════════════════════════════════
+BEFORE Implementation:
+- User will manually delete existing cloud data
+- This ensures clean slate for group-based structure
+
+AFTER Implementation:
+- All uploads require group code
+- All downloads require group code
+- Existing local data continues working
+- Users must create or join a group to use cloud sync
+
+
+═══════════════════════════════════════════════════════════════════
+END OF MASTER TRACKER
+═══════════════════════════════════════════════════════════════════

@@ -1,0 +1,206 @@
+═══════════════════════════════════════════════════════════════════
+TASK 1: ADD GROUP CODE TO DATASTORE
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 1
+Phase: 1 - Data Layer
+Estimated Time: 1-2 hours
+Status: ☐ Not Started
+Dependencies: None
+Priority: High (Foundation for all other tasks)
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Add local storage for the group serial code (UUID) using DataStore.
+Enable saving, loading, and clearing the group code that links
+the user to a shared group.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Add GROUP_CODE_KEY to DataStore preferences
+☐ Implement saveGroupCode() function
+☐ Implement loadGroupCode() function
+☐ Implement clearGroupCode() function
+☐ Add logging for debugging
+☐ Test save/load/clear operations
+☐ Verify persistence across app restarts
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+EDIT:
+- app/src/main/java/com/example/supercart2/data/DataStoreManager.kt
+
+
+🏗️ TECHNICAL DETAILS - DataStoreManager.kt
+═══════════════════════════════════════════════════════════════════
+
+Add new preference key:
+---
+private val GROUP_CODE_KEY = stringPreferencesKey("group_code")
+---
+
+Add saveGroupCode function:
+---
+/**
+ * Save the group code (UUID) to DataStore
+ */
+suspend fun saveGroupCode(context: Context, groupCode: String) {
+    try {
+        context.dataStore.edit { preferences ->
+            preferences[GROUP_CODE_KEY] = groupCode
+        }
+        android.util.Log.d("DataStoreManager", "✅ Group code saved: $groupCode")
+    } catch (e: Exception) {
+        android.util.Log.e("DataStoreManager", "❌ Error saving group code", e)
+        throw e
+    }
+}
+---
+
+Add loadGroupCode function:
+---
+/**
+ * Load the group code from DataStore
+ * Returns null if no group code is set
+ */
+suspend fun loadGroupCode(context: Context): String? {
+    return try {
+        val preferences = context.dataStore.data.first()
+        val groupCode = preferences[GROUP_CODE_KEY]
+        android.util.Log.d("DataStoreManager", "Group code loaded: ${groupCode ?: "None"}")
+        groupCode
+    } catch (e: Exception) {
+        android.util.Log.e("DataStoreManager", "❌ Error loading group code", e)
+        null
+    }
+}
+---
+
+Add clearGroupCode function:
+---
+/**
+ * Clear the group code from DataStore (leave group)
+ */
+suspend fun clearGroupCode(context: Context) {
+    try {
+        context.dataStore.edit { preferences ->
+            preferences.remove(GROUP_CODE_KEY)
+        }
+        android.util.Log.d("DataStoreManager", "✅ Group code cleared")
+    } catch (e: Exception) {
+        android.util.Log.e("DataStoreManager", "❌ Error clearing group code", e)
+        throw e
+    }
+}
+---
+
+Add hasGroupCode helper:
+---
+/**
+ * Check if user is in a group
+ */
+suspend fun hasGroupCode(context: Context): Boolean {
+    return loadGroupCode(context) != null
+}
+---
+
+
+📐 KEY DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+
+1. **Storage Location:**
+   - Use DataStore Preferences (same as other app settings)
+   - Key: "group_code"
+   - Type: String (UUID format)
+
+2. **Default Value:**
+   - null = user is not in any group
+   - Non-null = user is in a group with that code
+
+3. **Persistence:**
+   - Survives app restarts
+   - Survives app updates
+   - Cleared only when user leaves group
+
+4. **Access Pattern:**
+   - Load once on app start (globally available)
+   - Save when creating/joining group
+   - Clear when leaving group
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Save group code → Verify saved
+☐ Load group code → Verify correct value returned
+☐ Clear group code → Verify null returned
+☐ Restart app → Verify code persists
+☐ hasGroupCode() returns true when code exists
+☐ hasGroupCode() returns false when no code
+☐ Multiple save operations work correctly
+☐ Error handling doesn't crash app
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ GROUP_CODE_KEY added to DataStore
+☐ saveGroupCode() implemented and working
+☐ loadGroupCode() implemented and working
+☐ clearGroupCode() implemented and working
+☐ hasGroupCode() helper implemented
+☐ Logging shows all operations
+☐ Code persists across app restarts
+☐ No compilation errors
+☐ Ready for Group Manager implementation
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 2: Create Group Manager
+This will implement the business logic for creating, joining,
+and leaving groups.
+
+
+📝 USAGE EXAMPLE
+═══════════════════════════════════════════════════════════════════
+
+In ViewModel or Activity:
+---
+// Save group code when creating/joining
+scope.launch {
+    DataStoreManager.saveGroupCode(context, "abc-123-def-456")
+}
+
+// Load group code on app start
+scope.launch {
+    val groupCode = DataStoreManager.loadGroupCode(context)
+    if (groupCode != null) {
+        // User is in a group
+    } else {
+        // User is not in a group
+    }
+}
+
+// Clear group code when leaving
+scope.launch {
+    DataStoreManager.clearGroupCode(context)
+}
+
+// Check if in group
+scope.launch {
+    if (DataStoreManager.hasGroupCode(context)) {
+        // Show "Leave Group" option
+    } else {
+        // Show "Create/Join Group" options
+    }
+}
+---
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 1
+═══════════════════════════════════════════════════════════════════

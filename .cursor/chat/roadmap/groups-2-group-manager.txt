@@ -1,0 +1,340 @@
+═══════════════════════════════════════════════════════════════════
+TASK 2: CREATE GROUP MANAGER
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 2
+Phase: 2 - Group Management Logic
+Estimated Time: 2-3 hours
+Status: ☐ Not Started
+Dependencies: Task 1 (DataStore Group Code)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Create GroupManager to handle all group-related business logic:
+UUID generation, creating groups, joining groups, leaving groups,
+and populating groupId in all data models.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create GroupManager.kt object
+☐ Implement generateGroupCode() (UUID)
+☐ Implement createGroup() logic
+☐ Implement joinGroup() validation
+☐ Implement leaveGroup() logic
+☐ Implement populateGroupId() for all models
+☐ Implement clearGroupId() for all models
+☐ Add error handling
+☐ Add logging
+☐ Test all operations
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/data/GroupManager.kt
+
+
+🏗️ TECHNICAL DETAILS - GroupManager.kt
+═══════════════════════════════════════════════════════════════════
+
+Full Implementation:
+---
+package com.example.supercart2.data
+
+import android.content.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.UUID
+
+object GroupManager {
+    
+    /**
+     * Generate a new group code (UUID)
+     */
+    fun generateGroupCode(): String {
+        val uuid = UUID.randomUUID().toString()
+        android.util.Log.d("GroupManager", "Generated group code: $uuid")
+        return uuid
+    }
+    
+    /**
+     * Create a new group
+     * 1. Generate UUID
+     * 2. Save to DataStore
+     * 3. Populate groupId in all local data
+     * 4. Trigger upload to Firebase
+     */
+    suspend fun createGroup(context: Context): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Generate group code
+                val groupCode = generateGroupCode()
+                android.util.Log.d("GroupManager", "Creating group with code: $groupCode")
+                
+                // Save to DataStore
+                DataStoreManager.saveGroupCode(context, groupCode)
+                
+                // Populate groupId in all local data
+                populateGroupId(groupCode)
+                
+                // Save updated data
+                DataStoreManager.saveDataGlobally()
+                
+                android.util.Log.d("GroupManager", "✅ Group created successfully: $groupCode")
+                groupCode
+            } catch (e: Exception) {
+                android.util.Log.e("GroupManager", "❌ Error creating group", e)
+                throw e
+            }
+        }
+    }
+    
+    /**
+     * Join an existing group
+     * 1. Validate group code exists in Firebase
+     * 2. Save to DataStore
+     * 3. Download group data (will overwrite local)
+     */
+    suspend fun joinGroup(context: Context, groupCode: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                android.util.Log.d("GroupManager", "Attempting to join group: $groupCode")
+                
+                // Validate UUID format
+                if (!isValidGroupCode(groupCode)) {
+                    android.util.Log.e("GroupManager", "❌ Invalid group code format")
+                    return@withContext false
+                }
+                
+                // Check if group exists in Firebase
+                val groupExists = FirebaseManager.checkGroupExists(groupCode)
+                if (!groupExists) {
+                    android.util.Log.e("GroupManager", "❌ Group does not exist: $groupCode")
+                    return@withContext false
+                }
+                
+                // Save group code
+                DataStoreManager.saveGroupCode(context, groupCode)
+                
+                // Download group data (will overwrite local data)
+                FirebaseManager.downloadData()
+                
+                android.util.Log.d("GroupManager", "✅ Successfully joined group: $groupCode")
+                true
+            } catch (e: Exception) {
+                android.util.Log.e("GroupManager", "❌ Error joining group", e)
+                false
+            }
+        }
+    }
+    
+    /**
+     * Leave the current group
+     * 1. Clear group code from DataStore
+     * 2. Clear groupId from all local data
+     * 3. Keep local data intact
+     */
+    suspend fun leaveGroup(context: Context) {
+        return withContext(Dispatchers.IO) {
+            try {
+                val currentCode = DataStoreManager.loadGroupCode(context)
+                android.util.Log.d("GroupManager", "Leaving group: $currentCode")
+                
+                // Clear group code
+                DataStoreManager.clearGroupCode(context)
+                
+                // Clear groupId from all local data
+                clearGroupId()
+                
+                // Save updated data
+                DataStoreManager.saveDataGlobally()
+                
+                android.util.Log.d("GroupManager", "✅ Successfully left group")
+            } catch (e: Exception) {
+                android.util.Log.e("GroupManager", "❌ Error leaving group", e)
+                throw e
+            }
+        }
+    }
+    
+    /**
+     * Get current group code
+     */
+    suspend fun getCurrentGroupCode(context: Context): String? {
+        return DataStoreManager.loadGroupCode(context)
+    }
+    
+    /**
+     * Check if user is in a group
+     */
+    suspend fun isInGroup(context: Context): Boolean {
+        return DataStoreManager.hasGroupCode(context)
+    }
+    
+    /**
+     * Populate groupId in all local data models
+     */
+    private fun populateGroupId(groupCode: String) {
+        android.util.Log.d("GroupManager", "Populating groupId: $groupCode")
+        
+        DataManagerObject.categories.forEach { categoryWithSubs ->
+            // Update category groupId
+            val updatedCategory = categoryWithSubs.category.copy(groupId = groupCode)
+            
+            // Update all subcategories and groceries
+            val updatedSubCategories = categoryWithSubs.subCategories.map { subCategoryWithGroceries ->
+                val updatedGroceries = subCategoryWithGroceries.groceries.map { grocery ->
+                    grocery.copy(groupId = groupCode)
+                }
+                SubCategoryWithGroceries(
+                    subCategory = subCategoryWithGroceries.subCategory.copy(groupId = groupCode),
+                    groceries = updatedGroceries.toMutableList()
+                )
+            }
+            
+            // Replace in DataManagerObject
+            val index = DataManagerObject.categories.indexOfFirst { 
+                it.category.uuid == categoryWithSubs.category.uuid 
+            }
+            if (index != -1) {
+                DataManagerObject.categories[index] = CategoryWithSubCategories(
+                    category = updatedCategory,
+                    subCategories = updatedSubCategories.toMutableList()
+                )
+            }
+        }
+        
+        // Update stores
+        val updatedStores = DataManagerObject.stores.map { it.copy(groupId = groupCode) }
+        DataManagerObject.stores.clear()
+        DataManagerObject.stores.addAll(updatedStores)
+        
+        DataManagerObject.updateData()
+        android.util.Log.d("GroupManager", "✅ GroupId populated in all data")
+    }
+    
+    /**
+     * Clear groupId from all local data models
+     */
+    private fun clearGroupId() {
+        android.util.Log.d("GroupManager", "Clearing groupId from all data")
+        
+        DataManagerObject.categories.forEach { categoryWithSubs ->
+            // Clear category groupId
+            val updatedCategory = categoryWithSubs.category.copy(groupId = null)
+            
+            // Clear all subcategories and groceries
+            val updatedSubCategories = categoryWithSubs.subCategories.map { subCategoryWithGroceries ->
+                val updatedGroceries = subCategoryWithGroceries.groceries.map { grocery ->
+                    grocery.copy(groupId = null)
+                }
+                SubCategoryWithGroceries(
+                    subCategory = subCategoryWithGroceries.subCategory.copy(groupId = null),
+                    groceries = updatedGroceries.toMutableList()
+                )
+            }
+            
+            // Replace in DataManagerObject
+            val index = DataManagerObject.categories.indexOfFirst { 
+                it.category.uuid == categoryWithSubs.category.uuid 
+            }
+            if (index != -1) {
+                DataManagerObject.categories[index] = CategoryWithSubCategories(
+                    category = updatedCategory,
+                    subCategories = updatedSubCategories.toMutableList()
+                )
+            }
+        }
+        
+        // Clear stores groupId
+        val updatedStores = DataManagerObject.stores.map { it.copy(groupId = null) }
+        DataManagerObject.stores.clear()
+        DataManagerObject.stores.addAll(updatedStores)
+        
+        DataManagerObject.updateData()
+        android.util.Log.d("GroupManager", "✅ GroupId cleared from all data")
+    }
+    
+    /**
+     * Validate group code format (UUID)
+     */
+    private fun isValidGroupCode(code: String): Boolean {
+        return try {
+            UUID.fromString(code)
+            true
+        } catch (e: IllegalArgumentException) {
+            false
+        }
+    }
+}
+---
+
+
+📐 KEY DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+
+1. **UUID Generation:**
+   - Use Java UUID.randomUUID()
+   - Standard format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+2. **Create Group Flow:**
+   - Generate code → Save locally → Populate groupId → Ready to upload
+
+3. **Join Group Flow:**
+   - Validate code → Check Firebase → Save locally → Download data
+
+4. **Leave Group Flow:**
+   - Clear code → Clear groupId → Keep local data
+
+5. **GroupId Population:**
+   - Updates ALL data models (categories, subcategories, groceries, stores)
+   - Triggers full data save
+
+6. **Error Handling:**
+   - Invalid UUID format
+   - Group doesn't exist
+   - Network errors
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Generate UUID → Valid format
+☐ Create group → Code saved and groupId populated
+☐ Join valid group → Success
+☐ Join invalid UUID → Fails gracefully
+☐ Join non-existent group → Fails gracefully
+☐ Leave group → Code cleared and groupId removed
+☐ isInGroup() returns correct status
+☐ All data models updated correctly
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ GroupManager.kt created
+☐ generateGroupCode() returns valid UUID
+☐ createGroup() populates groupId in all data
+☐ joinGroup() validates and downloads data
+☐ leaveGroup() clears code but keeps data
+☐ populateGroupId() updates all models
+☐ clearGroupId() removes from all models
+☐ isValidGroupCode() checks UUID format
+☐ Error handling implemented
+☐ Logging shows all operations
+☐ No compilation errors
+☐ Ready for Firebase integration
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 3: Update Firebase Manager for Groups
+This will modify Firebase upload/download to use group-based paths.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 2
+═══════════════════════════════════════════════════════════════════
