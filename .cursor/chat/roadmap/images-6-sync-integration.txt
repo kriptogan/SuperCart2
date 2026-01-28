@@ -1,0 +1,345 @@
+═══════════════════════════════════════════════════════════════════
+TASK 6: SYNC IMAGES WITH FIREBASE (BATCH UPLOAD/DOWNLOAD)
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 6
+Phase: 5 - UI Integration (Sync)
+Estimated Time: 2-3 hours
+Status: ☐ Not Started
+Dependencies: Task 3 (Firebase Storage), Task 5 (UI Integration)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Integrate image batch upload/download into existing "Upload to Cloud"
+and "Download from Cloud" functionality. Handle image deletion when
+groceries are deleted. Provide user feedback on sync progress.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Update FirebaseManager.uploadData() to include images
+☐ Update FirebaseManager.downloadData() to include images
+☐ Update DataManagerObject.deleteGrocery() to delete images
+☐ Add image sync progress indicators
+☐ Add image count to upload/download success messages
+☐ Handle sync errors gracefully
+☐ Test batch upload with multiple images
+☐ Test batch download
+☐ Test image deletion with grocery
+☐ Test offline behavior
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+EDIT:
+- app/src/main/java/com/example/supercart2/data/FirebaseManager.kt
+- app/src/main/java/com/example/supercart2/data/DataManagerObject.kt
+- app/src/main/java/com/example/supercart2/ui/components/BurgerMenu.kt (optional: progress UI)
+
+
+🏗️ TECHNICAL DETAILS - FirebaseManager.kt Updates
+═══════════════════════════════════════════════════════════════════
+
+Update uploadData() function:
+---
+suspend fun uploadData() {
+    try {
+        // Convert nested structure to flat lists
+        val (categories, subCategories, groceries) = DataConverter.flattenCategories(DataManagerObject.categories)
+        
+        // Get stores list
+        val stores = DataManagerObject.stores.toList()
+        
+        // Create a batch operation for Firestore
+        val batch = db.batch()
+        
+        // Upload categories
+        categories.forEach { category ->
+            val docRef = db.collection(CATEGORIES_COLLECTION).document(category.uuid)
+            batch.set(docRef, categoryToMap(category))
+        }
+        
+        // Upload subcategories
+        subCategories.forEach { subCategory ->
+            val docRef = db.collection(SUBCATEGORIES_COLLECTION).document(subCategory.uuid)
+            batch.set(docRef, subCategoryToMap(subCategory))
+        }
+        
+        // Upload groceries
+        groceries.forEach { grocery ->
+            val docRef = db.collection(GROCERIES_COLLECTION).document(grocery.uuid)
+            batch.set(docRef, groceryToMap(grocery))
+        }
+        
+        // Upload stores
+        DataManagerObject.stores.forEach { store ->
+            val docRef = db.collection(STORES_COLLECTION).document(store.uuid)
+            batch.set(docRef, storeToMap(store))
+        }
+        
+        // Commit Firestore batch
+        batch.commit().await()
+        android.util.Log.d("FirebaseManager", "Data uploaded successfully")
+        
+        // NEW: Batch upload images to Firebase Storage
+        val context = DataStoreManager.globalContext
+        if (context != null) {
+            val uploadedCount = FirebaseStorageManager.batchUploadImages(context)
+            android.util.Log.d("FirebaseManager", "Uploaded $uploadedCount images to Firebase Storage")
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("FirebaseManager", "Error uploading data", e)
+        throw e
+    }
+}
+---
+
+Update downloadData() function:
+---
+suspend fun downloadData() {
+    try {
+        // Download all collections and manually deserialize
+        val categoriesSnapshot = db.collection(CATEGORIES_COLLECTION).get().await()
+        val categories = categoriesSnapshot.documents.map { documentToCategory(it) }
+        
+        val subCategoriesSnapshot = db.collection(SUBCATEGORIES_COLLECTION).get().await()
+        val subCategories = subCategoriesSnapshot.documents.map { documentToSubCategory(it) }
+        
+        val groceriesSnapshot = db.collection(GROCERIES_COLLECTION).get().await()
+        val groceries = groceriesSnapshot.documents.map { documentToGrocery(it) }
+        
+        val storesSnapshot = db.collection(STORES_COLLECTION).get().await()
+        val stores = storesSnapshot.documents.map { documentToStore(it) }
+        
+        // Validate relationships
+        if (DataConverter.validateRelationships(categories, subCategories, groceries)) {
+            // Build nested structure
+            val nestedCategories = DataConverter.buildNestedStructure(categories, subCategories, groceries)
+            
+            // Update DataManagerObject with downloaded data
+            DataManagerObject.categories.clear()
+            DataManagerObject.categories.addAll(nestedCategories)
+            
+            // Update stores (filter out deleted ones)
+            DataManagerObject.stores.clear()
+            DataManagerObject.stores.addAll(stores.filter { !it.deleted })
+            
+            DataManagerObject.updateData()
+            DataStoreManager.saveDataGlobally()
+            
+            android.util.Log.d("FirebaseManager", "Data downloaded successfully")
+            
+            // NEW: Batch download images from Firebase Storage
+            val context = DataStoreManager.globalContext
+            if (context != null) {
+                val downloadedCount = FirebaseStorageManager.batchDownloadImages(context)
+                android.util.Log.d("FirebaseManager", "Downloaded $downloadedCount images from Firebase Storage")
+            }
+        } else {
+            throw Exception("Invalid data relationships in downloaded data")
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("FirebaseManager", "Error downloading data", e)
+        throw e
+    }
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - DataManagerObject.kt Updates
+═══════════════════════════════════════════════════════════════════
+
+Update deleteGrocery() function:
+---
+fun deleteGrocery(groceryUuid: String) {
+    // Find and delete the grocery (soft delete)
+    categories.forEach { categoryWithSubs ->
+        categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+            val index = subCategoryWithGroceries.groceries.indexOfFirst { it.uuid == groceryUuid }
+            if (index != -1) {
+                val grocery = subCategoryWithGroceries.groceries[index]
+                
+                // NEW: Delete image if exists
+                grocery.imageUUID?.let { imageUUID ->
+                    val context = DataStoreManager.globalContext
+                    if (context != null) {
+                        ImageManager.deleteLocalImage(imageUUID, context)
+                        android.util.Log.d("DataManagerObject", "Deleted image for grocery: $imageUUID")
+                    }
+                }
+                
+                // Mark grocery as deleted
+                subCategoryWithGroceries.groceries[index] = grocery.copy(deleted = true)
+                updateData()
+                android.util.Log.d("DataManagerObject", "Deleted grocery $groceryUuid")
+                return
+            }
+        }
+    }
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - User Feedback (Optional Enhancement)
+═══════════════════════════════════════════════════════════════════
+
+Update BurgerMenu.kt to show image sync status:
+---
+DropdownMenuItem(
+    text = { 
+        Column {
+            Text("Upload to Cloud")
+            if (uploadingImages) {
+                Text(
+                    "Uploading images...",
+                    fontSize = 10.sp,
+                    color = SuperCartColors.gray
+                )
+            }
+        }
+    },
+    onClick = {
+        expanded = false
+        scope.launch {
+            uploadingImages = true
+            try {
+                FirebaseManager.uploadData()
+                // Success message already shown
+            } finally {
+                uploadingImages = false
+            }
+        }
+    }
+)
+---
+
+
+🔄 COMPLETE SYNC FLOW
+═══════════════════════════════════════════════════════════════════
+
+Upload to Cloud:
+---
+1. User clicks "Upload to Cloud" in burger menu
+2. FirebaseManager.uploadData() runs:
+   a. Upload Firestore data (categories, groceries, stores)
+   b. Batch upload all local images to Firebase Storage
+3. Show success: "Data uploaded (X images synced)"
+---
+
+Download from Cloud:
+---
+1. User clicks "Download from Cloud" in burger menu
+2. FirebaseManager.downloadData() runs:
+   a. Download Firestore data
+   b. Batch download missing images from Firebase Storage
+3. Show success: "Data downloaded (X images synced)"
+---
+
+Delete Grocery:
+---
+1. User deletes grocery in edit dialog
+2. DataManagerObject.deleteGrocery() runs:
+   a. Delete local image file
+   b. Soft delete grocery (deleted = true)
+3. Next upload: Image deleted from Firebase (not in batch anymore)
+---
+
+
+⚠️ ERROR HANDLING
+═══════════════════════════════════════════════════════════════════
+
+Scenarios to Handle:
+1. **No Internet:** Image sync fails, but Firestore sync may also fail
+2. **Partial Upload:** Some images upload, others fail
+3. **Missing Images:** Download requested but image not in Firebase
+4. **Storage Quota:** Firebase Storage quota exceeded
+
+Strategy:
+- Continue batch even if individual images fail
+- Log all failures
+- Return success count (not all-or-nothing)
+- Show user how many images synced
+- Local images always work offline
+
+
+📐 IMAGE LIFECYCLE
+═══════════════════════════════════════════════════════════════════
+
+Create Grocery with Image:
+---
+1. User adds image → ImageManager saves locally
+2. User saves grocery → imageUUID stored in Grocery
+3. User uploads to cloud → Image uploaded to Firebase Storage
+---
+
+Edit Grocery (Change Image):
+---
+1. User selects new image
+2. Old image deleted locally
+3. New image compressed and saved
+4. New UUID stored in grocery
+5. Upload to cloud → New image uploaded, old one orphaned in Firebase
+---
+
+Delete Grocery:
+---
+1. User deletes grocery
+2. Image deleted locally immediately
+3. Grocery soft-deleted (deleted = true)
+4. Upload to cloud → Deleted grocery not in batch, image not uploaded
+5. Orphaned image in Firebase (acceptable, or add cleanup function)
+---
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Upload with images works
+☐ Download with images works
+☐ Image count displayed in success message
+☐ Images accessible after download
+☐ Deleting grocery deletes image
+☐ Multiple images upload in batch
+☐ Partial failures handled
+☐ Offline mode handled gracefully
+☐ No crashes on sync errors
+☐ Cross-device sync works
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ FirebaseManager.uploadData() includes image batch upload
+☐ FirebaseManager.downloadData() includes image batch download
+☐ DataManagerObject.deleteGrocery() deletes images
+☐ Image sync counts displayed to user
+☐ Upload to Cloud syncs images
+☐ Download from Cloud syncs images
+☐ Deleting grocery deletes image locally
+☐ Images work offline (local cache)
+☐ Images sync across devices
+☐ Error handling works correctly
+☐ No data loss on failures
+☐ Feature fully functional end-to-end
+
+
+🎉 FEATURE COMPLETION
+═══════════════════════════════════════════════════════════════════
+This is the final task for the Grocery Images feature!
+
+After completion:
+☐ Perform full end-to-end testing
+☐ Test on different Android versions
+☐ Test with various image sizes/formats
+☐ Test offline/online scenarios
+☐ Test cross-device sync
+☐ Verify 200KB compression
+☐ Check for memory leaks
+☐ Update images-0-to-do.txt with completion
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 6 - GROCERY IMAGES FEATURE COMPLETE
+═══════════════════════════════════════════════════════════════════

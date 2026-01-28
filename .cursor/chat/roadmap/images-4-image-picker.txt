@@ -1,0 +1,321 @@
+═══════════════════════════════════════════════════════════════════
+TASK 4: CREATE IMAGE PICKER & CAMERA INTEGRATION
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 4
+Phase: 4 - Image Picker UI
+Estimated Time: 3-4 hours
+Status: ☐ Not Started
+Dependencies: Task 1 (Setup), Task 2 (Image Manager)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Create UI components for selecting images from gallery or capturing
+with camera. Handle runtime permissions, image selection flow, and
+provide seamless UX for both Android 13+ (PhotoPicker) and legacy
+versions (traditional picker).
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create ImageSourceDialog.kt (Gallery or Camera choice)
+☐ Implement gallery picker launcher
+☐ Implement camera launcher
+☐ Handle runtime permissions (Accompanist)
+☐ Handle Android 13+ PhotoPicker
+☐ Handle legacy image picker
+☐ Create temporary file for camera capture
+☐ Process selected/captured image
+☐ Test on Android 13+
+☐ Test on Android 12 and below
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/ui/components/ImageSourceDialog.kt
+
+
+🏗️ TECHNICAL DETAILS - ImageSourceDialog.kt
+═══════════════════════════════════════════════════════════════════
+
+Component Structure:
+---
+package com.example.supercart2.ui.components
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
+import com.example.supercart2.ui.theme.SuperCartColors
+import com.example.supercart2.ui.theme.SuperCartSpacing
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.isGranted
+import java.io.File
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun ImageSourceDialog(
+    onDismiss: () -> Unit,
+    onImageSelected: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    
+    // Permission states
+    val cameraPermission = rememberPermissionState(
+        android.Manifest.permission.CAMERA
+    )
+    
+    // Gallery picker launcher (works for all Android versions)
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            onImageSelected(it)
+            onDismiss()
+        }
+    }
+    
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            tempCameraUri?.let {
+                onImageSelected(it)
+                onDismiss()
+            }
+        }
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Image Source") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+            ) {
+                // Gallery Option
+                Button(
+                    onClick = {
+                        galleryLauncher.launch("image/*")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen,
+                        contentColor = SuperCartColors.white
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PhotoLibrary,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                    Text("Choose from Gallery")
+                }
+                
+                // Camera Option
+                Button(
+                    onClick = {
+                        if (cameraPermission.status.isGranted) {
+                            // Permission granted, launch camera
+                            val photoFile = createTempImageFile(context)
+                            tempCameraUri = FileProvider.getUriForFile(
+                                context,
+                                "com.example.supercart2.fileprovider",
+                                photoFile
+                            )
+                            cameraLauncher.launch(tempCameraUri!!)
+                        } else {
+                            // Request permission
+                            cameraPermission.launchPermissionRequest()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen,
+                        contentColor = SuperCartColors.white
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                    Text("Take Photo")
+                }
+                
+                // Show permission explanation if denied
+                if (!cameraPermission.status.isGranted) {
+                    Text(
+                        text = "Camera permission required to take photos",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SuperCartColors.gray
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+/**
+ * Create temporary file for camera capture
+ */
+private fun createTempImageFile(context: Context): File {
+    val cameraDir = File(context.cacheDir, "camera")
+    if (!cameraDir.exists()) {
+        cameraDir.mkdirs()
+    }
+    return File(cameraDir, "temp_${System.currentTimeMillis()}.jpg")
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - Android Version Handling
+═══════════════════════════════════════════════════════════════════
+
+Android 13+ (API 33+):
+- PhotoPicker available (built into GetContent contract)
+- No READ_MEDIA_IMAGES permission needed for gallery
+- Still need CAMERA permission for camera
+
+Android 12 and below (API 32 and below):
+- Traditional image picker
+- READ_EXTERNAL_STORAGE permission needed
+- CAMERA permission needed
+
+Our implementation:
+- Use ActivityResultContracts.GetContent() (works on all versions)
+- Use ActivityResultContracts.TakePicture() for camera
+- Accompanist handles permission UI automatically
+
+
+🏗️ TECHNICAL DETAILS - Permission Flow
+═══════════════════════════════════════════════════════════════════
+
+Gallery (all Android versions):
+1. User taps "Choose from Gallery"
+2. Launch GetContent("image/*")
+3. System handles permissions automatically
+4. User selects image
+5. Receive Uri callback
+
+Camera:
+1. User taps "Take Photo"
+2. Check if CAMERA permission granted
+3. If granted: Create temp file, launch camera
+4. If not granted: Show permission request
+5. After permission granted: Launch camera
+6. User captures photo
+7. Receive success/failure callback
+
+
+📐 UX FLOW
+═══════════════════════════════════════════════════════════════════
+
+User Flow:
+---
+1. User editing grocery → Taps "Add Image" area
+2. ImageSourceDialog appears with 2 options:
+   - [📷 Choose from Gallery]
+   - [📸 Take Photo]
+3. User selects option
+4. System picker/camera opens
+5. User selects/captures image
+6. Image is processed (compress, save)
+7. Dialog closes
+8. Image displays in grocery dialog
+---
+
+
+⚠️ EDGE CASES TO HANDLE
+═══════════════════════════════════════════════════════════════════
+
+1. **Permission Denied:**
+   - Show explanation text
+   - Disable camera button
+   - Gallery still works (no permission needed on Android 13+)
+
+2. **User Cancels Selection:**
+   - Do nothing, return to grocery dialog
+   - No error message needed
+
+3. **Camera Unavailable:**
+   - Disable camera button
+   - Show "Camera not available" message
+
+4. **Large Images:**
+   - Handle in ImageManager compression
+   - May take a few seconds
+   - Show loading indicator (Task 5)
+
+5. **Storage Full:**
+   - Catch IOException
+   - Show error message
+   - Don't crash
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Gallery picker opens
+☐ Can select image from gallery
+☐ Camera permission request works
+☐ Camera opens after permission granted
+☐ Can capture photo with camera
+☐ Image URI received correctly
+☐ Works on Android 13+
+☐ Works on Android 12
+☐ Works on Android 11 and below
+☐ Permission denial handled gracefully
+☐ Cancel flow handled gracefully
+☐ No crashes
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ ImageSourceDialog.kt created
+☐ Gallery picker working
+☐ Camera capture working
+☐ Runtime permissions handled
+☐ Works on all Android versions
+☐ Permission UI clear and helpful
+☐ Temp files created correctly for camera
+☐ Uri callback working
+☐ Cancel handling works
+☐ No crashes or errors
+☐ Ready for UI integration
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 5: Integrate Images into Grocery Dialog
+This will add image display, selection, and removal to the grocery
+creation/edit dialog.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 4
+═══════════════════════════════════════════════════════════════════

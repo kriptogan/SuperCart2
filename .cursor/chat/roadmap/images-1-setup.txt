@@ -1,0 +1,152 @@
+═══════════════════════════════════════════════════════════════════
+TASK 1: ADD DEPENDENCIES & PERMISSIONS
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 1
+Phase: 1 - Setup & Dependencies
+Estimated Time: 1-2 hours
+Status: ☐ Not Started
+Dependencies: None
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Set up all required dependencies, Android permissions, and FileProvider
+configuration for image handling. Enable gallery access, camera usage,
+and image loading capabilities.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Add Coil dependency for image loading
+☐ Add Accompanist Permissions dependency
+☐ Add camera permission to AndroidManifest
+☐ Add media permissions to AndroidManifest
+☐ Create FileProvider configuration
+☐ Add file_paths.xml for camera temp files
+☐ Update AndroidManifest with FileProvider
+☐ Sync Gradle and verify build
+☐ Test dependency resolution
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/res/xml/file_paths.xml
+
+EDIT:
+- app/build.gradle.kts
+- app/src/main/AndroidManifest.xml
+
+
+🏗️ TECHNICAL DETAILS - build.gradle.kts
+═══════════════════════════════════════════════════════════════════
+
+Add to dependencies block:
+---
+// Image loading library
+implementation("io.coil-kt:coil-compose:2.5.0")
+
+// Permission handling (for Android 12 and below)
+implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+---
+
+
+🏗️ TECHNICAL DETAILS - AndroidManifest.xml
+═══════════════════════════════════════════════════════════════════
+
+Add Permissions (before <application> tag):
+---
+<!-- Camera permission -->
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-feature android:name="android.hardware.camera" android:required="false" />
+
+<!-- Media permissions (Android 13+) -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+<!-- Legacy storage permission (Android 12 and below) -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32" />
+---
+
+Add FileProvider (inside <application> tag):
+---
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="com.example.supercart2.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>
+---
+
+
+🏗️ TECHNICAL DETAILS - file_paths.xml
+═══════════════════════════════════════════════════════════════════
+
+Create file at: app/src/main/res/xml/file_paths.xml
+---
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cache directory for temporary camera images -->
+    <cache-path name="camera_images" path="camera/" />
+    
+    <!-- External cache for sharing -->
+    <external-cache-path name="external_images" path="/" />
+</paths>
+---
+
+
+📐 ANDROID VERSION CONSIDERATIONS
+═══════════════════════════════════════════════════════════════════
+
+Android 13+ (API 33+):
+- Use PhotoPicker API (no permission needed for gallery)
+- Still need CAMERA permission for camera
+
+Android 12 and below (API 32 and below):
+- Need READ_EXTERNAL_STORAGE for gallery
+- Need CAMERA permission for camera
+- Use traditional image picker
+
+Implementation will handle both automatically.
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Project syncs successfully
+☐ No dependency conflicts
+☐ No build errors
+☐ Can import Coil classes
+☐ Can import Accompanist classes
+☐ Permissions appear in merged manifest
+☐ FileProvider configured correctly
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ Coil dependency added and working
+☐ Accompanist permissions added
+☐ Camera permission in manifest
+☐ Media permissions in manifest (both Android 13+ and legacy)
+☐ FileProvider configured with authority
+☐ file_paths.xml created and referenced
+☐ Project builds successfully
+☐ No compilation errors
+☐ Ready for image processing implementation
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 2: Create Image Manager
+This will implement image compression and local storage.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 1
+═══════════════════════════════════════════════════════════════════

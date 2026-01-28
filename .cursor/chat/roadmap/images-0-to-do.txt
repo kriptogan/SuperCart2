@@ -1,0 +1,147 @@
+═══════════════════════════════════════════════════════════════════
+GROCERY IMAGES FEATURE - MASTER TRACKER
+═══════════════════════════════════════════════════════════════════
+
+📊 OVERALL PROGRESS
+═══════════════════════════════════════════════════════════════════
+Total Tasks: 5 phases
+Completed: 0
+In Progress: 0
+Remaining: 5
+
+Estimated Total Time: 12-16 hours
+Actual Time Spent: 0 hours
+
+Current Phase: Phase 1 - Setup & Dependencies
+Current Status: Not Started
+
+
+📝 TASK LIST BY PHASE
+═══════════════════════════════════════════════════════════════════
+
+PHASE 1: SETUP & DEPENDENCIES
+═══════════════════════════════════════════════════════════════════
+☐ Task 1: Add Dependencies & Permissions
+   File: images-1-setup.txt
+   Estimate: 1-2 hours
+   Status: Not Started
+   Dependencies: None
+
+PHASE 2: IMAGE PROCESSING
+═══════════════════════════════════════════════════════════════════
+☐ Task 2: Create Image Manager (Compression & Local Storage)
+   File: images-2-image-manager.txt
+   Estimate: 2-3 hours
+   Status: Not Started
+   Dependencies: Task 1
+
+PHASE 3: FIREBASE STORAGE INTEGRATION
+═══════════════════════════════════════════════════════════════════
+☐ Task 3: Implement Firebase Storage Manager
+   File: images-3-firebase-storage.txt
+   Estimate: 2-3 hours
+   Status: Not Started
+   Dependencies: Task 2
+
+PHASE 4: IMAGE PICKER UI
+═══════════════════════════════════════════════════════════════════
+☐ Task 4: Create Image Picker & Camera Integration
+   File: images-4-image-picker.txt
+   Estimate: 3-4 hours
+   Status: Not Started
+   Dependencies: Task 1, Task 2
+
+PHASE 5: UI INTEGRATION
+═══════════════════════════════════════════════════════════════════
+☐ Task 5: Integrate Images into Grocery Dialog
+   File: images-5-ui-integration.txt
+   Estimate: 2-3 hours
+   Status: Not Started
+   Dependencies: Task 3, Task 4
+
+☐ Task 6: Sync Images with Firebase (Batch Upload/Download)
+   File: images-6-sync-integration.txt
+   Estimate: 2-3 hours
+   Status: Not Started
+   Dependencies: Task 3, Task 5
+
+
+🔄 CURRENT FOCUS
+═══════════════════════════════════════════════════════════════════
+Next Task: Task 1 - Add Dependencies & Permissions
+Focus Area: Setup & configuration
+Blockers: None
+Notes: Start with dependencies, permissions, and FileProvider setup
+
+
+⚠️ IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════
+- Images stored locally (app cache) as primary source
+- Firebase Storage as backup/sync mechanism
+- Batch upload/download (not real-time)
+- Compress all images to ≤200KB
+- Delete images when grocery is deleted
+- Handle offline mode gracefully
+- Use Coil for image loading/display
+- Android 13+ use PhotoPicker (no permission needed)
+- Android 12 and below use traditional picker with permissions
+
+
+📐 DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+1. Image Display: Only in grocery creation/edit dialog
+2. Image Sources: Gallery + Camera (both options)
+3. Sync Strategy: Batch upload when user clicks "Upload to Cloud"
+4. Image Deletion: Delete with grocery (local + Firebase)
+5. Placeholder: "Add Image" button/prompt
+6. Image Format: JPEG (best compression)
+7. Max Size: 200KB (requirement)
+8. Storage Path (Firebase): /grocery_images/{uuid}.jpg
+9. Local Path: context.cacheDir/images/{uuid}.jpg
+10. Library: Coil for image loading
+
+
+🧪 TESTING STRATEGY
+═══════════════════════════════════════════════════════════════════
+After Each Phase:
+- Test on Android 13+ (PhotoPicker)
+- Test on Android 12 and below (traditional picker)
+- Test camera functionality
+- Test image compression (verify ≤200KB)
+- Test local storage
+- Test Firebase upload/download
+- Test image deletion
+- Test offline behavior
+
+Final Testing:
+- Test with large images (>10MB)
+- Test with various image formats
+- Test with no internet (offline mode)
+- Test batch sync with multiple images
+- Test memory usage
+- Test with deleted groceries
+- Test cross-device sync
+
+
+📝 COMPLETION CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ All 6 tasks completed
+☐ Dependencies added and working
+☐ Image compression working (≤200KB)
+☐ Gallery picker working
+☐ Camera integration working
+☐ Permissions handled correctly
+☐ Local storage working
+☐ Firebase Storage upload/download working
+☐ Images display in grocery dialog
+☐ Images sync with "Upload to Cloud"
+☐ Images download with "Download from Cloud"
+☐ Images deleted with groceries
+☐ Offline mode handled
+☐ No memory leaks
+☐ All acceptance criteria met
+
+
+═══════════════════════════════════════════════════════════════════
+END OF MASTER TRACKER
+═══════════════════════════════════════════════════════════════════

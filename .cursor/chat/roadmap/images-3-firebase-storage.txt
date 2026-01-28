@@ -1,0 +1,345 @@
+═══════════════════════════════════════════════════════════════════
+TASK 3: IMPLEMENT FIREBASE STORAGE MANAGER
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 3
+Phase: 3 - Firebase Storage Integration
+Estimated Time: 2-3 hours
+Status: ☐ Not Started
+Dependencies: Task 2 (Image Manager)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Implement Firebase Storage manager to handle cloud backup and sync
+of grocery images. Batch upload/download images when user manually
+syncs data via "Upload to Cloud" / "Download from Cloud".
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create FirebaseStorageManager.kt
+☐ Implement uploadImage() function
+☐ Implement downloadImage() function
+☐ Implement deleteImage() function
+☐ Implement batchUploadImages() for sync
+☐ Implement batchDownloadImages() for sync
+☐ Handle upload/download errors gracefully
+☐ Add progress tracking (optional)
+☐ Test upload/download flow
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/data/FirebaseStorageManager.kt
+
+EDIT:
+- app/src/main/java/com/example/supercart2/data/FirebaseManager.kt
+  (integrate image sync into uploadData/downloadData)
+
+
+🏗️ TECHNICAL DETAILS - FirebaseStorageManager.kt
+═══════════════════════════════════════════════════════════════════
+
+---
+package com.example.supercart2.data
+
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import kotlinx.coroutines.tasks.await
+import java.io.File
+import android.content.Context
+
+object FirebaseStorageManager {
+    private val storage = FirebaseStorage.getInstance()
+    private val storageRef: StorageReference = storage.reference
+    private const val IMAGES_PATH = "grocery_images"
+    
+    /**
+     * Upload a single image to Firebase Storage
+     * Returns true if successful
+     */
+    suspend fun uploadImage(imageFile: File, uuid: String): Boolean {
+        return try {
+            val imageRef = storageRef.child("$IMAGES_PATH/$uuid.jpg")
+            imageRef.putFile(android.net.Uri.fromFile(imageFile)).await()
+            
+            android.util.Log.d("FirebaseStorageManager", "Uploaded image: $uuid")
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseStorageManager", "Error uploading image: $uuid", e)
+            false
+        }
+    }
+    
+    /**
+     * Download a single image from Firebase Storage
+     * Returns the local file or null on error
+     */
+    suspend fun downloadImage(uuid: String, context: Context): File? {
+        return try {
+            val imageRef = storageRef.child("$IMAGES_PATH/$uuid.jpg")
+            val localFile = ImageManager.getImageFile(uuid, context)
+            
+            // Download to local file
+            imageRef.getFile(localFile).await()
+            
+            android.util.Log.d("FirebaseStorageManager", "Downloaded image: $uuid")
+            localFile
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseStorageManager", "Error downloading image: $uuid", e)
+            null
+        }
+    }
+    
+    /**
+     * Delete image from Firebase Storage
+     */
+    suspend fun deleteImage(uuid: String): Boolean {
+        return try {
+            val imageRef = storageRef.child("$IMAGES_PATH/$uuid.jpg")
+            imageRef.delete().await()
+            
+            android.util.Log.d("FirebaseStorageManager", "Deleted image from Firebase: $uuid")
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseStorageManager", "Error deleting image: $uuid", e)
+            false
+        }
+    }
+    
+    /**
+     * Check if image exists in Firebase Storage
+     */
+    suspend fun imageExists(uuid: String): Boolean {
+        return try {
+            val imageRef = storageRef.child("$IMAGES_PATH/$uuid.jpg")
+            imageRef.metadata.await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * Batch upload all local images that aren't in Firebase yet
+     * Returns count of successfully uploaded images
+     */
+    suspend fun batchUploadImages(context: Context): Int {
+        var uploadedCount = 0
+        
+        try {
+            // Get all groceries with images
+            val groceriesWithImages = DataManagerObject.categories
+                .flatMap { it.subCategories }
+                .flatMap { it.groceries }
+                .filter { it.imageUUID != null && !it.deleted }
+            
+            groceriesWithImages.forEach { grocery ->
+                val uuid = grocery.imageUUID ?: return@forEach
+                val localFile = ImageManager.getLocalImageFile(uuid, context)
+                
+                if (localFile != null && localFile.exists()) {
+                    if (uploadImage(localFile, uuid)) {
+                        uploadedCount++
+                    }
+                }
+            }
+            
+            android.util.Log.d("FirebaseStorageManager", "Batch upload complete: $uploadedCount images")
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseStorageManager", "Error in batch upload", e)
+        }
+        
+        return uploadedCount
+    }
+    
+    /**
+     * Batch download images for groceries that don't have local copies
+     * Returns count of successfully downloaded images
+     */
+    suspend fun batchDownloadImages(context: Context): Int {
+        var downloadedCount = 0
+        
+        try {
+            // Get all groceries with images
+            val groceriesWithImages = DataManagerObject.categories
+                .flatMap { it.subCategories }
+                .flatMap { it.groceries }
+                .filter { it.imageUUID != null && !it.deleted }
+            
+            groceriesWithImages.forEach { grocery ->
+                val uuid = grocery.imageUUID ?: return@forEach
+                val localFile = ImageManager.getLocalImageFile(uuid, context)
+                
+                // Only download if we don't have it locally
+                if (localFile == null || !localFile.exists()) {
+                    if (downloadImage(uuid, context) != null) {
+                        downloadedCount++
+                    }
+                }
+            }
+            
+            android.util.Log.d("FirebaseStorageManager", "Batch download complete: $downloadedCount images")
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseStorageManager", "Error in batch download", e)
+        }
+        
+        return downloadedCount
+    }
+    
+    // Make getImageFile public for access from FirebaseStorageManager
+    fun getImageFile(uuid: String, context: Context): File {
+        val dir = File(context.cacheDir, "images")
+        if (!dir.exists()) dir.mkdirs()
+        return File(dir, "$uuid.jpg")
+    }
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - Integrate with FirebaseManager
+═══════════════════════════════════════════════════════════════════
+
+Update uploadData() function:
+---
+suspend fun uploadData() {
+    try {
+        // ... existing code to upload Firestore data ...
+        
+        batch.commit().await()
+        android.util.Log.d("FirebaseManager", "Data uploaded successfully")
+        
+        // NEW: Batch upload images after data upload
+        val context = DataStoreManager.globalContext
+        if (context != null) {
+            val uploadedCount = FirebaseStorageManager.batchUploadImages(context)
+            android.util.Log.d("FirebaseManager", "Uploaded $uploadedCount images to Firebase Storage")
+        }
+    } catch (e: Exception) {
+        // ... error handling ...
+    }
+}
+---
+
+Update downloadData() function:
+---
+suspend fun downloadData() {
+    try {
+        // ... existing code to download Firestore data ...
+        
+        DataManagerObject.updateData()
+        DataStoreManager.saveDataGlobally()
+        android.util.Log.d("FirebaseManager", "Data downloaded successfully")
+        
+        // NEW: Batch download images after data download
+        val context = DataStoreManager.globalContext
+        if (context != null) {
+            val downloadedCount = FirebaseStorageManager.batchDownloadImages(context)
+            android.util.Log.d("FirebaseManager", "Downloaded $downloadedCount images from Firebase Storage")
+        }
+    } catch (e: Exception) {
+        // ... error handling ...
+    }
+}
+---
+
+
+📐 FIREBASE STORAGE STRUCTURE
+═══════════════════════════════════════════════════════════════════
+
+Storage Bucket: supercart2-58caf.firebasestorage.app
+
+Directory Structure:
+---
+/grocery_images/
+  ├── {uuid1}.jpg  (200KB max)
+  ├── {uuid2}.jpg
+  ├── {uuid3}.jpg
+  └── ...
+---
+
+Example:
+- Grocery UUID: "abc-123-def-456"
+- Firestore path: groceries/abc-123-def-456
+- Storage path: grocery_images/abc-123-def-456.jpg
+- Local path: cache/images/abc-123-def-456.jpg
+
+
+🔄 SYNC FLOW
+═══════════════════════════════════════════════════════════════════
+
+User clicks "Upload to Cloud":
+1. Upload Firestore data (categories, groceries, etc.)
+2. Batch upload all local images to Firebase Storage
+3. Show success message with count
+
+User clicks "Download from Cloud":
+1. Download Firestore data
+2. Batch download missing images from Firebase Storage
+3. Show success message with count
+
+Offline:
+- Upload/download attempts fail gracefully
+- Show error message
+- Local images remain available
+
+
+⚠️ ERROR HANDLING
+═══════════════════════════════════════════════════════════════════
+
+Handle these scenarios:
+1. Network failure during upload/download
+2. Storage quota exceeded
+3. Missing images in Firebase
+4. Corrupted image files
+5. Permission denied errors
+
+Strategy:
+- Continue on individual failures (don't stop batch)
+- Log all errors
+- Return success counts
+- Show user-friendly error messages
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Can upload single image
+☐ Can download single image
+☐ Can delete image from Firebase
+☐ Batch upload works
+☐ Batch download works
+☐ Handles missing images gracefully
+☐ Handles network errors
+☐ Doesn't crash on failures
+☐ Logs are informative
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ FirebaseStorageManager.kt created
+☐ Upload image function working
+☐ Download image function working
+☐ Delete image function working
+☐ Batch upload integrated with "Upload to Cloud"
+☐ Batch download integrated with "Download from Cloud"
+☐ FirebaseManager.kt updated
+☐ Error handling implemented
+☐ All images ≤200KB upload successfully
+☐ Downloaded images work offline
+☐ No compilation errors
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 4: Create Image Picker & Camera
+This will implement the UI for selecting/capturing images.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 3
+═══════════════════════════════════════════════════════════════════

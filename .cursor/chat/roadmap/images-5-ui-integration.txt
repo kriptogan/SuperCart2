@@ -1,0 +1,388 @@
+═══════════════════════════════════════════════════════════════════
+TASK 5: INTEGRATE IMAGES INTO GROCERY DIALOG
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 5
+Phase: 5 - UI Integration
+Estimated Time: 2-3 hours
+Status: ☐ Not Started
+Dependencies: Task 3 (Firebase Storage), Task 4 (Image Picker)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Add image display, selection, and removal to GroceryCreationDialog.
+Show image preview using Coil, provide "Add Image" placeholder,
+and allow users to change or remove images.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Add image state to GroceryCreationDialog
+☐ Add ImageSourceDialog integration
+☐ Add image preview display (using Coil)
+☐ Add "Add Image" placeholder button
+☐ Add "Change Image" button (when image exists)
+☐ Add "Remove Image" button (when image exists)
+☐ Process selected image (compress & save)
+☐ Update grocery with imageUUID
+☐ Handle image loading states
+☐ Add loading indicator during processing
+☐ Test image selection flow
+☐ Test image removal flow
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+EDIT:
+- app/src/main/java/com/example/supercart2/ui/components/GroceryCreationDialog.kt
+
+
+🏗️ TECHNICAL DETAILS - GroceryCreationDialog Updates
+═══════════════════════════════════════════════════════════════════
+
+Add State Variables:
+---
+var imageUri by remember { mutableStateOf<Uri?>(null) }
+var currentImageUUID by remember { mutableStateOf<String?>(null) }
+var showImageSourceDialog by remember { mutableStateOf(false) }
+var isProcessingImage by remember { mutableStateOf(false) }
+
+// Initialize with existing image when editing
+LaunchedEffect(groceryToEdit) {
+    if (groceryToEdit != null) {
+        // ... existing initialization ...
+        currentImageUUID = groceryToEdit.imageUUID
+    }
+}
+---
+
+Add Image Display Section (at top of dialog content):
+---
+// Image Section (at the top of the dialog content Column)
+Card(
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(200.dp)
+        .clickable { showImageSourceDialog = true },
+    colors = CardDefaults.cardColors(
+        containerColor = SuperCartColors.lightGray.copy(alpha = 0.3f)
+    ),
+    shape = SuperCartShapes.medium
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isProcessingImage) {
+            // Show loading indicator
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    color = SuperCartColors.primaryGreen
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Processing image...",
+                    color = SuperCartColors.gray,
+                    fontSize = 12.sp
+                )
+            }
+        } else if (currentImageUUID != null) {
+            // Show image using Coil
+            val imageFile = remember(currentImageUUID) {
+                ImageManager.getLocalImageFile(currentImageUUID!!, context)
+            }
+            
+            if (imageFile != null && imageFile.exists()) {
+                AsyncImage(
+                    model = imageFile,
+                    contentDescription = "Grocery Image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                
+                // Remove button overlay (top-right)
+                IconButton(
+                    onClick = {
+                        // Remove image
+                        currentImageUUID?.let { uuid ->
+                            ImageManager.deleteLocalImage(uuid, context)
+                        }
+                        currentImageUUID = null
+                        imageUri = null
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Remove Image",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .background(
+                                Color.Black.copy(alpha = 0.5f),
+                                shape = CircleShape
+                            )
+                            .padding(4.dp)
+                    )
+                }
+            } else {
+                // Image file not found
+                PlaceholderContent()
+            }
+        } else {
+            // No image - show placeholder
+            PlaceholderContent()
+        }
+    }
+}
+
+@Composable
+private fun PlaceholderContent() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.AddPhotoAlternate,
+            contentDescription = null,
+            tint = SuperCartColors.gray,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Add Image",
+            color = SuperCartColors.gray,
+            fontSize = 14.sp
+        )
+        Text(
+            text = "Tap to upload",
+            color = SuperCartColors.gray,
+            fontSize = 12.sp
+        )
+    }
+}
+---
+
+Add Image Processing Logic:
+---
+// ImageSourceDialog
+if (showImageSourceDialog) {
+    ImageSourceDialog(
+        onDismiss = { showImageSourceDialog = false },
+        onImageSelected = { uri ->
+            // Process image in background
+            scope.launch {
+                isProcessingImage = true
+                
+                try {
+                    // Generate new UUID for image if creating new, or use existing
+                    val imageUUID = currentImageUUID ?: UUID.randomUUID().toString()
+                    
+                    // Compress and save locally
+                    val savedFile = ImageManager.compressAndSaveImage(uri, imageUUID, context)
+                    
+                    if (savedFile != null) {
+                        currentImageUUID = imageUUID
+                        imageUri = Uri.fromFile(savedFile)
+                        android.util.Log.d("GroceryCreationDialog", "Image saved: $imageUUID")
+                    } else {
+                        android.util.Log.e("GroceryCreationDialog", "Failed to save image")
+                        // Show error to user (optional)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("GroceryCreationDialog", "Error processing image", e)
+                } finally {
+                    isProcessingImage = false
+                }
+            }
+        }
+    )
+}
+---
+
+Update Grocery Creation/Update:
+---
+// When creating new grocery
+val newGrocery = Grocery(
+    name = groceryName.trim(),
+    categoryId = selectedCategory!!.uuid,
+    subCategoryId = selectedSubCategory!!.uuid,
+    expirationDate = selectedDate,
+    storeIds = selectedStoreIds,
+    imageUUID = currentImageUUID,  // NEW: Add image UUID
+    inShoppingList = addToShoppingList,
+    isBought = false,
+    lastUpdate = java.time.LocalDateTime.now(),
+    deleted = false
+)
+
+// When editing existing grocery
+val updatedGrocery = groceryToEdit.copy(
+    name = groceryName.trim(),
+    categoryId = selectedCategory!!.uuid,
+    subCategoryId = selectedSubCategory!!.uuid,
+    expirationDate = selectedDate,
+    storeIds = selectedStoreIds,
+    imageUUID = currentImageUUID,  // NEW: Update image UUID
+    // ... other fields ...
+)
+---
+
+
+🏗️ TECHNICAL DETAILS - Coil AsyncImage
+═══════════════════════════════════════════════════════════════════
+
+Import:
+---
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+---
+
+Usage:
+---
+AsyncImage(
+    model = imageFile,  // File object
+    contentDescription = "Grocery Image",
+    modifier = Modifier.fillMaxSize(),
+    contentScale = ContentScale.Crop,
+    placeholder = painterResource(R.drawable.placeholder), // Optional
+    error = painterResource(R.drawable.error) // Optional
+)
+---
+
+Coil automatically:
+- Loads images asynchronously
+- Caches in memory
+- Handles loading states
+- Resizes for display
+
+
+🎨 UI LAYOUT
+═══════════════════════════════════════════════════════════════════
+
+Grocery Dialog Layout:
+---
+┌────────────────────────────────────┐
+│  Edit Grocery            [🗑️]     │
+├────────────────────────────────────┤
+│  ┌──────────────────────────────┐ │
+│  │                              │ │
+│  │    [Image Preview]      [❌] │ │ 200dp height
+│  │    or "Add Image"            │ │
+│  │    "Tap to upload"           │ │
+│  │                              │ │
+│  └──────────────────────────────┘ │
+│                                    │
+│  Name: [________________]          │
+│  Category: [___________]           │
+│  Sub-Category: [_______]           │
+│  Stores: [_____________]           │
+│  Date: [_______________]           │
+│                                    │
+│  [Cancel]  [Save/Create]           │
+└────────────────────────────────────┘
+---
+
+States:
+1. No Image: Show "Add Image" icon + text
+2. Processing: Show CircularProgressIndicator + "Processing..."
+3. Image Loaded: Show image + remove button (top-right X)
+
+
+📐 IMAGE PROCESSING FLOW
+═══════════════════════════════════════════════════════════════════
+
+When User Selects/Captures Image:
+---
+1. Receive Uri from picker/camera
+2. Set isProcessingImage = true (show loading)
+3. Launch coroutine:
+   a. Generate UUID (new or existing)
+   b. Call ImageManager.compressAndSaveImage()
+   c. If successful: Update currentImageUUID
+   d. If failed: Log error, show message
+4. Set isProcessingImage = false
+5. Image appears in preview
+---
+
+When User Removes Image:
+---
+1. Delete local file (ImageManager.deleteLocalImage)
+2. Set currentImageUUID = null
+3. Set imageUri = null
+4. Placeholder appears
+5. When saving grocery: imageUUID will be null
+---
+
+
+⚠️ IMPORTANT CONSIDERATIONS
+═══════════════════════════════════════════════════════════════════
+
+1. **Image UUID Management:**
+   - Create mode: Generate new UUID when image selected
+   - Edit mode: Use existing UUID, or generate if adding first image
+   - Preserve UUID when updating grocery (don't regenerate)
+
+2. **Image Deletion:**
+   - When removing image from grocery: Delete local file immediately
+   - When deleting grocery: Delete image in DataManagerObject.deleteGrocery()
+
+3. **Memory Management:**
+   - Coil handles bitmap recycling
+   - Don't hold large bitmaps in memory
+   - Use File references, not Bitmap state
+
+4. **Loading States:**
+   - Show progress during compression (can take 1-3 seconds for large images)
+   - Disable save button while processing
+   - Clear visual feedback
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Can open image source dialog
+☐ Can select from gallery
+☐ Can capture with camera
+☐ Image compresses correctly
+☐ Image displays in preview
+☐ Can remove image
+☐ Can change image (select new one)
+☐ Image UUID saved with grocery
+☐ Loading indicator shows during processing
+☐ Works in create mode
+☐ Works in edit mode
+☐ Image persists after saving grocery
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ Image preview area added to dialog
+☐ "Add Image" placeholder working
+☐ ImageSourceDialog integrated
+☐ Gallery selection working
+☐ Camera capture working
+☐ Image compression working (≤200KB)
+☐ Image display with Coil working
+☐ Remove image button working
+☐ Loading indicator during processing
+☐ imageUUID saved with grocery (create & edit)
+☐ Image state initialized when editing
+☐ No UI glitches or crashes
+☐ User experience smooth and intuitive
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 6: Sync Images with Firebase
+This will integrate image upload/download with the cloud sync buttons.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 5
+═══════════════════════════════════════════════════════════════════

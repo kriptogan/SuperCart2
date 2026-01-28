@@ -1,0 +1,364 @@
+═══════════════════════════════════════════════════════════════════
+TASK 2: CREATE IMAGE MANAGER (COMPRESSION & LOCAL STORAGE)
+═══════════════════════════════════════════════════════════════════
+
+📊 TASK METADATA
+═══════════════════════════════════════════════════════════════════
+Task Number: 2
+Phase: 2 - Image Processing
+Estimated Time: 2-3 hours
+Status: ☐ Not Started
+Dependencies: Task 1 (Dependencies & Permissions)
+Priority: High
+
+
+🎯 OBJECTIVE
+═══════════════════════════════════════════════════════════════════
+Create ImageManager to handle image compression (to 200KB max),
+local storage in app cache directory, and image file management.
+This provides the core image processing functionality.
+
+
+📋 CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Create ImageManager.kt object
+☐ Implement image compression to 200KB
+☐ Implement local storage (cache/images/)
+☐ Implement image retrieval
+☐ Implement image deletion
+☐ Handle EXIF orientation correction
+☐ Add error handling
+☐ Add logging for debugging
+☐ Test compression with various sizes
+
+
+📝 FILES TO CREATE/EDIT
+═══════════════════════════════════════════════════════════════════
+CREATE:
+- app/src/main/java/com/example/supercart2/data/ImageManager.kt
+
+
+🏗️ TECHNICAL DETAILS - ImageManager.kt Structure
+═══════════════════════════════════════════════════════════════════
+
+---
+package com.example.supercart2.data
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.net.Uri
+import androidx.exifinterface.media.ExifInterface
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+
+object ImageManager {
+    private const val MAX_IMAGE_SIZE_BYTES = 200_000 // 200KB
+    private const val IMAGES_DIR = "images"
+    
+    /**
+     * Compress image from URI to target size (200KB max)
+     * Returns the compressed file or null on error
+     */
+    suspend fun compressAndSaveImage(
+        uri: Uri, 
+        uuid: String, 
+        context: Context
+    ): File? {
+        return try {
+            // Load bitmap from URI
+            val bitmap = loadBitmapFromUri(uri, context) ?: return null
+            
+            // Correct orientation based on EXIF
+            val orientedBitmap = correctOrientation(bitmap, uri, context)
+            
+            // Compress to target size
+            val compressedBytes = compressToTarget(orientedBitmap, MAX_IMAGE_SIZE_BYTES)
+            
+            // Save to local cache
+            val imageFile = getImageFile(uuid, context)
+            FileOutputStream(imageFile).use { it.write(compressedBytes) }
+            
+            android.util.Log.d("ImageManager", "Image saved: ${imageFile.absolutePath}, size: ${compressedBytes.size} bytes")
+            imageFile
+        } catch (e: Exception) {
+            android.util.Log.e("ImageManager", "Error compressing image", e)
+            null
+        }
+    }
+    
+    /**
+     * Get local image file for a grocery UUID
+     */
+    fun getLocalImageFile(uuid: String, context: Context): File? {
+        val file = getImageFile(uuid, context)
+        return if (file.exists()) file else null
+    }
+    
+    /**
+     * Delete local image file
+     */
+    fun deleteLocalImage(uuid: String, context: Context): Boolean {
+        return try {
+            val file = getImageFile(uuid, context)
+            val deleted = file.delete()
+            if (deleted) {
+                android.util.Log.d("ImageManager", "Deleted local image: $uuid")
+            }
+            deleted
+        } catch (e: Exception) {
+            android.util.Log.e("ImageManager", "Error deleting image", e)
+            false
+        }
+    }
+    
+    /**
+     * Get images directory, create if doesn't exist
+     */
+    private fun getImagesDir(context: Context): File {
+        val dir = File(context.cacheDir, IMAGES_DIR)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        return dir
+    }
+    
+    /**
+     * Get file path for image UUID
+     */
+    private fun getImageFile(uuid: String, context: Context): File {
+        return File(getImagesDir(context), "$uuid.jpg")
+    }
+    
+    /**
+     * Load bitmap from URI with sampling for memory efficiency
+     */
+    private fun loadBitmapFromUri(uri: Uri, context: Context): Bitmap? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ImageManager", "Error loading bitmap", e)
+            null
+        }
+    }
+    
+    /**
+     * Correct image orientation based on EXIF data
+     */
+    private fun correctOrientation(bitmap: Bitmap, uri: Uri, context: Context): Bitmap {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val exif = ExifInterface(inputStream)
+                val orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+                
+                when (orientation) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> rotateBitmap(bitmap, 90f)
+                    ExifInterface.ORIENTATION_ROTATE_180 -> rotateBitmap(bitmap, 180f)
+                    ExifInterface.ORIENTATION_ROTATE_270 -> rotateBitmap(bitmap, 270f)
+                    else -> bitmap
+                }
+            } ?: bitmap
+        } catch (e: Exception) {
+            android.util.Log.e("ImageManager", "Error correcting orientation", e)
+            bitmap
+        }
+    }
+    
+    /**
+     * Rotate bitmap by degrees
+     */
+    private fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
+        val matrix = Matrix().apply { postRotate(degrees) }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
+    
+    /**
+     * Compress bitmap to target size using iterative quality reduction
+     */
+    private fun compressToTarget(bitmap: Bitmap, maxSizeBytes: Int): ByteArray {
+        var quality = 90
+        var output: ByteArray
+        
+        do {
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)
+            output = stream.toByteArray()
+            
+            android.util.Log.d("ImageManager", "Compressed at quality $quality: ${output.size} bytes")
+            quality -= 10
+        } while (output.size > maxSizeBytes && quality > 10)
+        
+        return output
+    }
+    
+    /**
+     * Get all local image UUIDs
+     */
+    fun getAllLocalImageUUIDs(context: Context): List<String> {
+        return try {
+            getImagesDir(context).listFiles()
+                ?.mapNotNull { it.nameWithoutExtension }
+                ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    /**
+     * Clean up orphaned images (images not linked to any grocery)
+     */
+    fun cleanupOrphanedImages(context: Context) {
+        try {
+            val allImageUUIDs = getAllLocalImageUUIDs(context)
+            val groceryImageUUIDs = DataManagerObject.categories
+                .flatMap { it.subCategories }
+                .flatMap { it.groceries }
+                .mapNotNull { it.imageUUID }
+                .toSet()
+            
+            val orphanedUUIDs = allImageUUIDs.filterNot { groceryImageUUIDs.contains(it) }
+            
+            orphanedUUIDs.forEach { uuid ->
+                deleteLocalImage(uuid, context)
+                android.util.Log.d("ImageManager", "Cleaned up orphaned image: $uuid")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ImageManager", "Error cleaning orphaned images", e)
+        }
+    }
+}
+---
+
+
+🏗️ TECHNICAL DETAILS - file_paths.xml
+═══════════════════════════════════════════════════════════════════
+
+Location: app/src/main/res/xml/file_paths.xml
+
+Create the xml directory if it doesn't exist:
+- Right-click on res/ → New → Directory → name it "xml"
+- Create file_paths.xml inside
+
+Content:
+---
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cache directory for temporary camera images -->
+    <cache-path name="camera_images" path="camera/" />
+    
+    <!-- Images directory for processed images -->
+    <cache-path name="images" path="images/" />
+    
+    <!-- External cache for sharing if needed -->
+    <external-cache-path name="external_images" path="/" />
+</paths>
+---
+
+
+🏗️ TECHNICAL DETAILS - AndroidManifest.xml
+═══════════════════════════════════════════════════════════════════
+
+Add Permissions (before <application>):
+---
+<!-- Camera permission -->
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-feature 
+    android:name="android.hardware.camera" 
+    android:required="false" />
+
+<!-- Media permissions for Android 13+ -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+<!-- Storage permission for Android 12 and below -->
+<uses-permission 
+    android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32" />
+---
+
+Add FileProvider (inside <application>, after activities):
+---
+<!-- FileProvider for camera image capture -->
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="com.example.supercart2.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>
+---
+
+
+📐 KEY DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+
+1. **Storage Location:**
+   - Use `context.cacheDir/images/` for processed images
+   - Use `context.cacheDir/camera/` for camera temp files
+   - Cache dir auto-cleans when storage is low
+
+2. **Compression Strategy:**
+   - Start at 90% JPEG quality
+   - Reduce by 10% each iteration
+   - Stop when ≤200KB or quality reaches 10%
+   - JPEG format for best compression
+
+3. **EXIF Handling:**
+   - Read orientation from EXIF data
+   - Rotate bitmap before saving
+   - Prevents sideways/upside-down images
+
+4. **File Naming:**
+   - Use grocery UUID as filename: `{uuid}.jpg`
+   - Simple, predictable, no collisions
+
+5. **Cleanup Strategy:**
+   - Provide `cleanupOrphanedImages()` function
+   - Can be called periodically or on app start
+   - Prevents storage bloat
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════
+☐ Dependencies resolve correctly
+☐ Project builds without errors
+☐ Can import Coil classes
+☐ Can import Accompanist classes
+☐ Permissions in merged manifest
+☐ FileProvider authority correct
+☐ file_paths.xml accessible
+☐ ImageManager compiles (create skeleton first)
+
+
+✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════
+☐ All dependencies added to build.gradle.kts
+☐ Gradle sync successful
+☐ All permissions in AndroidManifest
+☐ FileProvider configured correctly
+☐ file_paths.xml created and valid
+☐ ImageManager.kt created with all functions
+☐ Image compression working (≤200KB)
+☐ Local storage working (save/load/delete)
+☐ EXIF orientation handled
+☐ No compilation errors
+☐ Ready for Firebase Storage integration
+
+
+🔗 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+After completion, proceed to Task 3: Implement Firebase Storage Manager
+This will handle cloud backup and sync for images.
+
+
+═══════════════════════════════════════════════════════════════════
+END OF TASK 2
+═══════════════════════════════════════════════════════════════════
