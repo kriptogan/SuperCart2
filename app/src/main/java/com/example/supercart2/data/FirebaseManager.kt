@@ -134,8 +134,16 @@ object FirebaseManager {
             // Batch upload images to Firebase Storage
             val context = DataStoreManager.globalContext
             if (context != null) {
-                val uploadedCount = FirebaseStorageManager.batchUploadImages(context)
-                android.util.Log.d("FirebaseManager", "Uploaded $uploadedCount images to Firebase Storage")
+                try {
+                    android.util.Log.d("FirebaseManager", "Starting image upload...")
+                    val uploadedCount = FirebaseStorageManager.batchUploadImages(context)
+                    android.util.Log.d("FirebaseManager", "✅ Uploaded $uploadedCount images to Firebase Storage")
+                } catch (e: Exception) {
+                    android.util.Log.e("FirebaseManager", "❌ Error uploading images", e)
+                    // Don't throw - allow data upload to succeed even if images fail
+                }
+            } else {
+                android.util.Log.w("FirebaseManager", "⚠️ Cannot upload images: context is null")
             }
         } catch (e: Exception) {
             android.util.Log.e("FirebaseManager", "Error uploading data", e)
@@ -287,8 +295,16 @@ object FirebaseManager {
                 // Batch download images from Firebase Storage
                 val context = DataStoreManager.globalContext
                 if (context != null) {
-                    val downloadedCount = FirebaseStorageManager.batchDownloadImages(context)
-                    android.util.Log.d("FirebaseManager", "Downloaded $downloadedCount images from Firebase Storage")
+                    try {
+                        android.util.Log.d("FirebaseManager", "Starting image download...")
+                        val downloadedCount = FirebaseStorageManager.batchDownloadImages(context)
+                        android.util.Log.d("FirebaseManager", "✅ Downloaded $downloadedCount images from Firebase Storage")
+                    } catch (e: Exception) {
+                        android.util.Log.e("FirebaseManager", "❌ Error downloading images", e)
+                        // Don't throw - allow data download to succeed even if images fail
+                    }
+                } else {
+                    android.util.Log.w("FirebaseManager", "⚠️ Cannot download images: context is null")
                 }
             } else {
                 throw IllegalStateException("Invalid data relationships detected in downloaded data")
