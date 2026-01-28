@@ -50,10 +50,20 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
     
     // DataStore and Gson for local data persistence
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Image loading library
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    
+    // ExifInterface for image orientation
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    
+    // Permission handling (for Android 12 and below)
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
     
     // Firebase
     implementation(platform(libs.firebase.bom))

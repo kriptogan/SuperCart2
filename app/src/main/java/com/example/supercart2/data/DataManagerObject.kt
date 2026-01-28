@@ -382,6 +382,16 @@ object DataManagerObject {
         categories.forEachIndexed { categoryIndex, category ->
             category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
                 if (subCategory.groceries.any { it.uuid == groceryUuid }) {
+                    // Find the grocery and delete its image if it exists
+                    val grocery = subCategory.groceries.find { it.uuid == groceryUuid }
+                    grocery?.imageUUID?.let { imageUUID ->
+                        val context = DataStoreManager.globalContext
+                        if (context != null) {
+                            ImageManager.deleteLocalImage(imageUUID, context)
+                            android.util.Log.d("DataManagerObject", "Deleted image for grocery: $imageUUID")
+                        }
+                    }
+                    
                     // Create new list without the deleted grocery
                     val updatedGroceries = subCategory.groceries.filterNot { 
                         it.uuid == groceryUuid 

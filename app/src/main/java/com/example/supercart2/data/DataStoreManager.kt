@@ -81,7 +81,7 @@ object DataStoreManager {
     }
     
     // Global context reference for saving data from anywhere
-    private var globalContext: Context? = null
+    internal var globalContext: Context? = null
     
     fun setGlobalContext(context: Context) {
         globalContext = context

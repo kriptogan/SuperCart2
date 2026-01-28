@@ -130,6 +130,13 @@ object FirebaseManager {
             batch.commit().await()
             
             android.util.Log.d("FirebaseManager", "Data uploaded successfully")
+            
+            // Batch upload images to Firebase Storage
+            val context = DataStoreManager.globalContext
+            if (context != null) {
+                val uploadedCount = FirebaseStorageManager.batchUploadImages(context)
+                android.util.Log.d("FirebaseManager", "Uploaded $uploadedCount images to Firebase Storage")
+            }
         } catch (e: Exception) {
             android.util.Log.e("FirebaseManager", "Error uploading data", e)
             throw e
@@ -276,6 +283,13 @@ object FirebaseManager {
                 DataStoreManager.saveDataGlobally()
                 
                 android.util.Log.d("FirebaseManager", "Data downloaded and saved successfully")
+                
+                // Batch download images from Firebase Storage
+                val context = DataStoreManager.globalContext
+                if (context != null) {
+                    val downloadedCount = FirebaseStorageManager.batchDownloadImages(context)
+                    android.util.Log.d("FirebaseManager", "Downloaded $downloadedCount images from Firebase Storage")
+                }
             } else {
                 throw IllegalStateException("Invalid data relationships detected in downloaded data")
             }

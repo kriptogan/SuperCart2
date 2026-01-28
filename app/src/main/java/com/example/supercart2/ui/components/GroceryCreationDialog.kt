@@ -1,24 +1,42 @@
 package com.example.supercart2.ui.components
 
+import android.net.Uri
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import com.example.supercart2.data.DataStoreManager
+import com.example.supercart2.data.ImageManager
+import java.util.UUID
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -70,6 +88,14 @@ fun GroceryCreationDialog(
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var selectedStoreIds by remember { mutableStateOf<List<String>>(emptyList()) }
     
+    // Image state
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var currentImageUUID by remember { mutableStateOf<String?>(null) }
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    var isProcessingImage by remember { mutableStateOf(false) }
+    
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
     // Initialize form with grocery data when editing, or auto-select first category/sub-category when creating
     LaunchedEffect(groceryToEdit, initialGroceryName) {
         if (groceryToEdit != null) {
@@ -83,6 +109,7 @@ fun GroceryCreationDialog(
             }?.subCategories?.find { it.subCategory.uuid == groceryToEdit.subCategoryId }?.subCategory
             selectedDate = groceryToEdit.expirationDate
             selectedStoreIds = groceryToEdit.storeIds
+            currentImageUUID = groceryToEdit.imageUUID
         } else {
             // Create mode - use initialGroceryName if provided, otherwise empty string
             groceryName = initialGroceryName
@@ -215,6 +242,129 @@ fun GroceryCreationDialog(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
+                // Image Section
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clickable { showImageSourceDialog = true },
+                    colors = CardDefaults.cardColors(
+                        containerColor = SuperCartColors.lightGray.copy(alpha = 0.3f)
+                    ),
+                    shape = SuperCartShapes.medium
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isProcessingImage) {
+                            // Show loading indicator
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                CircularProgressIndicator(
+                                    color = SuperCartColors.primaryGreen
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Processing image...",
+                                    color = SuperCartColors.gray,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        } else if (currentImageUUID != null) {
+                            // Show image using Coil
+                            val imageFile = remember(currentImageUUID) {
+                                ImageManager.getLocalImageFile(currentImageUUID!!, context)
+                            }
+                            
+                            if (imageFile != null && imageFile.exists()) {
+                                AsyncImage(
+                                    model = imageFile,
+                                    contentDescription = "Grocery Image",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                                
+                                // Remove button overlay (top-right)
+                                IconButton(
+                                    onClick = {
+                                        // Remove image
+                                        currentImageUUID?.let { uuid ->
+                                            ImageManager.deleteLocalImage(uuid, context)
+                                        }
+                                        currentImageUUID = null
+                                        imageUri = null
+                                    },
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Remove Image",
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .background(
+                                                Color.Black.copy(alpha = 0.5f),
+                                                shape = CircleShape
+                                            )
+                                            .padding(4.dp)
+                                    )
+                                }
+                            } else {
+                                // Image file not found - show placeholder
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AddPhotoAlternate,
+                                        contentDescription = null,
+                                        tint = SuperCartColors.gray,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Add Image",
+                                        color = SuperCartColors.gray,
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = "Tap to upload",
+                                        color = SuperCartColors.gray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        } else {
+                            // No image - show placeholder
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AddPhotoAlternate,
+                                    contentDescription = null,
+                                    tint = SuperCartColors.gray,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Add Image",
+                                    color = SuperCartColors.gray,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    text = "Tap to upload",
+                                    color = SuperCartColors.gray,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(SuperCartSpacing.md))
+                
                 // Grocery Name Input
                 OutlinedTextField(
                     value = groceryName,
@@ -454,20 +604,20 @@ fun GroceryCreationDialog(
                              android.util.Log.d("GroceryCreationDialog", "Saving grocery. Selected date: $selectedDate")
                              
                              if (groceryToEdit != null) {
-                                 // Edit mode - update existing grocery
-                                 val updatedGrocery = groceryToEdit.copy(
-                                    name = groceryName.trim(),
-                                    categoryId = selectedCategory!!.uuid,
-                                    subCategoryId = selectedSubCategory!!.uuid,
-                                    expirationDate = selectedDate,
-                                    storeIds = selectedStoreIds,
-                                    // Preserve existing values for new properties
-                                    buyEvents = groceryToEdit.buyEvents,
-                                    imageUUID = groceryToEdit.imageUUID,
-                                    // Update lastUpdate timestamp
-                                    lastUpdate = java.time.LocalDateTime.now(),
-                                    // Preserve isDeleted status
-                                    deleted = groceryToEdit.deleted
+                                // Edit mode - update existing grocery
+                                val updatedGrocery = groceryToEdit.copy(
+                                   name = groceryName.trim(),
+                                   categoryId = selectedCategory!!.uuid,
+                                   subCategoryId = selectedSubCategory!!.uuid,
+                                   expirationDate = selectedDate,
+                                   storeIds = selectedStoreIds,
+                                   // Preserve existing values for new properties
+                                   buyEvents = groceryToEdit.buyEvents,
+                                   imageUUID = currentImageUUID,
+                                   // Update lastUpdate timestamp
+                                   lastUpdate = java.time.LocalDateTime.now(),
+                                   // Preserve isDeleted status
+                                   deleted = groceryToEdit.deleted
                                 )
                                  
                                  // If category or sub-category changed, use updateGroceryLocation
@@ -496,17 +646,18 @@ fun GroceryCreationDialog(
                                 }
                                  android.util.Log.d("GroceryCreationDialog", "Updated grocery expiration date: ${updatedGrocery.expirationDate}")
                              } else {
-                                 // Create mode - create new grocery
-                                 val newGrocery = Grocery(
-                                    name = groceryName.trim(),
-                                    categoryId = selectedCategory!!.uuid,
-                                    subCategoryId = selectedSubCategory!!.uuid,
-                                    expirationDate = selectedDate,
-                                    storeIds = selectedStoreIds,
-                                    inShoppingList = addToShoppingList,
-                                    isBought = false,
-                                    lastUpdate = java.time.LocalDateTime.now(),
-                                    deleted = false
+                                // Create mode - create new grocery
+                                val newGrocery = Grocery(
+                                   name = groceryName.trim(),
+                                   categoryId = selectedCategory!!.uuid,
+                                   subCategoryId = selectedSubCategory!!.uuid,
+                                   expirationDate = selectedDate,
+                                   storeIds = selectedStoreIds,
+                                   imageUUID = currentImageUUID,
+                                   inShoppingList = addToShoppingList,
+                                   isBought = false,
+                                   lastUpdate = java.time.LocalDateTime.now(),
+                                   deleted = false
                                 )
                                  
                                  // Add the new grocery using DataManagerObject helper
@@ -665,6 +816,39 @@ fun GroceryCreationDialog(
             onDismiss = { showStoreSelection = false },
             onStoresSelected = { newSelectedIds ->
                 selectedStoreIds = newSelectedIds
+            }
+        )
+    }
+    
+    // Image Source Dialog
+    if (showImageSourceDialog) {
+        ImageSourceDialog(
+            onDismiss = { showImageSourceDialog = false },
+            onImageSelected = { uri ->
+                // Process image in background
+                scope.launch {
+                    isProcessingImage = true
+                    
+                    try {
+                        // Generate new UUID for image if creating new, or use existing
+                        val imageUUID = currentImageUUID ?: UUID.randomUUID().toString()
+                        
+                        // Compress and save locally
+                        val savedFile = ImageManager.compressAndSaveImage(uri, imageUUID, context)
+                        
+                        if (savedFile != null) {
+                            currentImageUUID = imageUUID
+                            imageUri = Uri.fromFile(savedFile)
+                            android.util.Log.d("GroceryCreationDialog", "Image saved: $imageUUID")
+                        } else {
+                            android.util.Log.e("GroceryCreationDialog", "Failed to save image")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("GroceryCreationDialog", "Error processing image", e)
+                    } finally {
+                        isProcessingImage = false
+                    }
+                }
             }
         )
     }
