@@ -7,7 +7,7 @@ TASK 6: IMPLEMENT HIDE/UNHIDE STORES FEATURE
 Task Number: 6
 Phase: 4 - Store View Mode
 Estimated Time: 3-5 hours
-Status: ☐ Not Started
+Status: ✅ COMPLETED
 Dependencies: Task 5 (Store View Mode)
 Priority: Medium
 

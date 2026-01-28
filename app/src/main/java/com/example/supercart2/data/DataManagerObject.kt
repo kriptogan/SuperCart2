@@ -8,10 +8,13 @@ import androidx.compose.runtime.setValue
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Store
 import java.time.LocalDate
 
 object DataManagerObject {
     val categories: SnapshotStateList<CategoryWithSubCategories> = mutableStateListOf()
+    val stores: SnapshotStateList<Store> = mutableStateListOf()
+    val hiddenStoreIds: SnapshotStateList<String> = mutableStateListOf()
     
     // Version counter to force recomposition
     private var _version by mutableStateOf(0)
@@ -506,6 +509,177 @@ object DataManagerObject {
 
         updateData()
         android.util.Log.d("DataManagerObject", "Confirmed bought items and added buyEvents")
+    }
+
+    // Store Management Helpers
+    fun getSortedStores(): List<Store> {
+        return stores.filter { !it.deleted }.sortedBy { it.viewOrder }
+    }
+
+    fun addStore(store: Store) {
+        stores.add(store)
+        updateData()
+        android.util.Log.d("DataManagerObject", "Added store ${store.name}")
+    }
+
+    fun updateStore(storeUuid: String, update: (Store) -> Store) {
+        val index = stores.indexOfFirst { it.uuid == storeUuid }
+        if (index != -1) {
+            stores[index] = update(stores[index])
+            updateData()
+            android.util.Log.d("DataManagerObject", "Updated store")
+        }
+    }
+
+    fun swapStoreOrder(store1Uuid: String, store2Uuid: String) {
+        val index1 = stores.indexOfFirst { it.uuid == store1Uuid }
+        val index2 = stores.indexOfFirst { it.uuid == store2Uuid }
+        
+        if (index1 != -1 && index2 != -1) {
+            val store1 = stores[index1]
+            val store2 = stores[index2]
+            
+            // Swap their view orders
+            val tempOrder = store1.viewOrder
+            updateStore(store1.uuid) { it.copy(viewOrder = store2.viewOrder) }
+            updateStore(store2.uuid) { it.copy(viewOrder = tempOrder) }
+        }
+    }
+
+    fun unlinkStoreFromAllGroceries(storeUuid: String) {
+        categories.forEach { categoryWithSubs ->
+            categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                subCategoryWithGroceries.groceries.forEachIndexed { index, grocery ->
+                    if (grocery.storeIds.contains(storeUuid)) {
+                        val updatedStoreIds = grocery.storeIds.filter { it != storeUuid }
+                        val updatedGrocery = grocery.copy(storeIds = updatedStoreIds)
+                        subCategoryWithGroceries.groceries[index] = updatedGrocery
+                    }
+                }
+            }
+        }
+        updateData()
+        android.util.Log.d("DataManagerObject", "Unlinked store from all groceries")
+    }
+
+    fun deleteStore(storeUuid: String) {
+        // First unlink from all groceries
+        unlinkStoreFromAllGroceries(storeUuid)
+        
+        // Soft delete (for Firebase sync)
+        updateStore(storeUuid) { it.copy(deleted = true) }
+        
+        // Remove from hidden list if present
+        hiddenStoreIds.remove(storeUuid)
+        
+        android.util.Log.d("DataManagerObject", "Deleted store")
+    }
+
+    fun toggleStoreHidden(storeUuid: String) {
+        if (hiddenStoreIds.contains(storeUuid)) {
+            hiddenStoreIds.remove(storeUuid)
+        } else {
+            hiddenStoreIds.add(storeUuid)
+        }
+        updateData()
+        android.util.Log.d("DataManagerObject", "Toggled store visibility")
+    }
+
+    fun isStoreHidden(storeUuid: String): Boolean {
+        return hiddenStoreIds.contains(storeUuid)
+    }
+
+    // Group groceries by store for store view mode
+    fun groupGroceriesByStore(
+        categories: List<CategoryWithSubCategories>
+    ): List<com.example.supercart2.ui.components.StoreWithCategories> {
+        val result = mutableListOf<com.example.supercart2.ui.components.StoreWithCategories>()
+        
+        // Group by each store
+        getSortedStores().forEach { store ->
+            val storeCategories = mutableListOf<CategoryWithSubCategories>()
+            
+            categories.forEach { categoryWithSubs ->
+                val categorySubCategories = mutableListOf<SubCategoryWithGroceries>()
+                
+                categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                    val groceriesForStore = subCategoryWithGroceries.groceries
+                        .filter { grocery ->
+                            grocery.storeIds.contains(store.uuid)
+                        }
+                    
+                    if (groceriesForStore.isNotEmpty()) {
+                        categorySubCategories.add(
+                            SubCategoryWithGroceries(
+                                subCategory = subCategoryWithGroceries.subCategory,
+                                groceries = groceriesForStore.toMutableList()
+                            )
+                        )
+                    }
+                }
+                
+                if (categorySubCategories.isNotEmpty()) {
+                    storeCategories.add(
+                        CategoryWithSubCategories(
+                            category = categoryWithSubs.category,
+                            subCategories = categorySubCategories
+                        )
+                    )
+                }
+            }
+            
+            // Only add if store has groceries and is not hidden
+            if (storeCategories.isNotEmpty() && !isStoreHidden(store.uuid)) {
+                result.add(
+                    com.example.supercart2.ui.components.StoreWithCategories(
+                        store = store, 
+                        categories = storeCategories
+                    )
+                )
+            }
+        }
+        
+        // Add "Not Linked to Any Store" section
+        val notLinkedCategories = mutableListOf<CategoryWithSubCategories>()
+        categories.forEach { categoryWithSubs ->
+            val categorySubCategories = mutableListOf<SubCategoryWithGroceries>()
+            
+            categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                val notLinkedGroceries = subCategoryWithGroceries.groceries
+                    .filter { grocery ->
+                        grocery.storeIds.isEmpty()
+                    }
+                
+                if (notLinkedGroceries.isNotEmpty()) {
+                    categorySubCategories.add(
+                        SubCategoryWithGroceries(
+                            subCategory = subCategoryWithGroceries.subCategory,
+                            groceries = notLinkedGroceries.toMutableList()
+                        )
+                    )
+                }
+            }
+            
+            if (categorySubCategories.isNotEmpty()) {
+                notLinkedCategories.add(
+                    CategoryWithSubCategories(
+                        category = categoryWithSubs.category,
+                        subCategories = categorySubCategories
+                    )
+                )
+            }
+        }
+        
+        if (notLinkedCategories.isNotEmpty()) {
+            result.add(
+                com.example.supercart2.ui.components.StoreWithCategories(
+                    store = null, 
+                    categories = notLinkedCategories
+                )
+            )
+        }
+        
+        return result
     }
 
     // Call this after any data modification

@@ -51,6 +51,7 @@ import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
 import com.example.supercart2.ui.components.CategorySelectionDialog
 import com.example.supercart2.ui.components.SubCategorySelectionDialog
+import com.example.supercart2.ui.components.StoreSelectionDialog
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -67,6 +68,7 @@ fun GroceryCreationDialog(
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var selectedSubCategory by remember { mutableStateOf<SubCategory?>(null) }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    var selectedStoreIds by remember { mutableStateOf<List<String>>(emptyList()) }
     
     // Initialize form with grocery data when editing, or auto-select first category/sub-category when creating
     LaunchedEffect(groceryToEdit, initialGroceryName) {
@@ -80,6 +82,7 @@ fun GroceryCreationDialog(
                 categoryWithSubs.category.uuid == groceryToEdit.categoryId
             }?.subCategories?.find { it.subCategory.uuid == groceryToEdit.subCategoryId }?.subCategory
             selectedDate = groceryToEdit.expirationDate
+            selectedStoreIds = groceryToEdit.storeIds
         } else {
             // Create mode - use initialGroceryName if provided, otherwise empty string
             groceryName = initialGroceryName
@@ -98,6 +101,7 @@ fun GroceryCreationDialog(
     // Dialog states
     var showCategorySelection by remember { mutableStateOf(false) }
     var showSubCategorySelection by remember { mutableStateOf(false) }
+    var showStoreSelection by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -308,6 +312,54 @@ fun GroceryCreationDialog(
                 
                 Spacer(modifier = Modifier.height(SuperCartSpacing.md))
                 
+                // Store Selector
+                Column {
+                    Text(
+                        text = "Stores",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        color = SuperCartColors.black,
+                        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+                    )
+                    
+                    Button(
+                        onClick = { showStoreSelection = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SuperCartColors.white,
+                            contentColor = SuperCartColors.primaryGreen
+                        ),
+                        shape = SuperCartShapes.small
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val storeNames = remember(selectedStoreIds, DataManagerObject.version) {
+                                selectedStoreIds.mapNotNull { storeId ->
+                                    DataManagerObject.stores.find { it.uuid == storeId }?.name
+                                }
+                            }
+                            
+                            Text(
+                                text = when {
+                                    storeNames.isEmpty() -> "Select Stores (Optional)"
+                                    storeNames.size == 1 -> storeNames[0]
+                                    else -> "${storeNames.size} stores selected"
+                                },
+                                color = if (storeNames.isNotEmpty()) 
+                                    SuperCartColors.black else SuperCartColors.gray
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Select Stores"
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(SuperCartSpacing.md))
+                
                 // Date Selector
                 Column {
                                          Text(
@@ -408,6 +460,7 @@ fun GroceryCreationDialog(
                                     categoryId = selectedCategory!!.uuid,
                                     subCategoryId = selectedSubCategory!!.uuid,
                                     expirationDate = selectedDate,
+                                    storeIds = selectedStoreIds,
                                     // Preserve existing values for new properties
                                     buyEvents = groceryToEdit.buyEvents,
                                     imageUUID = groceryToEdit.imageUUID,
@@ -449,6 +502,7 @@ fun GroceryCreationDialog(
                                     categoryId = selectedCategory!!.uuid,
                                     subCategoryId = selectedSubCategory!!.uuid,
                                     expirationDate = selectedDate,
+                                    storeIds = selectedStoreIds,
                                     inShoppingList = addToShoppingList,
                                     isBought = false,
                                     lastUpdate = java.time.LocalDateTime.now(),
@@ -601,6 +655,17 @@ fun GroceryCreationDialog(
             },
             selectedCategory = selectedCategory!!,
             selectedSubCategoryId = selectedSubCategory?.uuid
+        )
+    }
+    
+    // Store Selection Dialog
+    if (showStoreSelection) {
+        StoreSelectionDialog(
+            selectedStoreIds = selectedStoreIds,
+            onDismiss = { showStoreSelection = false },
+            onStoresSelected = { newSelectedIds ->
+                selectedStoreIds = newSelectedIds
+            }
         )
     }
 }

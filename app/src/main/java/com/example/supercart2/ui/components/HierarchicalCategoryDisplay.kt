@@ -378,12 +378,55 @@ private fun GroceryItem(
             }
         } else {
             // Regular item layout
-            Text(
-                text = currentGrocery.name,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
+            Column(
                 modifier = Modifier.weight(1f)
-            )
+            ) {
+                Text(
+                    text = currentGrocery.name,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                // Display store badges if grocery has stores linked
+                if (currentGrocery.storeIds.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        // Show up to 3 stores
+                        currentGrocery.storeIds.take(3).forEach { storeId ->
+                            val storeName = remember(storeId, version) {
+                                DataManagerObject.stores.find { it.uuid == storeId }?.name ?: "Unknown"
+                            }
+                            
+                            androidx.compose.material3.AssistChip(
+                                onClick = { /* Read-only */ },
+                                label = { 
+                                    Text(
+                                        text = storeName, 
+                                        fontSize = 10.sp
+                                    ) 
+                                },
+                                modifier = Modifier.padding(end = 4.dp),
+                                colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
+                                    containerColor = SuperCartColors.lightGray.copy(alpha = 0.3f)
+                                )
+                            )
+                        }
+                        
+                        // Show "+X more" if more than 3 stores
+                        if (currentGrocery.storeIds.size > 3) {
+                            Text(
+                                text = "+${currentGrocery.storeIds.size - 3} more",
+                                fontSize = 10.sp,
+                                color = SuperCartColors.gray,
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            )
+                        }
+                    }
+                }
+            }
             
             if (isShoppingList) {
                 // Options menu for shopping list

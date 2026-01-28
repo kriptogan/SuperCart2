@@ -8,6 +8,7 @@ import kotlinx.coroutines.tasks.await
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Store
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -21,6 +22,7 @@ object FirebaseManager {
     const val CATEGORIES_COLLECTION = "categories"
     const val SUBCATEGORIES_COLLECTION = "subcategories"
     const val GROCERIES_COLLECTION = "groceries"
+    const val STORES_COLLECTION = "stores"
     
     // Test Firebase connection
     suspend fun testConnection(): Boolean {
@@ -72,8 +74,20 @@ object FirebaseManager {
             "buyEvents" to grocery.buyEvents.map { it.format(DateTimeFormatter.ISO_LOCAL_DATE) },
             "imageUUID" to grocery.imageUUID,
             "averageBuyDays" to grocery.averageBuyDays,
+            "storeIds" to grocery.storeIds,
             "lastUpdate" to grocery.lastUpdate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             "deleted" to grocery.deleted
+        )
+    }
+    
+    // Helper function to convert Store to Map for Firestore (with date serialization)
+    private fun storeToMap(store: Store): Map<String, Any?> {
+        return mapOf(
+            "uuid" to store.uuid,
+            "name" to store.name,
+            "viewOrder" to store.viewOrder,
+            "lastUpdate" to store.lastUpdate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            "deleted" to store.deleted
         )
     }
 
@@ -81,6 +95,9 @@ object FirebaseManager {
         try {
             // Convert nested structure to flat lists
             val (categories, subCategories, groceries) = DataConverter.flattenCategories(DataManagerObject.categories)
+            
+            // Get stores list
+            val stores = DataManagerObject.stores.toList()
             
             // Create a batch operation
             val batch = db.batch()
@@ -101,6 +118,12 @@ object FirebaseManager {
             groceries.forEach { grocery ->
                 val docRef = db.collection(GROCERIES_COLLECTION).document(grocery.uuid)
                 batch.set(docRef, groceryToMap(grocery))
+            }
+            
+            // Upload stores (convert to Map for proper date serialization)
+            stores.forEach { store ->
+                val docRef = db.collection(STORES_COLLECTION).document(store.uuid)
+                batch.set(docRef, storeToMap(store))
             }
             
             // Execute the batch
@@ -182,6 +205,13 @@ object FirebaseManager {
     // Helper function to deserialize Grocery from Firestore document
     private fun documentToGrocery(doc: DocumentSnapshot): Grocery {
         val data = doc.data ?: throw IllegalStateException("Document ${doc.id} has no data")
+        
+        // Handle storeIds as List<String>
+        val storeIds = when (val value = data["storeIds"]) {
+            is List<*> -> value.filterIsInstance<String>()
+            else -> emptyList()
+        }
+        
         return Grocery(
             uuid = doc.id,
             name = data["name"] as? String ?: throw IllegalStateException("Grocery ${doc.id} missing name"),
@@ -193,6 +223,19 @@ object FirebaseManager {
             buyEvents = toLocalDateList(data["buyEvents"]),
             imageUUID = data["imageUUID"] as? String,
             averageBuyDays = (data["averageBuyDays"] as? Long)?.toInt(),
+            storeIds = storeIds,
+            lastUpdate = timestampToLocalDateTime(data["lastUpdate"]),
+            deleted = (data["deleted"] as? Boolean) ?: false
+        )
+    }
+    
+    // Helper function to deserialize Store from Firestore document
+    private fun documentToStore(doc: DocumentSnapshot): Store {
+        val data = doc.data ?: throw IllegalStateException("Document ${doc.id} has no data")
+        return Store(
+            uuid = doc.id,
+            name = data["name"] as? String ?: throw IllegalStateException("Store ${doc.id} missing name"),
+            viewOrder = (data["viewOrder"] as? Long)?.toInt() ?: 0,
             lastUpdate = timestampToLocalDateTime(data["lastUpdate"]),
             deleted = (data["deleted"] as? Boolean) ?: false
         )
@@ -210,6 +253,9 @@ object FirebaseManager {
             val groceriesSnapshot = db.collection(GROCERIES_COLLECTION).get().await()
             val groceries = groceriesSnapshot.documents.map { documentToGrocery(it) }
             
+            val storesSnapshot = db.collection(STORES_COLLECTION).get().await()
+            val stores = storesSnapshot.documents.map { documentToStore(it) }
+            
             // Validate relationships
             if (DataConverter.validateRelationships(categories, subCategories, groceries)) {
                 // Convert to nested structure
@@ -218,6 +264,10 @@ object FirebaseManager {
                 // Update DataManagerObject
                 DataManagerObject.categories.clear()
                 DataManagerObject.categories.addAll(nestedData)
+                
+                // Update stores (filter out deleted ones)
+                DataManagerObject.stores.clear()
+                DataManagerObject.stores.addAll(stores.filter { !it.deleted })
                 
                 // Trigger UI update
                 DataManagerObject.updateData()

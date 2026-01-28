@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.supercart2.ui.components.BurgerMenu
 import com.example.supercart2.ui.components.CategoriesManagementDialog
+import com.example.supercart2.ui.components.StoresManagementDialog
 import com.example.supercart2.ui.components.GroceryCreationDialog
 import com.example.supercart2.ui.components.ImportGroceriesDialog
 import com.example.supercart2.ui.components.HierarchicalCategoryDisplay
@@ -61,6 +62,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen() {
     var showCategoriesManagement by remember { mutableStateOf(false) }
+    var showStoresManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
     var showImportGroceries by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
@@ -176,6 +178,9 @@ fun HomeScreen() {
                     BurgerMenu(
                         onCategoriesManagementClick = {
                             showCategoriesManagement = true
+                        },
+                        onManageStoresClick = {
+                            showStoresManagement = true
                         },
                         onImportGroceriesClick = {
                             showImportGroceries = true
@@ -358,6 +363,13 @@ fun HomeScreen() {
     if (showCategoriesManagement) {
         CategoriesManagementDialog(
             onDismiss = { showCategoriesManagement = false }
+        )
+    }
+    
+    // Stores Management Dialog
+    if (showStoresManagement) {
+        StoresManagementDialog(
+            onDismiss = { showStoresManagement = false }
         )
     }
     

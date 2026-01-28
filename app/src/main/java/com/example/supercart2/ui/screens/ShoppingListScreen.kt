@@ -36,21 +36,43 @@ import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.ui.components.HierarchicalCategoryDisplay
 import com.example.supercart2.ui.components.BurgerMenu
 import com.example.supercart2.ui.components.CategoriesManagementDialog
+import com.example.supercart2.ui.components.StoresManagementDialog
 import com.example.supercart2.ui.components.GroceryCreationDialog
 import com.example.supercart2.ui.components.ImportGroceriesDialog
 import com.example.supercart2.ui.components.SettingsDialog
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
+import com.example.supercart2.ui.components.StoreBasedDisplay
+import com.example.supercart2.ui.components.HideStoresDialog
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+
+enum class ShoppingListViewMode {
+    CATEGORY,  // Default hierarchical view
+    STORE      // Grouped by stores
+}
 
 @Composable
 fun ShoppingListScreen() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showCategoriesManagement by remember { mutableStateOf(false) }
+    var showStoresManagement by remember { mutableStateOf(false) }
     var showGroceryCreation by remember { mutableStateOf(false) }
     var showFinishConfirmation by remember { mutableStateOf(false) }
     var showImportGroceries by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showHideStoresDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
+    var viewMode by remember { mutableStateOf(ShoppingListViewMode.CATEGORY) }
+    
+    // Load saved view mode on screen creation
+    LaunchedEffect(Unit) {
+        val isStoreView = DataStoreManager.loadStoreViewMode(context)
+        viewMode = if (isStoreView) ShoppingListViewMode.STORE else ShoppingListViewMode.CATEGORY
+    }
     
     // Edit mode state
     var groceryToEdit by remember { mutableStateOf<Grocery?>(null) }
@@ -177,6 +199,9 @@ fun ShoppingListScreen() {
                     BurgerMenu(
                         onCategoriesManagementClick = {
                             showCategoriesManagement = true
+                        },
+                        onManageStoresClick = {
+                            showStoresManagement = true
                         },
                         onImportGroceriesClick = {
                             showImportGroceries = true
@@ -306,6 +331,90 @@ fun ShoppingListScreen() {
                     }
                 }
             }
+            
+            // View Mode Toggle Button
+            Button(
+                onClick = { 
+                    viewMode = if (viewMode == ShoppingListViewMode.CATEGORY) {
+                        ShoppingListViewMode.STORE
+                    } else {
+                        ShoppingListViewMode.CATEGORY
+                    }
+                    // Save view mode preference
+                    scope.launch {
+                        DataStoreManager.saveStoreViewMode(context, viewMode == ShoppingListViewMode.STORE)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = SuperCartSpacing.md),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SuperCartColors.white,
+                    contentColor = SuperCartColors.primaryGreen
+                ),
+                shape = RoundedCornerShape(12.dp),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 2.dp
+                )
+            ) {
+                Icon(
+                    imageVector = if (viewMode == ShoppingListViewMode.CATEGORY) {
+                        Icons.Default.ShoppingCart
+                    } else {
+                        Icons.AutoMirrored.Filled.List
+                    },
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (viewMode == ShoppingListViewMode.CATEGORY) {
+                        "Switch to Store View"
+                    } else {
+                        "Switch to Category View"
+                    }
+                )
+            }
+            
+            // Hide/Unhide Stores Button (only show in store view mode)
+            if (viewMode == ShoppingListViewMode.STORE) {
+                val hiddenCount = remember(version) { 
+                    DataManagerObject.hiddenStoreIds.size 
+                }
+                
+                Button(
+                    onClick = { showHideStoresDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = SuperCartSpacing.md),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen.copy(alpha = 0.1f),
+                        contentColor = SuperCartColors.primaryGreen
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (hiddenCount > 0) {
+                            Icons.Default.FavoriteBorder
+                        } else {
+                            Icons.Default.Favorite
+                        },
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (hiddenCount > 0) {
+                            "Show/Hide Stores ($hiddenCount hidden)"
+                        } else {
+                            "Show/Hide Stores"
+                        }
+                    )
+                }
+            }
         }
 
         // Scrollable content area
@@ -313,7 +422,7 @@ fun ShoppingListScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    top = 180.dp, // Height of the top bar + extra gap
+                    top = if (viewMode == ShoppingListViewMode.STORE) 280.dp else 230.dp, // Extra space for hide button in store view
                     bottom = 100.dp, // Height of the bottom navigation bar + extra gap
                     start = SuperCartSpacing.md,
                     end = SuperCartSpacing.md
@@ -345,14 +454,28 @@ fun ShoppingListScreen() {
                                 color = SuperCartColors.gray
                             )
                         }
-                        HierarchicalCategoryDisplay(
-                            categories = toBuyCategories,
-                            searchQuery = searchQuery,
-                            isAllExpanded = isAllExpanded,
-                            onEditGrocery = { onEditGrocery(it) },
-                            useScroll = false,
-                            isShoppingList = true
-                        )
+                        
+                        when (viewMode) {
+                            ShoppingListViewMode.CATEGORY -> {
+                                HierarchicalCategoryDisplay(
+                                    categories = toBuyCategories,
+                                    searchQuery = searchQuery,
+                                    isAllExpanded = isAllExpanded,
+                                    onEditGrocery = { onEditGrocery(it) },
+                                    useScroll = false,
+                                    isShoppingList = true
+                                )
+                            }
+                            ShoppingListViewMode.STORE -> {
+                                StoreBasedDisplay(
+                                    categories = toBuyCategories,
+                                    searchQuery = searchQuery,
+                                    isAllExpanded = isAllExpanded,
+                                    onEditGrocery = { onEditGrocery(it) },
+                                    useScroll = false
+                                )
+                            }
+                        }
                     } else {
                         Card(
                             modifier = Modifier
@@ -563,6 +686,20 @@ fun ShoppingListScreen() {
         if (showCategoriesManagement) {
             CategoriesManagementDialog(
                 onDismiss = { showCategoriesManagement = false }
+            )
+        }
+        
+        // Stores Management Dialog
+        if (showStoresManagement) {
+            StoresManagementDialog(
+                onDismiss = { showStoresManagement = false }
+            )
+        }
+        
+        // Hide/Unhide Stores Dialog
+        if (showHideStoresDialog) {
+            HideStoresDialog(
+                onDismiss = { showHideStoresDialog = false }
             )
         }
         
