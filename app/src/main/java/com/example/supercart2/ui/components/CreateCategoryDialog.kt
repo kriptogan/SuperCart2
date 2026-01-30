@@ -101,7 +101,6 @@ fun CreateCategoryDialog(
                                name = categoryName.trim(),
                                default = false,
                                viewOrder = highestViewOrder + 1,
-                               groupId = null,
                                protected = false
                            )
                             

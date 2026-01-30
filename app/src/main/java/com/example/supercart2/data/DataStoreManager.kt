@@ -34,6 +34,7 @@ object DataStoreManager {
     private val STORES_KEY = stringPreferencesKey("stores_flat")
     private val HIDDEN_STORES_KEY = stringPreferencesKey("hidden_stores")
     private val STORE_VIEW_MODE_KEY = stringPreferencesKey("store_view_mode")
+    private val GROUP_CODE_KEY = stringPreferencesKey("group_code")
     
     // LocalDate adapter for Gson
     private class LocalDateAdapter : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
@@ -201,5 +202,60 @@ object DataStoreManager {
             android.util.Log.e("DataStoreManager", "Error loading store view mode", e)
             false // Default to category view
         }
+    }
+    
+    // ========== Group Code Management ==========
+    
+    /**
+     * Save the group code (UUID) to DataStore
+     */
+    suspend fun saveGroupCode(context: Context, groupCode: String) {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences[GROUP_CODE_KEY] = groupCode
+            }
+            android.util.Log.d("DataStoreManager", "✅ Group code saved: $groupCode")
+        } catch (e: Exception) {
+            android.util.Log.e("DataStoreManager", "❌ Error saving group code", e)
+            throw e
+        }
+    }
+    
+    /**
+     * Load the group code from DataStore
+     * Returns null if no group code is set
+     */
+    suspend fun loadGroupCode(context: Context): String? {
+        return try {
+            val preferences = context.dataStore.data.first()
+            val groupCode = preferences[GROUP_CODE_KEY]
+            android.util.Log.d("DataStoreManager", "Group code loaded: ${groupCode ?: "None"}")
+            groupCode
+        } catch (e: Exception) {
+            android.util.Log.e("DataStoreManager", "❌ Error loading group code", e)
+            null
+        }
+    }
+    
+    /**
+     * Clear the group code from DataStore (leave group)
+     */
+    suspend fun clearGroupCode(context: Context) {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences.remove(GROUP_CODE_KEY)
+            }
+            android.util.Log.d("DataStoreManager", "✅ Group code cleared")
+        } catch (e: Exception) {
+            android.util.Log.e("DataStoreManager", "❌ Error clearing group code", e)
+            throw e
+        }
+    }
+    
+    /**
+     * Check if user is in a group
+     */
+    suspend fun hasGroupCode(context: Context): Boolean {
+        return loadGroupCode(context) != null
     }
 }

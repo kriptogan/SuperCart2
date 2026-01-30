@@ -1,5 +1,6 @@
 package com.example.supercart2.ui.components
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,24 +19,37 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.data.FirebaseManager
 import com.example.supercart2.data.DataManagerObject
+import com.example.supercart2.data.DataStoreManager
 import kotlinx.coroutines.launch
 
 @Composable
 fun BurgerMenu(
     onCategoriesManagementClick: () -> Unit,
     onManageStoresClick: () -> Unit = {},
+    onManageGroupClick: () -> Unit = {},
     onImportGroceriesClick: () -> Unit,
     onSettingsClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    var hasGroupCode by remember { mutableStateOf(false) }
+    
+    // Check if group code exists when menu opens
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            hasGroupCode = DataStoreManager.hasGroupCode(context)
+        }
+    }
     
     // Upload/Download state
     var isUploading by remember { mutableStateOf(false) }
@@ -88,6 +103,13 @@ fun BurgerMenu(
             }
         )
         DropdownMenuItem(
+            text = { Text("Family Group") },
+            onClick = {
+                onManageGroupClick()
+                expanded = false
+            }
+        )
+        DropdownMenuItem(
             text = { Text("Import Groceries") },
             onClick = {
                 onImportGroceriesClick()
@@ -103,46 +125,84 @@ fun BurgerMenu(
         )
         // Firebase Upload Option
         DropdownMenuItem(
-            text = { Text("Upload to Cloud") },
-            onClick = {
-                expanded = false
-                scope.launch {
-                    isUploading = true
-                    try {
-                        FirebaseManager.uploadData()
-                        isUploading = false
-                        showUploadSuccess = true
-                    } catch (e: Exception) {
-                        isUploading = false
-                        errorMessage = "Upload failed: ${e.message ?: "Unknown error"}"
-                        showError = true
-                        android.util.Log.e("BurgerMenu", "Upload failed", e)
+            text = {
+                Column {
+                    Text("Upload to Cloud")
+                    if (!hasGroupCode) {
+                        Text(
+                            "Requires family group",
+                            fontSize = 10.sp,
+                            color = Color.Red
+                        )
                     }
                 }
             },
-            enabled = !isUploading && !isDownloading
+            onClick = {
+                if (hasGroupCode) {
+                    expanded = false
+                    scope.launch {
+                        isUploading = true
+                        try {
+                            FirebaseManager.uploadData()
+                            isUploading = false
+                            showUploadSuccess = true
+                        } catch (e: Exception) {
+                            isUploading = false
+                            errorMessage = "Upload failed: ${e.message ?: "Unknown error"}"
+                            showError = true
+                            android.util.Log.e("BurgerMenu", "Upload failed", e)
+                        }
+                    }
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Please create or join a family group first",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            },
+            enabled = hasGroupCode && !isUploading && !isDownloading
         )
         // Firebase Download Option
         DropdownMenuItem(
-            text = { Text("Download from Cloud") },
-            onClick = {
-                expanded = false
-                scope.launch {
-                    isDownloading = true
-                    try {
-                        FirebaseManager.downloadData()
-                        // UI update is already triggered inside downloadData()
-                        isDownloading = false
-                        showDownloadSuccess = true
-                    } catch (e: Exception) {
-                        isDownloading = false
-                        errorMessage = "Download failed: ${e.message ?: "Unknown error"}"
-                        showError = true
-                        android.util.Log.e("BurgerMenu", "Download failed", e)
+            text = {
+                Column {
+                    Text("Download from Cloud")
+                    if (!hasGroupCode) {
+                        Text(
+                            "Requires family group",
+                            fontSize = 10.sp,
+                            color = Color.Red
+                        )
                     }
                 }
             },
-            enabled = !isUploading && !isDownloading
+            onClick = {
+                if (hasGroupCode) {
+                    expanded = false
+                    scope.launch {
+                        isDownloading = true
+                        try {
+                            FirebaseManager.downloadData()
+                            // UI update is already triggered inside downloadData()
+                            isDownloading = false
+                            showDownloadSuccess = true
+                        } catch (e: Exception) {
+                            isDownloading = false
+                            errorMessage = "Download failed: ${e.message ?: "Unknown error"}"
+                            showError = true
+                            android.util.Log.e("BurgerMenu", "Download failed", e)
+                        }
+                    }
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Please create or join a family group first",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            },
+            enabled = hasGroupCode && !isUploading && !isDownloading
         )
     }
     

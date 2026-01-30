@@ -8,7 +8,6 @@ data class Category(
     val name: String,
     val default: Boolean = false,
     val viewOrder: Int = 0,
-    val groupId: String? = null,
     val protected: Boolean = false,
     val lastUpdate: LocalDateTime = LocalDateTime.now(),
     val deleted: Boolean = false  // Changed from isDeleted to deleted

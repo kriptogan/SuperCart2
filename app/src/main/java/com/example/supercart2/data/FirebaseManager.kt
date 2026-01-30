@@ -24,6 +24,38 @@ object FirebaseManager {
     const val GROCERIES_COLLECTION = "groceries"
     const val STORES_COLLECTION = "stores"
     
+    /**
+     * Get Firestore collection reference for a group
+     */
+    private fun getGroupCollection(groupCode: String, collection: String): com.google.firebase.firestore.CollectionReference {
+        return db.collection("groups")
+            .document(groupCode)
+            .collection(collection)
+    }
+    
+    /**
+     * Check if a group exists in Firestore
+     * Returns true if group has at least one document
+     */
+    suspend fun checkGroupExists(groupCode: String): Boolean {
+        return try {
+            android.util.Log.d("FirebaseManager", "Checking if group exists: $groupCode")
+            
+            // Check if any categories exist in this group
+            val snapshot = getGroupCollection(groupCode, CATEGORIES_COLLECTION)
+                .limit(1)
+                .get()
+                .await()
+            
+            val exists = !snapshot.isEmpty
+            android.util.Log.d("FirebaseManager", "Group exists: $exists")
+            exists
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseManager", "Error checking group existence", e)
+            false
+        }
+    }
+    
     // Test Firebase connection
     suspend fun testConnection(): Boolean {
         return try {
@@ -42,7 +74,6 @@ object FirebaseManager {
             "name" to category.name,
             "default" to category.default,
             "viewOrder" to category.viewOrder,
-            "groupId" to category.groupId,
             "protected" to category.protected,
             "lastUpdate" to category.lastUpdate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             "deleted" to category.deleted
@@ -93,51 +124,72 @@ object FirebaseManager {
 
     suspend fun uploadData() {
         try {
-            // Convert nested structure to flat lists
-            val (categories, subCategories, groceries) = DataConverter.flattenCategories(DataManagerObject.categories)
+            // Get group code
+            val context = DataStoreManager.globalContext
+            val groupCode = context?.let { DataStoreManager.loadGroupCode(it) }
             
-            // Get stores list
+            if (groupCode == null) {
+                android.util.Log.e("FirebaseManager", "❌ Cannot upload: No group code set")
+                throw IllegalStateException("Group code required for upload")
+            }
+            
+            android.util.Log.d("FirebaseManager", "Uploading ALL local data to group: $groupCode")
+            
+            // Convert nested structure to flat lists
+            val (categories, subCategories, groceries) = DataConverter.flattenCategories(
+                DataManagerObject.categories
+            )
             val stores = DataManagerObject.stores.toList()
             
-            // Create a batch operation
+            // Filter only non-deleted items (upload everything in local storage)
+            val activeCategories = categories.filter { !it.deleted }
+            val activeSubCategories = subCategories.filter { !it.deleted }
+            val activeGroceries = groceries.filter { !it.deleted }
+            val activeStores = stores.filter { !it.deleted }
+            
+            android.util.Log.d("FirebaseManager", "Uploading: ${activeCategories.size} categories, " +
+                "${activeSubCategories.size} subcategories, ${activeGroceries.size} groceries, " +
+                "${activeStores.size} stores")
+            
+            // Create batch operation
             val batch = db.batch()
             
-            // Upload categories (convert to Map for proper date serialization)
-            categories.forEach { category ->
-                val docRef = db.collection(CATEGORIES_COLLECTION).document(category.uuid)
+            // Upload ALL local data to group-based paths
+            activeCategories.forEach { category ->
+                val docRef = getGroupCollection(groupCode, CATEGORIES_COLLECTION)
+                    .document(category.uuid)
                 batch.set(docRef, categoryToMap(category))
             }
             
-            // Upload subcategories (convert to Map for proper date serialization)
-            subCategories.forEach { subCategory ->
-                val docRef = db.collection(SUBCATEGORIES_COLLECTION).document(subCategory.uuid)
+            activeSubCategories.forEach { subCategory ->
+                val docRef = getGroupCollection(groupCode, SUBCATEGORIES_COLLECTION)
+                    .document(subCategory.uuid)
                 batch.set(docRef, subCategoryToMap(subCategory))
             }
             
-            // Upload groceries (convert to Map for proper date serialization)
-            groceries.forEach { grocery ->
-                val docRef = db.collection(GROCERIES_COLLECTION).document(grocery.uuid)
+            activeGroceries.forEach { grocery ->
+                val docRef = getGroupCollection(groupCode, GROCERIES_COLLECTION)
+                    .document(grocery.uuid)
                 batch.set(docRef, groceryToMap(grocery))
             }
             
-            // Upload stores (convert to Map for proper date serialization)
-            stores.forEach { store ->
-                val docRef = db.collection(STORES_COLLECTION).document(store.uuid)
+            activeStores.forEach { store ->
+                val docRef = getGroupCollection(groupCode, STORES_COLLECTION)
+                    .document(store.uuid)
                 batch.set(docRef, storeToMap(store))
             }
             
-            // Execute the batch
+            // Commit batch
             batch.commit().await()
             
-            android.util.Log.d("FirebaseManager", "Data uploaded successfully")
+            android.util.Log.d("FirebaseManager", "✅ Data uploaded successfully to group: $groupCode")
             
             // Batch upload images to Firebase Storage
-            val context = DataStoreManager.globalContext
             if (context != null) {
                 try {
                     android.util.Log.d("FirebaseManager", "Starting image upload...")
                     val uploadedCount = FirebaseStorageManager.batchUploadImages(context)
-                    android.util.Log.d("FirebaseManager", "✅ Uploaded $uploadedCount images to Firebase Storage")
+                    android.util.Log.d("FirebaseManager", "✅ Uploaded $uploadedCount images")
                 } catch (e: Exception) {
                     android.util.Log.e("FirebaseManager", "❌ Error uploading images", e)
                     // Don't throw - allow data upload to succeed even if images fail
@@ -197,7 +249,6 @@ object FirebaseManager {
             name = data["name"] as? String ?: throw IllegalStateException("Category ${doc.id} missing name"),
             default = (data["default"] as? Boolean) ?: false,
             viewOrder = (data["viewOrder"] as? Long)?.toInt() ?: 0,
-            groupId = data["groupId"] as? String,
             protected = (data["protected"] as? Boolean) ?: false,
             lastUpdate = timestampToLocalDateTime(data["lastUpdate"]),
             deleted = (data["deleted"] as? Boolean) ?: false
@@ -258,47 +309,61 @@ object FirebaseManager {
 
     suspend fun downloadData() {
         try {
-            // Download all collections and manually deserialize
-            val categoriesSnapshot = db.collection(CATEGORIES_COLLECTION).get().await()
-            val categories = categoriesSnapshot.documents.map { documentToCategory(it) }
+            // Get group code
+            val context = DataStoreManager.globalContext
+            val groupCode = context?.let { DataStoreManager.loadGroupCode(it) }
             
-            val subCategoriesSnapshot = db.collection(SUBCATEGORIES_COLLECTION).get().await()
-            val subCategories = subCategoriesSnapshot.documents.map { documentToSubCategory(it) }
+            if (groupCode == null) {
+                android.util.Log.e("FirebaseManager", "❌ Cannot download: No group code set")
+                throw IllegalStateException("Group code required for download")
+            }
             
-            val groceriesSnapshot = db.collection(GROCERIES_COLLECTION).get().await()
-            val groceries = groceriesSnapshot.documents.map { documentToGrocery(it) }
+            android.util.Log.d("FirebaseManager", "Downloading data from group: $groupCode")
             
-            val storesSnapshot = db.collection(STORES_COLLECTION).get().await()
-            val stores = storesSnapshot.documents.map { documentToStore(it) }
+            // Download from group-based paths
+            val categoriesSnapshot = getGroupCollection(groupCode, CATEGORIES_COLLECTION).get().await()
+            val downloadedCategories = categoriesSnapshot.documents.map { documentToCategory(it) }
+            
+            val subCategoriesSnapshot = getGroupCollection(groupCode, SUBCATEGORIES_COLLECTION).get().await()
+            val downloadedSubCategories = subCategoriesSnapshot.documents.map { documentToSubCategory(it) }
+            
+            val groceriesSnapshot = getGroupCollection(groupCode, GROCERIES_COLLECTION).get().await()
+            val downloadedGroceries = groceriesSnapshot.documents.map { documentToGrocery(it) }
+            
+            val storesSnapshot = getGroupCollection(groupCode, STORES_COLLECTION).get().await()
+            val downloadedStores = storesSnapshot.documents.map { documentToStore(it) }
+            
+            android.util.Log.d("FirebaseManager", "Downloaded: ${downloadedCategories.size} categories, " +
+                "${downloadedSubCategories.size} subcategories, ${downloadedGroceries.size} groceries, " +
+                "${downloadedStores.size} stores")
             
             // Validate relationships
-            if (DataConverter.validateRelationships(categories, subCategories, groceries)) {
-                // Convert to nested structure
-                val nestedData = DataConverter.buildNestedStructure(categories, subCategories, groceries)
+            if (DataConverter.validateRelationships(downloadedCategories, downloadedSubCategories, downloadedGroceries)) {
+                // Build nested structure
+                val nestedCategories = DataConverter.buildNestedStructure(
+                    downloadedCategories,
+                    downloadedSubCategories,
+                    downloadedGroceries
+                )
                 
-                // Update DataManagerObject
+                // Replace ALL local data with downloaded data
                 DataManagerObject.categories.clear()
-                DataManagerObject.categories.addAll(nestedData)
+                DataManagerObject.categories.addAll(nestedCategories)
                 
-                // Update stores (filter out deleted ones)
                 DataManagerObject.stores.clear()
-                DataManagerObject.stores.addAll(stores.filter { !it.deleted })
+                DataManagerObject.stores.addAll(downloadedStores.filter { !it.deleted })
                 
-                // Trigger UI update
                 DataManagerObject.updateData()
-                
-                // Save to DataStore
                 DataStoreManager.saveDataGlobally()
                 
-                android.util.Log.d("FirebaseManager", "Data downloaded and saved successfully")
+                android.util.Log.d("FirebaseManager", "✅ Data downloaded and replaced successfully")
                 
                 // Batch download images from Firebase Storage
-                val context = DataStoreManager.globalContext
                 if (context != null) {
                     try {
                         android.util.Log.d("FirebaseManager", "Starting image download...")
                         val downloadedCount = FirebaseStorageManager.batchDownloadImages(context)
-                        android.util.Log.d("FirebaseManager", "✅ Downloaded $downloadedCount images from Firebase Storage")
+                        android.util.Log.d("FirebaseManager", "✅ Downloaded $downloadedCount images")
                     } catch (e: Exception) {
                         android.util.Log.e("FirebaseManager", "❌ Error downloading images", e)
                         // Don't throw - allow data download to succeed even if images fail
@@ -307,13 +372,14 @@ object FirebaseManager {
                     android.util.Log.w("FirebaseManager", "⚠️ Cannot download images: context is null")
                 }
             } else {
-                throw IllegalStateException("Invalid data relationships detected in downloaded data")
+                throw IllegalStateException("Invalid data relationships in downloaded data")
             }
         } catch (e: Exception) {
             android.util.Log.e("FirebaseManager", "Error downloading data", e)
             throw e
         }
     }
+    
 
     suspend fun deleteCategory(categoryId: String) {
         try {
