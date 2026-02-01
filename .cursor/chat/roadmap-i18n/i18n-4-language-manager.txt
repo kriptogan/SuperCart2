@@ -1,0 +1,404 @@
+# 🌐 TASK 4: LANGUAGE MANAGER
+
+## 🎯 **Objective**
+Implement language switching logic that:
+- Allows user to select language in-app
+- Forces layout direction based on selected language (NOT device OS)
+- Persists language preference across app restarts
+
+---
+
+## 📋 **CHECKLIST**
+
+### **Phase 1: Language Manager Core** ⏳
+- [ ] Implement `LanguageManager` functions
+- [ ] Store language preference in DataStore
+- [ ] Load language preference on startup
+- [ ] Apply locale to app context
+
+### **Phase 2: MainActivity Integration** ⏳
+- [ ] Override `attachBaseContext()` to force locale
+- [ ] Apply language on app launch
+- [ ] Handle configuration changes
+
+### **Phase 3: Compose State Management** ⏳
+- [ ] Create language state in UI
+- [ ] Trigger recomposition on language change
+- [ ] Force layout direction based on language
+
+---
+
+## 📝 **IMPLEMENTATION**
+
+### **1. Update LanguageManager.kt**
+
+**Location:** `app/src/main/java/com/example/supercart2/utils/LanguageManager.kt`
+
+**Full Implementation:**
+```kotlin
+package com.example.supercart2.utils
+
+import android.content.Context
+import android.content.res.Configuration
+import android.content.res.Resources
+import android.os.Build
+import androidx.compose.ui.unit.LayoutDirection
+import com.example.supercart2.data.DataStoreManager
+import kotlinx.coroutines.runBlocking
+import java.util.Locale
+
+enum class AppLanguage(
+    val code: String,
+    val displayName: String,
+    val nativeDisplayName: String,
+    val isRtl: Boolean
+) {
+    ENGLISH("en", "English", "English", isRtl = false),
+    HEBREW("iw", "Hebrew", "עברית", isRtl = true),  // iw = Hebrew legacy code
+    RUSSIAN("ru", "Russian", "Русский", isRtl = false),
+    BULGARIAN("bg", "Bulgarian", "Български", isRtl = false);
+
+    fun toLocale(): Locale = Locale(code)
+    
+    fun toLayoutDirection(): LayoutDirection = 
+        if (isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr
+    
+    companion object {
+        fun fromCode(code: String?): AppLanguage {
+            return values().find { it.code == code } ?: ENGLISH
+        }
+    }
+}
+
+object LanguageManager {
+    private const val LANGUAGE_KEY = "app_language"
+    
+    /**
+     * Get currently selected language
+     */
+    suspend fun getCurrentLanguage(context: Context): AppLanguage {
+        val code = DataStoreManager.loadString(context, LANGUAGE_KEY)
+        return AppLanguage.fromCode(code)
+    }
+    
+    /**
+     * Save language preference
+     */
+    suspend fun setLanguage(context: Context, language: AppLanguage) {
+        DataStoreManager.saveString(context, LANGUAGE_KEY, language.code)
+    }
+    
+    /**
+     * Apply language to context (creates new context with locale)
+     */
+    fun applyLanguage(context: Context, language: AppLanguage): Context {
+        val locale = language.toLocale()
+        Locale.setDefault(locale)
+        
+        val resources: Resources = context.resources
+        val config: Configuration = resources.configuration
+        
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            config.setLocale(locale)
+            config.setLayoutDirection(locale)
+            context.createConfigurationContext(config)
+        } else {
+            @Suppress("DEPRECATION")
+            config.locale = locale
+            @Suppress("DEPRECATION")
+            resources.updateConfiguration(config, resources.displayMetrics)
+            context
+        }
+    }
+    
+    /**
+     * Get layout direction for current language
+     */
+    fun getLayoutDirection(language: AppLanguage): LayoutDirection {
+        return language.toLayoutDirection()
+    }
+}
+```
+
+---
+
+### **2. Add DataStore Helpers**
+
+**Location:** `app/src/main/java/com/example/supercart2/data/DataStoreManager.kt`
+
+**Add these functions:**
+```kotlin
+object DataStoreManager {
+    // ... existing code ...
+    
+    // Generic string save/load for language preference
+    suspend fun saveString(context: Context, key: String, value: String) {
+        val prefKey = stringPreferencesKey(key)
+        context.dataStore.edit { preferences ->
+            preferences[prefKey] = value
+        }
+    }
+    
+    suspend fun loadString(context: Context, key: String): String? {
+        val prefKey = stringPreferencesKey(key)
+        val preferences = context.dataStore.data.first()
+        return preferences[prefKey]
+    }
+}
+```
+
+---
+
+### **3. Update MainActivity.kt**
+
+**Location:** `app/src/main/java/com/example/supercart2/MainActivity.kt`
+
+**Add context override:**
+```kotlin
+class MainActivity : ComponentActivity() {
+    
+    override fun attachBaseContext(newBase: Context) {
+        // Force app language (ignore device OS language)
+        val language = runBlocking {
+            LanguageManager.getCurrentLanguage(newBase)
+        }
+        val context = LanguageManager.applyLanguage(newBase, language)
+        super.attachBaseContext(context)
+    }
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Apply language on every create (handles config changes)
+        val language = runBlocking {
+            LanguageManager.getCurrentLanguage(this@MainActivity)
+        }
+        LanguageManager.applyLanguage(this, language)
+        
+        setContent {
+            // Get language state for recomposition
+            var currentLanguage by remember {
+                mutableStateOf(
+                    runBlocking { LanguageManager.getCurrentLanguage(this@MainActivity) }
+                )
+            }
+            
+            // Force layout direction based on language
+            CompositionLocalProvider(
+                LocalLayoutDirection provides currentLanguage.toLayoutDirection()
+            ) {
+                SuperCart2Theme {
+                    // ... your app content ...
+                    
+                    // Pass language change callback
+                    MainContent(
+                        onLanguageChange = { newLanguage ->
+                            currentLanguage = newLanguage
+                            // Recreate activity to apply new locale
+                            recreate()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+```
+
+---
+
+### **4. Create Language State Provider**
+
+**Location:** `app/src/main/java/com/example/supercart2/ui/LanguageState.kt` (NEW FILE)
+
+**Create a composable for managing language state:**
+```kotlin
+package com.example.supercart2.ui
+
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import com.example.supercart2.utils.AppLanguage
+import com.example.supercart2.utils.LanguageManager
+import kotlinx.coroutines.launch
+
+@Composable
+fun rememberLanguageState(): MutableState<AppLanguage> {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    val languageState = remember {
+        mutableStateOf(
+            runBlocking { LanguageManager.getCurrentLanguage(context) }
+        )
+    }
+    
+    return languageState
+}
+
+/**
+ * Change app language and persist preference
+ */
+@Composable
+fun changeLanguage(
+    language: AppLanguage,
+    onLanguageChanged: (AppLanguage) -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    LaunchedEffect(language) {
+        scope.launch {
+            LanguageManager.setLanguage(context, language)
+            onLanguageChanged(language)
+        }
+    }
+}
+```
+
+---
+
+## 🔄 **HOW IT WORKS**
+
+### **1. App Startup Flow**
+
+```
+1. MainActivity.attachBaseContext()
+   ↓
+2. Load saved language from DataStore
+   ↓
+3. Apply locale to context (force language)
+   ↓
+4. Android uses forced locale (NOT device OS language)
+   ↓
+5. App displays in selected language ✅
+   ↓
+6. Layout direction set based on language (RTL for Hebrew) ✅
+```
+
+---
+
+### **2. Language Change Flow**
+
+```
+User clicks "Hebrew" in language selection:
+   ↓
+1. LanguageManager.setLanguage(HEBREW)
+   ↓
+2. Save "iw" to DataStore
+   ↓
+3. Call activity.recreate()
+   ↓
+4. MainActivity.attachBaseContext() runs again
+   ↓
+5. Loads "iw" from DataStore
+   ↓
+6. Applies Hebrew locale
+   ↓
+7. Layout direction set to RTL
+   ↓
+8. App reloads in Hebrew with RTL layout ✅
+```
+
+---
+
+## 🧪 **TESTING**
+
+### **Test 1: Default Language**
+**Setup:** Fresh app install, English device
+**Steps:**
+1. Launch app
+2. **Expected:** App in English (default) ✅
+
+---
+
+### **Test 2: Switch to Hebrew**
+**Setup:** App in English
+**Steps:**
+1. Open language selection
+2. Select Hebrew
+3. **Expected:**
+   - App reloads
+   - All text in Hebrew ✅
+   - Layout is RTL ✅
+   - Direction independent of device OS ✅
+
+---
+
+### **Test 3: Persist Across Restart**
+**Setup:** App set to Hebrew
+**Steps:**
+1. Close app completely
+2. Reopen app
+3. **Expected:** App still in Hebrew ✅
+
+---
+
+### **Test 4: LTR on Hebrew Device**
+**Setup:** Device OS in Hebrew
+**Steps:**
+1. Launch app (will default to English)
+2. **Expected:** App in English (LTR) ✅
+3. Switch to Hebrew
+4. **Expected:** App in Hebrew (RTL) ✅
+
+---
+
+### **Test 5: RTL on English Device**
+**Setup:** Device OS in English
+**Steps:**
+1. Launch app
+2. Switch to Hebrew
+3. **Expected:** App in Hebrew (RTL) ✅
+4. Switch back to English
+5. **Expected:** App in English (LTR) ✅
+
+---
+
+## 🐛 **TROUBLESHOOTING**
+
+### **Issue 1: Language doesn't change**
+
+**Symptom:** Click language, nothing happens
+
+**Fix:**
+- Verify `activity.recreate()` is called
+- Check `attachBaseContext()` is overridden
+
+---
+
+### **Issue 2: Layout direction wrong**
+
+**Symptom:** Hebrew shows as LTR
+
+**Fix:**
+- Verify `CompositionLocalProvider` sets `LocalLayoutDirection`
+- Check `language.toLayoutDirection()` returns correct value
+
+---
+
+### **Issue 3: Device OS language overrides app**
+
+**Symptom:** App follows device language, not selected language
+
+**Fix:**
+- Verify `attachBaseContext()` loads from DataStore (not device locale)
+- Check `Locale.setDefault()` is called
+
+---
+
+## 📊 **COMPLETION CRITERIA**
+
+- [ ] LanguageManager fully implemented
+- [ ] Language preference saved to DataStore
+- [ ] MainActivity overrides `attachBaseContext()`
+- [ ] Language state managed in Compose
+- [ ] Layout direction forced based on language
+- [ ] Language persists across app restarts
+- [ ] Language independent of device OS
+- [ ] All tests pass
+
+---
+
+## 🔄 **NEXT STEP**
+
+➡️ **Task 5:** Create language selection UI (dialog in burger menu)

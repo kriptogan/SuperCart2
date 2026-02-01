@@ -1,0 +1,172 @@
+# 🔧 TASK 1: SETUP & DEPENDENCIES
+
+## 🎯 **Objective**
+Set up Android project for internationalization (i18n) with proper dependencies and configuration.
+
+---
+
+## 📋 **CHECKLIST**
+
+### **Step 1: Update build.gradle.kts** ⏳
+- [ ] Add AppCompat dependency (for locale utilities)
+- [ ] Verify Compose BOM includes i18n support
+- [ ] No additional dependencies needed (Android built-in i18n)
+
+### **Step 2: Update AndroidManifest.xml** ⏳
+- [ ] Add `android:supportsRtl="true"` to `<application>` tag
+- [ ] Ensure `android:configChanges` handles locale changes
+
+### **Step 3: Create Resource Directories** ⏳
+- [ ] Create `res/values/strings.xml` (English - default)
+- [ ] Create `res/values-iw/strings.xml` (Hebrew - RTL)
+- [ ] Create `res/values-ru/strings.xml` (Russian)
+- [ ] Create `res/values-bg/strings.xml` (Bulgarian)
+
+**Note:** Hebrew uses `iw` code (legacy), not `he`
+
+### **Step 4: Create Locale Utilities** ⏳
+- [ ] Create `LanguageManager.kt` file structure
+- [ ] Add enum for supported languages
+- [ ] Add locale codes mapping
+
+---
+
+## 📝 **IMPLEMENTATION DETAILS**
+
+### **1. AndroidManifest.xml Changes**
+
+**Location:** `app/src/main/AndroidManifest.xml`
+
+**Add to `<application>` tag:**
+```xml
+<application
+    ...
+    android:supportsRtl="true">
+```
+
+**Optional - Add to `<activity>` for better locale handling:**
+```xml
+<activity
+    ...
+    android:configChanges="locale|layoutDirection">
+```
+
+---
+
+### **2. Resource Directory Structure**
+
+**Create these directories:**
+```
+app/src/main/res/
+├── values/                    # English (default)
+│   └── strings.xml
+├── values-iw/                 # Hebrew (RTL)
+│   └── strings.xml
+├── values-ru/                 # Russian
+│   └── strings.xml
+└── values-bg/                 # Bulgarian
+    └── strings.xml
+```
+
+**Initial `strings.xml` template:**
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SuperCart2</string>
+    <!-- More strings will be added in Task 2 -->
+</resources>
+```
+
+---
+
+### **3. Create LanguageManager.kt**
+
+**Location:** `app/src/main/java/com/example/supercart2/utils/LanguageManager.kt`
+
+**Initial structure:**
+```kotlin
+package com.example.supercart2.utils
+
+import android.content.Context
+import androidx.compose.ui.unit.LayoutDirection
+import java.util.Locale
+
+enum class AppLanguage(
+    val code: String,
+    val displayName: String,
+    val nativeDisplayName: String,
+    val isRtl: Boolean
+) {
+    ENGLISH("en", "English", "English", isRtl = false),
+    HEBREW("iw", "Hebrew", "עברית", isRtl = true),  // Note: iw, not he
+    RUSSIAN("ru", "Russian", "Русский", isRtl = false),
+    BULGARIAN("bg", "Bulgarian", "Български", isRtl = false);
+
+    fun toLocale(): Locale = Locale(code)
+    
+    fun toLayoutDirection(): LayoutDirection = 
+        if (isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr
+}
+
+object LanguageManager {
+    // Will be implemented in Task 4
+}
+```
+
+---
+
+### **4. Dependencies (Verification)**
+
+**File:** `app/build.gradle.kts`
+
+**Verify these are present:**
+```kotlin
+dependencies {
+    // AppCompat for locale utilities
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    
+    // Compose (already present)
+    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    
+    // DataStore (already present - for storing language preference)
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+}
+```
+
+**No new dependencies needed!** Android i18n is built-in.
+
+---
+
+## 🧪 **TESTING**
+
+### **Test 1: Resource Directories Created**
+- [ ] Verify all 4 `values-*` directories exist
+- [ ] Verify each has a `strings.xml` file
+- [ ] Verify `strings.xml` files are valid XML
+
+### **Test 2: Manifest Updated**
+- [ ] Check `supportsRtl="true"` is present
+- [ ] App builds successfully
+
+### **Test 3: LanguageManager Created**
+- [ ] `LanguageManager.kt` file exists
+- [ ] `AppLanguage` enum compiles
+- [ ] All 4 languages defined
+
+---
+
+## 📊 **COMPLETION CRITERIA**
+
+- [x] AndroidManifest.xml updated with RTL support
+- [x] 4 resource directories created (values, values-iw, values-ru, values-bg)
+- [x] Initial strings.xml files created
+- [x] LanguageManager.kt structure created
+- [x] App builds successfully
+
+---
+
+## 🔄 **NEXT STEP**
+
+➡️ **Task 2:** Extract strings and create translations

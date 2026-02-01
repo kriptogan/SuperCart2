@@ -1,0 +1,210 @@
+# 🌍 INTERNATIONALIZATION (i18n) ROADMAP - MASTER TRACKER
+
+## 📋 **Feature Overview**
+
+**Goal:** Add multi-language support to SuperCart2 with proper RTL (Right-to-Left) handling
+
+**Supported Languages:**
+- 🇬🇧 English (LTR)
+- 🇮🇱 Hebrew (RTL)
+- 🇷🇺 Russian (LTR)
+- 🇧🇬 Bulgarian (LTR)
+
+**Key Requirements:**
+- ✅ RTL support for Hebrew
+- ✅ LTR support for English, Russian, Bulgarian
+- ✅ Language direction independent of device OS language
+- ✅ Example: English app on Hebrew device = LTR ✅
+- ✅ Example: Hebrew app on English device = RTL ✅
+- ✅ User can switch language in-app
+- ✅ Language preference persists across app restarts
+
+---
+
+## 🗺️ **TASK BREAKDOWN**
+
+### **Task 0: Master Tracker** ✅
+- [x] Create roadmap structure
+- [x] Define requirements
+- [x] Break down tasks
+
+### **Task 1: Setup & Dependencies** ⏳
+**File:** `i18n-1-setup.txt`
+- [ ] Add necessary dependencies
+- [ ] Configure Android resources for multi-language
+- [ ] Create directory structure for string resources
+- [ ] Set up locale utilities
+
+### **Task 2: String Resources** ⏳
+**File:** `i18n-2-strings.txt`
+- [ ] Extract all hardcoded strings
+- [ ] Create `strings.xml` for English (default)
+- [ ] Create `strings.xml` for Hebrew
+- [ ] Create `strings.xml` for Russian
+- [ ] Create `strings.xml` for Bulgarian
+- [ ] Ensure all UI text uses string resources
+
+### **Task 3: RTL Support** ⏳
+**File:** `i18n-3-rtl.txt`
+- [ ] Enable RTL support in Android Manifest
+- [ ] Update layouts for RTL compatibility
+- [ ] Test icons and images in RTL mode
+- [ ] Fix any RTL layout issues
+- [ ] Ensure bidirectional text handling
+
+### **Task 4: Language Manager** ⏳
+**File:** `i18n-4-language-manager.txt`
+- [ ] Create `LanguageManager` object
+- [ ] Implement language switching logic
+- [ ] Store language preference in DataStore
+- [ ] Apply locale on app startup
+- [ ] Force layout direction based on selected language (not device OS)
+
+### **Task 5: Language Selection UI** ⏳
+**File:** `i18n-5-ui.txt`
+- [ ] Create language selection dialog
+- [ ] Add language option to burger menu
+- [ ] Show current language
+- [ ] Display language names in their native script
+- [ ] Add language flags/icons (optional)
+
+### **Task 6: Testing & Polish** ⏳
+**File:** `i18n-6-testing.txt`
+- [ ] Test all languages on English OS device
+- [ ] Test all languages on Hebrew OS device
+- [ ] Test RTL/LTR switching
+- [ ] Test text overflow/truncation
+- [ ] Test long translations
+- [ ] Document translation process
+
+---
+
+## 📊 **PROGRESS TRACKER**
+
+```
+Task 0: Setup & Planning           [████████████████████] 100% ✅
+Task 1: Dependencies               [                    ]   0% ⏳
+Task 2: String Resources           [                    ]   0% ⏳
+Task 3: RTL Support                [                    ]   0% ⏳
+Task 4: Language Manager           [                    ]   0% ⏳
+Task 5: Language Selection UI      [                    ]   0% ⏳
+Task 6: Testing & Polish           [                    ]   0% ⏳
+
+Overall Progress:                  [███                 ]  14%
+```
+
+---
+
+## 🎯 **SUCCESS CRITERIA**
+
+### **Functional Requirements:**
+- ✅ User can switch between 4 languages (EN, HE, RU, BG)
+- ✅ Hebrew displays in RTL mode
+- ✅ English, Russian, Bulgarian display in LTR mode
+- ✅ Language direction follows selected language, NOT device OS
+- ✅ Language preference persists across app restarts
+- ✅ All UI text is translated (no hardcoded strings)
+
+### **Technical Requirements:**
+- ✅ Use Android's built-in i18n system (strings.xml)
+- ✅ Proper RTL layout support (`supportsRtl="true"`)
+- ✅ Layout mirroring works correctly
+- ✅ Force locale independent of system settings
+
+### **Quality Requirements:**
+- ✅ No text truncation or overflow
+- ✅ Proper text alignment (start/end, not left/right)
+- ✅ Icons and images mirror correctly in RTL
+- ✅ Smooth language switching (no app restart needed)
+
+---
+
+## 📝 **NOTES**
+
+### **Android i18n Best Practices:**
+1. **Never use `left` and `right` in layouts** → Use `start` and `end`
+2. **Test with "Force RTL layout" in Developer Options**
+3. **Use `layoutDirection` property to force direction programmatically**
+4. **Avoid hardcoded strings** → Always use `R.string.xxx`
+5. **Consider plurals** → Use `<plurals>` resource for countable items
+
+### **RTL Considerations:**
+- Text alignment: `textAlignment="viewStart"` (not "left")
+- Padding: `paddingStart`/`paddingEnd` (not "Left"/"Right")
+- Icons: Some need mirroring (arrows), some don't (logos)
+- Images: Use `autoMirrored="true"` for directional icons
+
+### **Translation Sources:**
+- Initial translations: Use Google Translate / DeepL
+- Professional translations: Consider for production
+- Community translations: Can crowdsource if app grows
+
+---
+
+## 🚀 **IMPLEMENTATION ORDER**
+
+```
+1. Setup dependencies & structure       (Task 1)
+   ↓
+2. Extract strings & create resources   (Task 2)
+   ↓
+3. Enable RTL & fix layouts             (Task 3)
+   ↓
+4. Build language switching logic       (Task 4)
+   ↓
+5. Add language selection UI            (Task 5)
+   ↓
+6. Test & polish                        (Task 6)
+```
+
+---
+
+## 📚 **RESOURCES**
+
+### **Android Documentation:**
+- [Supporting Different Languages](https://developer.android.com/guide/topics/resources/localization)
+- [RTL Support](https://developer.android.com/training/basics/supporting-devices/languages#SupportLayoutDirection)
+- [String Resources](https://developer.android.com/guide/topics/resources/string-resource)
+
+### **Jetpack Compose i18n:**
+- Use `stringResource(R.string.xxx)` in Composables
+- Update locale with `LocalContext.current.resources.updateConfiguration()`
+
+---
+
+## ⚠️ **POTENTIAL CHALLENGES**
+
+### **Challenge 1: Forcing Language Direction**
+- **Issue:** Android defaults to device OS language/direction
+- **Solution:** Override `attachBaseContext()` in MainActivity to force locale
+
+### **Challenge 2: RTL Layout Issues**
+- **Issue:** Some layouts may break in RTL
+- **Solution:** Use `start`/`end` instead of `left`/`right`, test thoroughly
+
+### **Challenge 3: Dynamic Language Switching**
+- **Issue:** Compose may not recompose after locale change
+- **Solution:** Store language in state, trigger recomposition
+
+### **Challenge 4: Translation Quality**
+- **Issue:** Auto-translated strings may be awkward
+- **Solution:** Start with auto-translate, refine over time
+
+---
+
+## 🎉 **COMPLETION CHECKLIST**
+
+When all tasks are complete:
+- [ ] All tasks marked as done
+- [ ] All string resources created for 4 languages
+- [ ] RTL works correctly for Hebrew
+- [ ] Language switching works smoothly
+- [ ] Language preference persists
+- [ ] Tested on both English and Hebrew OS devices
+- [ ] Documentation updated
+- [ ] Update this master tracker to 100%
+
+---
+
+**Status:** Planning Complete - Ready for Implementation 🚀
+**Next Step:** Start with Task 1 (Setup & Dependencies)

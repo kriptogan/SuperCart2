@@ -1,0 +1,346 @@
+# 📝 TASK 2: STRING RESOURCES
+
+## 🎯 **Objective**
+Extract all hardcoded strings from the app and create translations for English, Hebrew, Russian, and Bulgarian.
+
+---
+
+## 📋 **CHECKLIST**
+
+### **Phase 1: Extract English Strings** ⏳
+- [ ] Identify all hardcoded strings in UI components
+- [ ] Create string resources in `values/strings.xml`
+- [ ] Replace hardcoded strings with `stringResource(R.string.xxx)`
+- [ ] Verify all UI text uses resources
+
+### **Phase 2: Create Translations** ⏳
+- [ ] Translate to Hebrew (`values-iw/strings.xml`)
+- [ ] Translate to Russian (`values-ru/strings.xml`)
+- [ ] Translate to Bulgarian (`values-bg/strings.xml`)
+
+### **Phase 3: Handle Plurals** ⏳
+- [ ] Create plural resources for countable items
+- [ ] Add plurals for all languages
+
+---
+
+## 📝 **STRING CATEGORIES**
+
+### **1. App & Navigation**
+- App name
+- Screen titles (Home, Shopping List, Categories)
+- Menu items (Upload, Download, Settings, etc.)
+
+### **2. Category Management**
+- Category labels
+- "Create Category", "Edit Category", "Delete Category"
+- Dialog titles and buttons
+
+### **3. Grocery Management**
+- "Add to Shopping List", "Mark as Bought"
+- "Edit Grocery", "Delete Grocery"
+- Field labels (Name, Expiration Date, etc.)
+
+### **4. Store Management**
+- "Manage Stores", "Create Store", "Edit Store"
+- "Link to Store", "Unlink from Store"
+- "Hide Store", "Show Store"
+
+### **5. Group Sharing**
+- "Family Group", "Create Group", "Join Group"
+- "Group Code", "Copy Code", "Leave Group"
+- "Upload to Cloud", "Download from Cloud"
+
+### **6. Dialogs & Confirmations**
+- "OK", "Cancel", "Save", "Delete"
+- "Are you sure?", "Confirm", "Yes", "No"
+- Success/Error messages
+
+### **7. Dates & Times**
+- "Expiration Date", "Buy Date"
+- Date formats (handled by Android, but labels needed)
+
+---
+
+## 📄 **EXAMPLE: values/strings.xml (English)**
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">SuperCart2</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_shopping_list">Shopping List</string>
+    <string name="nav_categories">Categories</string>
+    
+    <!-- Menu -->
+    <string name="menu_upload">Upload to Cloud</string>
+    <string name="menu_download">Download from Cloud</string>
+    <string name="menu_manage_stores">Manage Stores</string>
+    <string name="menu_family_group">Family Group</string>
+    <string name="menu_language">Language</string>
+    
+    <!-- Categories -->
+    <string name="create_category">Create Category</string>
+    <string name="edit_category">Edit Category</string>
+    <string name="delete_category">Delete Category</string>
+    <string name="category_name">Category Name</string>
+    
+    <!-- Groceries -->
+    <string name="add_to_shopping_list">Add to Shopping List</string>
+    <string name="mark_as_bought">Mark as Bought</string>
+    <string name="edit_grocery">Edit Grocery</string>
+    <string name="delete_grocery">Delete Grocery</string>
+    <string name="grocery_name">Grocery Name</string>
+    <string name="expiration_date">Expiration Date</string>
+    
+    <!-- Stores -->
+    <string name="manage_stores">Manage Stores</string>
+    <string name="create_store">Create Store</string>
+    <string name="edit_store">Edit Store</string>
+    <string name="delete_store">Delete Store</string>
+    <string name="store_name">Store Name</string>
+    <string name="link_to_store">Link to Store</string>
+    <string name="select_stores">Select Stores</string>
+    
+    <!-- Group Sharing -->
+    <string name="family_group">Family Group</string>
+    <string name="create_group">Create Group</string>
+    <string name="join_group">Join Group</string>
+    <string name="leave_group">Leave Group</string>
+    <string name="group_code">Group Code</string>
+    <string name="copy_code">Copy Code</string>
+    <string name="enter_group_code">Enter Group Code</string>
+    
+    <!-- Actions -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="create">Create</string>
+    <string name="confirm">Confirm</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    
+    <!-- Confirmations -->
+    <string name="are_you_sure">Are you sure?</string>
+    <string name="delete_confirmation">Are you sure you want to delete this item?</string>
+    <string name="leave_group_confirmation">Are you sure you want to leave the group?</string>
+    
+    <!-- Messages -->
+    <string name="upload_success">Upload successful</string>
+    <string name="download_success">Download successful</string>
+    <string name="group_created">Group created successfully</string>
+    <string name="group_joined">Joined group successfully</string>
+    <string name="code_copied">Code copied to clipboard</string>
+    <string name="requires_group">Requires family group</string>
+    
+    <!-- View Modes -->
+    <string name="category_view">Category View</string>
+    <string name="store_view">Store View</string>
+    <string name="not_linked_to_store">Not Linked to Any Store</string>
+    
+    <!-- Shopping List -->
+    <string name="things_to_buy">Things to Buy</string>
+    <string name="already_bought">Already Bought</string>
+    
+    <!-- Search -->
+    <string name="search">Search</string>
+    <string name="search_hint">Search groceries...</string>
+    
+    <!-- Plurals -->
+    <plurals name="items_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    
+    <plurals name="categories_count">
+        <item quantity="one">%d category</item>
+        <item quantity="other">%d categories</item>
+    </plurals>
+</resources>
+```
+
+---
+
+## 📄 **EXAMPLE: values-iw/strings.xml (Hebrew)**
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">SuperCart2</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">בית</string>
+    <string name="nav_shopping_list">רשימת קניות</string>
+    <string name="nav_categories">קטגוריות</string>
+    
+    <!-- Menu -->
+    <string name="menu_upload">העלה לענן</string>
+    <string name="menu_download">הורד מהענן</string>
+    <string name="menu_manage_stores">נהל חנויות</string>
+    <string name="menu_family_group">קבוצה משפחתית</string>
+    <string name="menu_language">שפה</string>
+    
+    <!-- Categories -->
+    <string name="create_category">צור קטגוריה</string>
+    <string name="edit_category">ערוך קטגוריה</string>
+    <string name="delete_category">מחק קטגוריה</string>
+    <string name="category_name">שם קטגוריה</string>
+    
+    <!-- Groceries -->
+    <string name="add_to_shopping_list">הוסף לרשימת קניות</string>
+    <string name="mark_as_bought">סמן כנקנה</string>
+    <string name="edit_grocery">ערוך מוצר</string>
+    <string name="delete_grocery">מחק מוצר</string>
+    <string name="grocery_name">שם מוצר</string>
+    <string name="expiration_date">תאריך תפוגה</string>
+    
+    <!-- Stores -->
+    <string name="manage_stores">נהל חנויות</string>
+    <string name="create_store">צור חנות</string>
+    <string name="edit_store">ערוך חנות</string>
+    <string name="delete_store">מחק חנות</string>
+    <string name="store_name">שם חנות</string>
+    <string name="link_to_store">קשר לחנות</string>
+    <string name="select_stores">בחר חנויות</string>
+    
+    <!-- Group Sharing -->
+    <string name="family_group">קבוצה משפחתית</string>
+    <string name="create_group">צור קבוצה</string>
+    <string name="join_group">הצטרף לקבוצה</string>
+    <string name="leave_group">עזוב קבוצה</string>
+    <string name="group_code">קוד קבוצה</string>
+    <string name="copy_code">העתק קוד</string>
+    <string name="enter_group_code">הזן קוד קבוצה</string>
+    
+    <!-- Actions -->
+    <string name="ok">אישור</string>
+    <string name="cancel">ביטול</string>
+    <string name="save">שמור</string>
+    <string name="delete">מחק</string>
+    <string name="edit">ערוך</string>
+    <string name="create">צור</string>
+    <string name="confirm">אשר</string>
+    <string name="yes">כן</string>
+    <string name="no">לא</string>
+    
+    <!-- Confirmations -->
+    <string name="are_you_sure">האם אתה בטוח?</string>
+    <string name="delete_confirmation">האם אתה בטוח שברצונך למחוק פריט זה?</string>
+    <string name="leave_group_confirmation">האם אתה בטוח שברצונך לעזוב את הקבוצה?</string>
+    
+    <!-- Messages -->
+    <string name="upload_success">ההעלאה הצליחה</string>
+    <string name="download_success">ההורדה הצליחה</string>
+    <string name="group_created">הקבוצה נוצרה בהצלחה</string>
+    <string name="group_joined">הצטרפת לקבוצה בהצלחה</string>
+    <string name="code_copied">הקוד הועתק ללוח</string>
+    <string name="requires_group">דורש קבוצה משפחתית</string>
+    
+    <!-- View Modes -->
+    <string name="category_view">תצוגת קטגוריות</string>
+    <string name="store_view">תצוגת חנויות</string>
+    <string name="not_linked_to_store">לא מקושר לחנות</string>
+    
+    <!-- Shopping List -->
+    <string name="things_to_buy">דברים לקנות</string>
+    <string name="already_bought">כבר נקנה</string>
+    
+    <!-- Search -->
+    <string name="search">חיפוש</string>
+    <string name="search_hint">חפש מוצרים...</string>
+    
+    <!-- Plurals -->
+    <plurals name="items_count">
+        <item quantity="one">פריט %d</item>
+        <item quantity="two">%d פריטים</item>
+        <item quantity="other">%d פריטים</item>
+    </plurals>
+    
+    <plurals name="categories_count">
+        <item quantity="one">קטגוריה %d</item>
+        <item quantity="two">%d קטגוריות</item>
+        <item quantity="other">%d קטגוריות</item>
+    </plurals>
+</resources>
+```
+
+---
+
+## 📄 **NOTES ON TRANSLATIONS**
+
+### **Russian (values-ru/strings.xml):**
+- Use Cyrillic script
+- Consider formal vs. informal "you" (use informal for app)
+- Plurals: one, few, many, other
+
+### **Bulgarian (values-bg/strings.xml):**
+- Use Cyrillic script
+- Similar to Russian but with differences
+- Plurals: one, other
+
+**Tip:** Start with Google Translate, then refine for natural phrasing.
+
+---
+
+## 🔄 **MIGRATION PROCESS**
+
+### **Step 1: Find Hardcoded Strings**
+Search for:
+- `Text("Hardcoded string")` in Composables
+- String literals in UI code
+
+### **Step 2: Add to strings.xml**
+```xml
+<string name="descriptive_name">Hardcoded string</string>
+```
+
+### **Step 3: Replace in Code**
+```kotlin
+// Before
+Text("Hardcoded string")
+
+// After
+Text(stringResource(R.string.descriptive_name))
+```
+
+---
+
+## 🧪 **TESTING**
+
+### **Test 1: All Strings Extracted**
+- [ ] No hardcoded UI strings in Kotlin code
+- [ ] All UI uses `stringResource()`
+
+### **Test 2: Translations Complete**
+- [ ] All 4 `strings.xml` files have same keys
+- [ ] No missing translations
+
+### **Test 3: App Displays Correctly**
+- [ ] Switch to each language
+- [ ] Verify text displays properly
+- [ ] No missing strings or fallback errors
+
+---
+
+## 📊 **COMPLETION CRITERIA**
+
+- [ ] All hardcoded strings extracted
+- [ ] English strings.xml complete
+- [ ] Hebrew translation complete
+- [ ] Russian translation complete
+- [ ] Bulgarian translation complete
+- [ ] Plurals handled
+- [ ] App builds successfully
+- [ ] All text uses string resources
+
+---
+
+## 🔄 **NEXT STEP**
+
+➡️ **Task 3:** Enable RTL support and fix layouts

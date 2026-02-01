@@ -1,0 +1,374 @@
+# 🔄 TASK 3: RTL SUPPORT
+
+## 🎯 **Objective**
+Enable and properly implement Right-to-Left (RTL) layout support for Hebrew language.
+
+---
+
+## 📋 **CHECKLIST**
+
+### **Phase 1: Enable RTL** ⏳
+- [ ] Verify `supportsRtl="true"` in AndroidManifest.xml
+- [ ] Enable RTL in Developer Options for testing
+- [ ] Test app with "Force RTL layout direction"
+
+### **Phase 2: Fix Layouts** ⏳
+- [ ] Replace `paddingLeft`/`Right` with `paddingStart`/`End`
+- [ ] Replace `textAlign` left/right with start/end
+- [ ] Update `Arrangement.Start`/`End` in Rows/Columns
+- [ ] Fix icon positioning
+
+### **Phase 3: Test & Polish** ⏳
+- [ ] Test all screens in RTL mode
+- [ ] Fix any layout breaking issues
+- [ ] Ensure text reads right-to-left
+- [ ] Verify bidirectional text handling
+
+---
+
+## 📝 **RTL LAYOUT GUIDELINES**
+
+### **1. Padding & Margins**
+
+**❌ WRONG - Use absolute directions:**
+```kotlin
+Modifier.padding(start = 16.dp, end = 8.dp)  // ❌ Will break in RTL
+```
+
+**✅ CORRECT - Use relative directions:**
+```kotlin
+// Compose automatically handles RTL with padding()
+Modifier.padding(start = 16.dp, end = 8.dp)  // ✅ Auto-mirrors in RTL
+```
+
+**Note:** In Jetpack Compose, `Modifier.padding()` with `start`/`end` automatically mirrors!
+
+---
+
+### **2. Text Alignment**
+
+**❌ WRONG:**
+```kotlin
+Text(
+    text = "Hello",
+    textAlign = TextAlign.Left  // ❌ Always left, even in RTL
+)
+```
+
+**✅ CORRECT:**
+```kotlin
+Text(
+    text = stringResource(R.string.hello),
+    textAlign = TextAlign.Start  // ✅ Mirrors in RTL
+)
+```
+
+---
+
+### **3. Row Arrangement**
+
+**❌ WRONG:**
+```kotlin
+Row(
+    horizontalArrangement = Arrangement.Start  // ❌ May need manual handling
+) {
+    Icon(...)
+    Text(...)
+}
+```
+
+**✅ CORRECT:**
+```kotlin
+Row(
+    horizontalArrangement = Arrangement.Start  // ✅ Auto-mirrors
+) {
+    Icon(...)  // Will appear on right in RTL
+    Spacer(Modifier.width(8.dp))
+    Text(...)  // Will appear on left in RTL
+}
+```
+
+**Compose automatically mirrors Row content in RTL!**
+
+---
+
+### **4. Icons**
+
+Some icons should mirror in RTL, some shouldn't:
+
+**Should Mirror (Directional):**
+- ➡️ Arrows (back, forward, next)
+- 🔙 Navigation icons
+- 📋 List bullets
+
+**Should NOT Mirror:**
+- 🏠 Logo / branding
+- ✅ Checkmarks
+- ⭐ Stars
+- 🎵 Media controls (play, pause)
+
+**Implementation:**
+```kotlin
+Icon(
+    imageVector = Icons.AutoMirrored.Filled.ArrowBack,  // ✅ Auto-mirrors
+    contentDescription = stringResource(R.string.back)
+)
+
+Icon(
+    imageVector = Icons.Filled.Star,  // ✅ Doesn't mirror
+    contentDescription = stringResource(R.string.favorite)
+)
+```
+
+---
+
+### **5. Column Alignment**
+
+**Horizontal alignment still uses Start/End:**
+```kotlin
+Column(
+    horizontalAlignment = Alignment.Start  // ✅ Mirrors in RTL
+) {
+    Text("Item 1")
+    Text("Item 2")
+}
+```
+
+---
+
+## 🔍 **COMMON LAYOUT PATTERNS TO FIX**
+
+### **Pattern 1: Icon + Text**
+
+**Before:**
+```kotlin
+Row {
+    Icon(Icons.Default.Home)
+    Spacer(Modifier.width(8.dp))
+    Text("Home")
+}
+```
+
+**After (Auto-mirrored):**
+```kotlin
+Row {
+    Icon(
+        imageVector = Icons.Default.Home,
+        contentDescription = null
+    )
+    Spacer(Modifier.width(8.dp))
+    Text(stringResource(R.string.nav_home))
+}
+// In RTL: Text appears on right, Icon on left
+```
+
+---
+
+### **Pattern 2: Button with Trailing Icon**
+
+**Before:**
+```kotlin
+Button(onClick = {}) {
+    Text("Next")
+    Icon(Icons.Default.ArrowForward)
+}
+```
+
+**After:**
+```kotlin
+Button(onClick = {}) {
+    Text(stringResource(R.string.next))
+    Icon(
+        imageVector = Icons.AutoMirrored.Filled.ArrowForward,  // ✅ Mirrors
+        contentDescription = null
+    )
+}
+// In RTL: Arrow points left, appears on left side
+```
+
+---
+
+### **Pattern 3: List Item with Actions**
+
+**Before:**
+```kotlin
+Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween
+) {
+    Text("Item Name")
+    IconButton(onClick = {}) {
+        Icon(Icons.Default.Delete)
+    }
+}
+```
+
+**After (No changes needed!):**
+```kotlin
+Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween  // ✅ Auto-mirrors
+) {
+    Text(stringResource(R.string.item_name))
+    IconButton(onClick = {}) {
+        Icon(
+            imageVector = Icons.Default.Delete,
+            contentDescription = stringResource(R.string.delete)
+        )
+    }
+}
+// In RTL: Delete button on left, text on right
+```
+
+---
+
+## 🧪 **TESTING RTL**
+
+### **Method 1: Force RTL in Developer Options**
+
+**On Device:**
+1. Go to Settings → Developer Options
+2. Enable "Force RTL layout direction"
+3. Restart app
+
+**Result:** ALL layouts render in RTL (for testing)
+
+---
+
+### **Method 2: Change App Language to Hebrew**
+
+**In App:**
+1. Switch language to Hebrew
+2. App should automatically switch to RTL
+
+**Result:** RTL only when Hebrew is selected
+
+---
+
+### **Method 3: Test on Hebrew OS Device**
+
+**Device Settings:**
+1. Change device language to Hebrew
+2. Launch app
+3. Switch app to English → Should be LTR
+4. Switch app to Hebrew → Should be RTL
+
+---
+
+## 📊 **RTL CHECKLIST BY SCREEN**
+
+### **Home Screen**
+- [ ] App header text aligns correctly
+- [ ] Navigation icons mirror
+- [ ] Category cards align right
+- [ ] Spacing mirrors correctly
+
+### **Shopping List Screen**
+- [ ] List items align right
+- [ ] Checkboxes appear on right
+- [ ] Search bar text aligns right
+- [ ] View mode toggle mirrors
+
+### **Category Management**
+- [ ] Category list aligns right
+- [ ] Edit/Delete icons on left
+- [ ] Dialogs mirror correctly
+
+### **Grocery Creation/Edit Dialog**
+- [ ] Text fields align right
+- [ ] Labels align right
+- [ ] Buttons mirror correctly
+- [ ] Store selection checkboxes on right
+
+### **Store Management**
+- [ ] Store list aligns right
+- [ ] Actions mirror correctly
+
+### **Group Management**
+- [ ] Dialog content mirrors
+- [ ] Buttons align correctly
+- [ ] Group code text aligns right
+
+---
+
+## 🐛 **COMMON RTL ISSUES & FIXES**
+
+### **Issue 1: Text Overflows**
+
+**Problem:** Hebrew text longer than English, breaks layout
+
+**Fix:**
+```kotlin
+Text(
+    text = stringResource(R.string.long_text),
+    maxLines = 2,
+    overflow = TextOverflow.Ellipsis
+)
+```
+
+---
+
+### **Issue 2: Mixed Text (English + Hebrew)**
+
+**Problem:** "iPhone 15" in Hebrew sentence displays incorrectly
+
+**Fix:** Android handles bidirectional text automatically, but verify:
+```kotlin
+Text(
+    text = stringResource(R.string.mixed_text),  // Contains both
+    textDirection = TextDirection.Content  // ✅ Auto-detect direction
+)
+```
+
+---
+
+### **Issue 3: Icons Not Mirroring**
+
+**Problem:** Arrow icons should mirror but don't
+
+**Fix:**
+```kotlin
+// Use AutoMirrored icons
+Icon(Icons.AutoMirrored.Filled.ArrowBack)  // ✅ Mirrors
+Icon(Icons.AutoMirrored.Filled.ArrowForward)  // ✅ Mirrors
+Icon(Icons.AutoMirrored.Outlined.List)  // ✅ Mirrors
+```
+
+---
+
+## 📝 **FILES TO UPDATE**
+
+### **Common UI Components:**
+- `HomeScreen.kt`
+- `ShoppingListScreen.kt`
+- `CategoryBasedDisplay.kt`
+- `StoreBasedDisplay.kt`
+- `CategoriesManagementDialog.kt`
+- `StoresManagementDialog.kt`
+- `GroceryCreationDialog.kt`
+- `GroupManagementDialog.kt`
+- `BurgerMenu.kt`
+
+### **Reusable Components:**
+- Any custom `Row` / `Column` layouts
+- Custom list items
+- Dialog layouts
+
+---
+
+## 📊 **COMPLETION CRITERIA**
+
+- [ ] RTL enabled in manifest
+- [ ] All layouts use Start/End (not Left/Right)
+- [ ] Text alignment uses Start/End
+- [ ] Icons properly configured (mirror vs. no-mirror)
+- [ ] Tested on Hebrew device
+- [ ] Tested with "Force RTL layout"
+- [ ] No layout breaking in RTL mode
+- [ ] Text reads naturally right-to-left in Hebrew
+
+---
+
+## 🔄 **NEXT STEP**
+
+➡️ **Task 4:** Implement language switching logic (LanguageManager)

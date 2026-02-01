@@ -1,0 +1,449 @@
+# 🎨 TASK 5: LANGUAGE SELECTION UI
+
+## 🎯 **Objective**
+Create a language selection dialog accessible from the burger menu, allowing users to easily switch between English, Hebrew, Russian, and Bulgarian.
+
+---
+
+## 📋 **CHECKLIST**
+
+### **Phase 1: Language Selection Dialog** ⏳
+- [ ] Create `LanguageSelectionDialog.kt`
+- [ ] Display list of available languages
+- [ ] Show native language names
+- [ ] Indicate current language
+- [ ] Handle language selection
+
+### **Phase 2: Burger Menu Integration** ⏳
+- [ ] Add "Language" menu item to BurgerMenu
+- [ ] Show language selection dialog
+- [ ] Display current language in menu
+
+### **Phase 3: Polish & UX** ⏳
+- [ ] Add language icons/flags (optional)
+- [ ] Smooth transition on language change
+- [ ] Loading indicator during recreation
+
+---
+
+## 📝 **IMPLEMENTATION**
+
+### **1. Create LanguageSelectionDialog.kt**
+
+**Location:** `app/src/main/java/com/example/supercart2/ui/components/LanguageSelectionDialog.kt`
+
+**Full Implementation:**
+```kotlin
+package com.example.supercart2.ui.components
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.example.supercart2.R
+import com.example.supercart2.utils.AppLanguage
+import com.example.supercart2.utils.LanguageManager
+import kotlinx.coroutines.launch
+
+@Composable
+fun LanguageSelectionDialog(
+    onDismiss: () -> Unit,
+    onLanguageSelected: (AppLanguage) -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    var currentLanguage by remember {
+        mutableStateOf<AppLanguage?>(null)
+    }
+    
+    // Load current language
+    LaunchedEffect(Unit) {
+        currentLanguage = LanguageManager.getCurrentLanguage(context)
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(R.string.select_language))
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                AppLanguage.values().forEach { language ->
+                    LanguageItem(
+                        language = language,
+                        isSelected = language == currentLanguage,
+                        onClick = {
+                            scope.launch {
+                                LanguageManager.setLanguage(context, language)
+                                onLanguageSelected(language)
+                            }
+                        }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun LanguageItem(
+    language: AppLanguage,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            // Display name in English
+            Text(
+                text = language.displayName,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            
+            // Native name
+            Text(
+                text = language.nativeDisplayName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        // Checkmark for selected language
+        if (isSelected) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+```
+
+---
+
+### **2. Update BurgerMenu.kt**
+
+**Location:** `app/src/main/java/com/example/supercart2/ui/components/BurgerMenu.kt`
+
+**Add language menu item:**
+```kotlin
+@Composable
+fun BurgerMenu(
+    onManageGroupClick: () -> Unit,
+    onManageStoresClick: () -> Unit,
+    onLanguageClick: () -> Unit,  // NEW
+    // ... other callbacks
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var hasGroupCode by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    // Load current language for display
+    var currentLanguage by remember {
+        mutableStateOf<AppLanguage?>(null)
+    }
+    
+    LaunchedEffect(Unit) {
+        hasGroupCode = DataStoreManager.hasGroupCode(context)
+        currentLanguage = LanguageManager.getCurrentLanguage(context)
+    }
+    
+    IconButton(onClick = { expanded = true }) {
+        Icon(
+            imageVector = Icons.Default.Menu,
+            contentDescription = stringResource(R.string.menu)
+        )
+    }
+    
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        // ... existing menu items ...
+        
+        // Language selection
+        DropdownMenuItem(
+            text = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Language,  // Add this icon
+                        contentDescription = null
+                    )
+                    Column {
+                        Text(stringResource(R.string.menu_language))
+                        // Show current language
+                        currentLanguage?.let {
+                            Text(
+                                text = it.nativeDisplayName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            },
+            onClick = {
+                expanded = false
+                onLanguageClick()
+            }
+        )
+        
+        // ... rest of menu items ...
+    }
+}
+```
+
+---
+
+### **3. Integrate in HomeScreen.kt**
+
+**Location:** `app/src/main/java/com/example/supercart2/ui/screens/HomeScreen.kt`
+
+**Add language dialog state:**
+```kotlin
+@Composable
+fun HomeScreen() {
+    var showGroupManagement by remember { mutableStateOf(false) }
+    var showStoresManagement by remember { mutableStateOf(false) }
+    var showLanguageSelection by remember { mutableStateOf(false) }  // NEW
+    
+    val context = LocalContext.current
+    val activity = context as? ComponentActivity
+    
+    // ... existing code ...
+    
+    // Top bar with burger menu
+    TopAppBar(
+        title = { Text(stringResource(R.string.app_name)) },
+        actions = {
+            BurgerMenu(
+                onManageGroupClick = { showGroupManagement = true },
+                onManageStoresClick = { showStoresManagement = true },
+                onLanguageClick = { showLanguageSelection = true },  // NEW
+                // ... other callbacks
+            )
+        }
+    )
+    
+    // ... existing dialogs ...
+    
+    // Language selection dialog
+    if (showLanguageSelection) {
+        LanguageSelectionDialog(
+            onDismiss = { showLanguageSelection = false },
+            onLanguageSelected = { newLanguage ->
+                showLanguageSelection = false
+                // Recreate activity to apply new language
+                activity?.recreate()
+            }
+        )
+    }
+}
+```
+
+---
+
+### **4. Add Missing String Resources**
+
+**Add to all `strings.xml` files:**
+
+**English (`values/strings.xml`):**
+```xml
+<string name="select_language">Select Language</string>
+<string name="menu_language">Language</string>
+```
+
+**Hebrew (`values-iw/strings.xml`):**
+```xml
+<string name="select_language">בחר שפה</string>
+<string name="menu_language">שפה</string>
+```
+
+**Russian (`values-ru/strings.xml`):**
+```xml
+<string name="select_language">Выбрать язык</string>
+<string name="menu_language">Язык</string>
+```
+
+**Bulgarian (`values-bg/strings.xml`):**
+```xml
+<string name="select_language">Изберете език</string>
+<string name="menu_language">Език</string>
+```
+
+---
+
+## 🎨 **UI MOCKUP**
+
+### **Burger Menu (with Language):**
+```
+┌─────────────────────────┐
+│ ≡ SuperCart2            │
+├─────────────────────────┤
+│ 🏠 Home                 │
+│ 🛒 Shopping List        │
+│ 📋 Categories           │
+├─────────────────────────┤
+│ ☁️ Upload to Cloud      │
+│ 📥 Download from Cloud  │
+│ 🏪 Manage Stores        │
+│ 👨‍👩‍👧 Family Group         │
+│ 🌐 Language             │  ← NEW
+│    עברית (current)      │
+└─────────────────────────┘
+```
+
+### **Language Selection Dialog:**
+```
+┌───────────────────────────────┐
+│ Select Language               │
+├───────────────────────────────┤
+│ English                       │
+│ English                       │
+│                               │
+│ Hebrew                     ✓  │  ← Selected
+│ עברית                         │
+│                               │
+│ Russian                       │
+│ Русский                       │
+│                               │
+│ Bulgarian                     │
+│ Български                     │
+│                               │
+│              [Cancel]         │
+└───────────────────────────────┘
+```
+
+---
+
+## 🔄 **USER FLOW**
+
+### **Flow: Change Language**
+
+```
+1. User taps burger menu (≡)
+   ↓
+2. Menu shows "Language" with current selection (עברית)
+   ↓
+3. User taps "Language"
+   ↓
+4. Dialog appears with 4 languages
+   ↓
+5. User taps "English"
+   ↓
+6. Dialog closes
+   ↓
+7. App recreates (loading)
+   ↓
+8. App reloads in English (LTR) ✅
+```
+
+---
+
+## 🧪 **TESTING**
+
+### **Test 1: Language Menu Item**
+**Steps:**
+1. Open burger menu
+2. **Expected:** "Language" item visible ✅
+3. **Expected:** Current language shown (e.g., "עברית") ✅
+
+---
+
+### **Test 2: Language Selection Dialog**
+**Steps:**
+1. Tap "Language" in menu
+2. **Expected:** Dialog opens with 4 languages ✅
+3. **Expected:** Current language has checkmark ✅
+4. **Expected:** Languages shown in native script ✅
+
+---
+
+### **Test 3: Switch Language**
+**Steps:**
+1. Open language dialog
+2. Select different language
+3. **Expected:** Dialog closes ✅
+4. **Expected:** App recreates ✅
+5. **Expected:** App in new language ✅
+6. **Expected:** Layout direction correct (RTL for Hebrew) ✅
+
+---
+
+### **Test 4: Cancel Dialog**
+**Steps:**
+1. Open language dialog
+2. Tap "Cancel"
+3. **Expected:** Dialog closes ✅
+4. **Expected:** Language unchanged ✅
+5. **Expected:** No app recreation ✅
+
+---
+
+## 🎨 **OPTIONAL ENHANCEMENTS**
+
+### **1. Language Flags/Icons**
+Add flag emojis or icons next to language names:
+```kotlin
+Text("🇬🇧 English")
+Text("🇮🇱 עברית")
+Text("🇷🇺 Русский")
+Text("🇧🇬 Български")
+```
+
+### **2. Loading Indicator**
+Show loading during app recreation:
+```kotlin
+if (isRecreating) {
+    CircularProgressIndicator()
+}
+```
+
+### **3. Confirmation Dialog**
+Ask "Are you sure?" before changing language (optional, may be annoying)
+
+---
+
+## 📊 **COMPLETION CRITERIA**
+
+- [ ] `LanguageSelectionDialog.kt` created
+- [ ] Dialog displays 4 languages
+- [ ] Current language indicated with checkmark
+- [ ] Language menu item added to burger menu
+- [ ] Tapping language opens dialog
+- [ ] Selecting language recreates app
+- [ ] App displays in new language
+- [ ] Layout direction correct
+- [ ] All string resources added
+
+---
+
+## 🔄 **NEXT STEP**
+
+➡️ **Task 6:** Testing & polish (full end-to-end testing)

@@ -1,0 +1,474 @@
+# 🧪 TASK 6: TESTING & POLISH
+
+## 🎯 **Objective**
+Comprehensive testing of multi-language support and RTL functionality across all device configurations and usage scenarios.
+
+---
+
+## 📋 **TESTING CHECKLIST**
+
+### **Phase 1: Language Switching** ⏳
+- [ ] Test switching between all 4 languages
+- [ ] Verify language persists after app restart
+- [ ] Test on English OS device
+- [ ] Test on Hebrew OS device
+- [ ] Test on Russian OS device
+
+### **Phase 2: RTL Functionality** ⏳
+- [ ] Test Hebrew RTL layout
+- [ ] Verify LTR when not Hebrew
+- [ ] Test RTL independent of device OS
+- [ ] Test with "Force RTL" developer option
+
+### **Phase 3: UI Completeness** ⏳
+- [ ] All screens translated
+- [ ] No missing strings
+- [ ] No text truncation
+- [ ] Proper text alignment in all languages
+
+### **Phase 4: Edge Cases** ⏳
+- [ ] Long translations
+- [ ] Mixed text (Hebrew + English)
+- [ ] Numbers and dates
+- [ ] Special characters
+
+### **Phase 5: Performance** ⏳
+- [ ] Language switching speed
+- [ ] App recreation time
+- [ ] No crashes or ANRs
+
+---
+
+## 🧪 **DETAILED TEST CASES**
+
+### **Test Suite 1: Language Switching**
+
+#### **TC1.1: Switch from English to Hebrew**
+**Device:** English OS
+**Steps:**
+1. Launch app (defaults to English)
+2. Verify UI is in English and LTR
+3. Open burger menu → Language
+4. Select Hebrew (עברית)
+5. App recreates
+
+**Expected:**
+- ✅ All text in Hebrew
+- ✅ Layout is RTL
+- ✅ Icons mirrored correctly
+- ✅ Text aligned to right
+
+---
+
+#### **TC1.2: Switch from Hebrew to English**
+**Device:** Any OS
+**Steps:**
+1. App in Hebrew
+2. Open burger menu → Language
+3. Select English
+
+**Expected:**
+- ✅ All text in English
+- ✅ Layout is LTR
+- ✅ Icons in default position
+- ✅ Text aligned to left
+
+---
+
+#### **TC1.3: Language Persistence**
+**Steps:**
+1. Set app to Russian
+2. Close app completely (swipe away)
+3. Reopen app
+
+**Expected:**
+- ✅ App opens in Russian
+- ✅ No flash of default language
+
+---
+
+#### **TC1.4: All Languages**
+**Steps:**
+1. Switch to English → Verify ✅
+2. Switch to Hebrew → Verify ✅
+3. Switch to Russian → Verify ✅
+4. Switch to Bulgarian → Verify ✅
+
+**Expected:**
+- ✅ Each language displays correctly
+- ✅ All text translated
+- ✅ Correct layout direction
+
+---
+
+### **Test Suite 2: RTL Functionality**
+
+#### **TC2.1: Hebrew on English Device**
+**Device:** English OS
+**Steps:**
+1. Launch app (English)
+2. Switch to Hebrew
+
+**Expected:**
+- ✅ Layout becomes RTL
+- ✅ Device OS stays English (LTR)
+- ✅ App overrides OS direction
+
+---
+
+#### **TC2.2: English on Hebrew Device**
+**Device:** Hebrew OS
+**Steps:**
+1. Launch app (will default to English)
+2. Verify layout is LTR
+
+**Expected:**
+- ✅ App in English (LTR)
+- ✅ Device OS in Hebrew (RTL)
+- ✅ App overrides OS direction
+
+---
+
+#### **TC2.3: Force RTL Developer Option**
+**Device:** Any OS
+**Steps:**
+1. Enable "Force RTL layout" in Developer Options
+2. Set app to English
+3. Launch app
+
+**Expected:**
+- ✅ App stays LTR (ignores force RTL)
+- ✅ App controls its own direction
+
+---
+
+#### **TC2.4: RTL UI Elements**
+**Setup:** App in Hebrew
+**Check:**
+- [ ] Text aligns to right
+- [ ] Navigation icons mirrored
+- [ ] List items align right
+- [ ] Checkboxes on right
+- [ ] Dialog buttons mirrored
+- [ ] Search bar text starts from right
+- [ ] Padding/margins mirrored
+
+---
+
+### **Test Suite 3: UI Completeness**
+
+#### **TC3.1: All Screens Translated**
+
+**Home Screen:**
+- [ ] App title
+- [ ] Navigation labels
+- [ ] Category names
+
+**Shopping List Screen:**
+- [ ] "Things to Buy"
+- [ ] "Already Bought"
+- [ ] Search hint
+- [ ] Item names
+
+**Category Management:**
+- [ ] Dialog titles
+- [ ] Button labels
+- [ ] Field labels
+
+**Store Management:**
+- [ ] Store list
+- [ ] Dialog titles
+- [ ] Actions
+
+**Group Management:**
+- [ ] Group dialog
+- [ ] Code copy toast
+- [ ] Confirmations
+
+**Burger Menu:**
+- [ ] All menu items
+- [ ] Language names
+
+---
+
+#### **TC3.2: No Missing Strings**
+**Steps:**
+1. Switch to each language
+2. Navigate through all screens
+3. Check for:
+   - ❌ English text in non-English languages
+   - ❌ `R.string.xxx` displayed as-is
+   - ❌ Blank text
+
+**Expected:**
+- ✅ All text properly translated
+
+---
+
+#### **TC3.3: Text Truncation**
+**Steps:**
+1. Switch to each language
+2. Check for text overflow
+3. Test long category/grocery names
+
+**Expected:**
+- ✅ Long text truncates gracefully (ellipsis)
+- ✅ No text cut off
+- ✅ Layouts don't break
+
+---
+
+### **Test Suite 4: Edge Cases**
+
+#### **TC4.1: Long Translations**
+**Test:** Bulgarian often has longer words
+**Steps:**
+1. Switch to Bulgarian
+2. Check all buttons and labels
+
+**Expected:**
+- ✅ Text fits in buttons
+- ✅ No layout breaking
+
+---
+
+#### **TC4.2: Mixed Text (Bidirectional)**
+**Test:** Hebrew with English words
+**Example:** "iPhone 15 חדש" (iPhone 15 new)
+**Steps:**
+1. Create grocery with mixed Hebrew/English name
+2. View in shopping list
+
+**Expected:**
+- ✅ Text displays correctly
+- ✅ English parts in correct order
+- ✅ Hebrew parts RTL
+
+---
+
+#### **TC4.3: Numbers and Dates**
+**Steps:**
+1. Switch to Hebrew
+2. Check item counts
+3. Check expiration dates
+
+**Expected:**
+- ✅ Numbers display correctly
+- ✅ Dates formatted for locale
+- ✅ "5 items" → "5 פריטים"
+
+---
+
+#### **TC4.4: Special Characters**
+**Test:** Cyrillic, Hebrew characters
+**Steps:**
+1. Create items with special chars
+2. Edit items
+3. Search items
+
+**Expected:**
+- ✅ Characters display correctly
+- ✅ Search works with special chars
+- ✅ Sorting works correctly
+
+---
+
+### **Test Suite 5: Performance**
+
+#### **TC5.1: Language Switch Speed**
+**Steps:**
+1. Time language switch
+2. Measure app recreation time
+
+**Expected:**
+- ✅ Switch completes in < 2 seconds
+- ✅ Smooth transition (no jarring flash)
+
+---
+
+#### **TC5.2: No Crashes**
+**Steps:**
+1. Rapidly switch languages 10 times
+2. Monitor for crashes
+
+**Expected:**
+- ✅ No crashes
+- ✅ No ANR (App Not Responding)
+
+---
+
+#### **TC5.3: Memory Leaks**
+**Steps:**
+1. Switch languages multiple times
+2. Monitor memory usage
+
+**Expected:**
+- ✅ Memory usage stable
+- ✅ No memory leaks
+
+---
+
+## 🐛 **COMMON ISSUES & FIXES**
+
+### **Issue 1: String Not Translated**
+
+**Symptom:** English text appears in Hebrew app
+
+**Fix:**
+1. Find hardcoded string
+2. Add to `strings.xml` (all languages)
+3. Replace with `stringResource(R.string.xxx)`
+
+---
+
+### **Issue 2: Layout Breaks in RTL**
+
+**Symptom:** UI elements overlap or misaligned in Hebrew
+
+**Fix:**
+1. Use `start`/`end` instead of `left`/`right`
+2. Test with "Force RTL layout"
+3. Adjust padding/margins
+
+---
+
+### **Issue 3: Text Truncates**
+
+**Symptom:** Long Bulgarian text cut off
+
+**Fix:**
+```kotlin
+Text(
+    text = stringResource(R.string.long_text),
+    maxLines = 2,
+    overflow = TextOverflow.Ellipsis,
+    softWrap = true
+)
+```
+
+---
+
+### **Issue 4: Mixed Text Wrong Direction**
+
+**Symptom:** "iPhone 15" appears reversed in Hebrew
+
+**Fix:**
+```kotlin
+Text(
+    text = "iPhone 15 חדש",
+    textDirection = TextDirection.Content  // Auto-detect
+)
+```
+
+---
+
+### **Issue 5: Language Doesn't Persist**
+
+**Symptom:** App resets to English after restart
+
+**Fix:**
+1. Verify `LanguageManager.setLanguage()` is called
+2. Check DataStore saving works
+3. Verify `attachBaseContext()` loads from DataStore
+
+---
+
+## 📊 **TESTING MATRIX**
+
+### **OS × Language × Direction**
+
+| Device OS | App Language | Expected Direction | Status |
+|-----------|--------------|-------------------|--------|
+| English   | English      | LTR               | ⏳     |
+| English   | Hebrew       | RTL               | ⏳     |
+| English   | Russian      | LTR               | ⏳     |
+| English   | Bulgarian    | LTR               | ⏳     |
+| Hebrew    | English      | LTR               | ⏳     |
+| Hebrew    | Hebrew       | RTL               | ⏳     |
+| Hebrew    | Russian      | LTR               | ⏳     |
+| Hebrew    | Bulgarian    | LTR               | ⏳     |
+| Russian   | English      | LTR               | ⏳     |
+| Russian   | Hebrew       | RTL               | ⏳     |
+
+---
+
+## 📝 **DOCUMENTATION TASKS**
+
+### **1. User Guide (Optional)**
+- [ ] How to change language
+- [ ] Screenshot of language dialog
+- [ ] Supported languages
+
+### **2. Developer Guide**
+- [ ] How to add a new language
+- [ ] How to update translations
+- [ ] Translation file locations
+
+### **3. Translation Guide**
+- [ ] Where to find strings
+- [ ] How to translate
+- [ ] Testing translations
+
+---
+
+## ✅ **FINAL CHECKLIST**
+
+### **Functional Requirements:**
+- [ ] 4 languages supported (EN, HE, RU, BG)
+- [ ] Hebrew displays in RTL
+- [ ] Other languages display in LTR
+- [ ] Language direction independent of OS
+- [ ] Language persists across restarts
+- [ ] No hardcoded strings
+
+### **Quality Requirements:**
+- [ ] All screens translated
+- [ ] No text truncation
+- [ ] No layout breaking
+- [ ] RTL layouts work correctly
+- [ ] Mixed text displays correctly
+- [ ] Performance acceptable
+
+### **Testing Complete:**
+- [ ] All test suites passed
+- [ ] Tested on English device
+- [ ] Tested on Hebrew device
+- [ ] Edge cases handled
+- [ ] No crashes or errors
+
+---
+
+## 🎉 **COMPLETION CRITERIA**
+
+- [ ] All 6 tasks completed
+- [ ] All test cases passed
+- [ ] All issues fixed
+- [ ] Documentation updated
+- [ ] Code reviewed
+- [ ] Ready for production ✅
+
+---
+
+## 📚 **RESOURCES FOR FUTURE**
+
+### **Adding a New Language:**
+1. Create `values-{code}/strings.xml`
+2. Translate all strings
+3. Add to `AppLanguage` enum
+4. Test thoroughly
+
+### **Updating Translations:**
+1. Find string in `values/strings.xml`
+2. Update in all language files
+3. Rebuild and test
+
+### **Professional Translation Services:**
+- Gengo
+- Lokalise
+- Crowdin
+- OneSky
+
+---
+
+**Status:** Ready for comprehensive testing! 🚀
+**Next Step:** Execute all test cases and fix any issues
