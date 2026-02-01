@@ -133,7 +133,7 @@ object FirebaseManager {
                 throw IllegalStateException("Group code required for upload")
             }
             
-            android.util.Log.d("FirebaseManager", "Uploading ALL local data to group: $groupCode")
+            android.util.Log.d("FirebaseManager", "Uploading with conflict resolution to group: $groupCode")
             
             // Convert nested structure to flat lists
             val (categories, subCategories, groceries) = DataConverter.flattenCategories(
@@ -141,42 +141,86 @@ object FirebaseManager {
             )
             val stores = DataManagerObject.stores.toList()
             
-            android.util.Log.d("FirebaseManager", "Uploading: ${categories.size} categories, " +
+            android.util.Log.d("FirebaseManager", "Local data: ${categories.size} categories, " +
                 "${subCategories.size} subcategories, ${groceries.size} groceries, " +
                 "${stores.size} stores")
+            
+            // Fetch existing data from Firebase for conflict resolution
+            val existingCategories = getGroupCollection(groupCode, CATEGORIES_COLLECTION)
+                .get().await().documents.associate { it.id to documentToCategory(it) }
+            val existingSubCategories = getGroupCollection(groupCode, SUBCATEGORIES_COLLECTION)
+                .get().await().documents.associate { it.id to documentToSubCategory(it) }
+            val existingGroceries = getGroupCollection(groupCode, GROCERIES_COLLECTION)
+                .get().await().documents.associate { it.id to documentToGrocery(it) }
+            val existingStores = getGroupCollection(groupCode, STORES_COLLECTION)
+                .get().await().documents.associate { it.id to documentToStore(it) }
             
             // Create batch operation
             val batch = db.batch()
             
-            // Upload ALL items (including those with deleted: true)
+            var uploadedCount = 0
+            var skippedCount = 0
+            
+            // Upload categories with conflict resolution
             categories.forEach { category ->
-                val docRef = getGroupCollection(groupCode, CATEGORIES_COLLECTION)
-                    .document(category.uuid)
-                batch.set(docRef, categoryToMap(category))
+                val existing = existingCategories[category.uuid]
+                if (existing == null || category.lastUpdate.isAfter(existing.lastUpdate)) {
+                    val docRef = getGroupCollection(groupCode, CATEGORIES_COLLECTION)
+                        .document(category.uuid)
+                    batch.set(docRef, categoryToMap(category))
+                    uploadedCount++
+                } else {
+                    skippedCount++
+                    android.util.Log.d("FirebaseManager", "⏭️ Skipped category ${category.name} (Firebase version is newer)")
+                }
             }
             
+            // Upload subcategories with conflict resolution
             subCategories.forEach { subCategory ->
-                val docRef = getGroupCollection(groupCode, SUBCATEGORIES_COLLECTION)
-                    .document(subCategory.uuid)
-                batch.set(docRef, subCategoryToMap(subCategory))
+                val existing = existingSubCategories[subCategory.uuid]
+                if (existing == null || subCategory.lastUpdate.isAfter(existing.lastUpdate)) {
+                    val docRef = getGroupCollection(groupCode, SUBCATEGORIES_COLLECTION)
+                        .document(subCategory.uuid)
+                    batch.set(docRef, subCategoryToMap(subCategory))
+                    uploadedCount++
+                } else {
+                    skippedCount++
+                    android.util.Log.d("FirebaseManager", "⏭️ Skipped subcategory ${subCategory.name} (Firebase version is newer)")
+                }
             }
             
+            // Upload groceries with conflict resolution
             groceries.forEach { grocery ->
-                val docRef = getGroupCollection(groupCode, GROCERIES_COLLECTION)
-                    .document(grocery.uuid)
-                batch.set(docRef, groceryToMap(grocery))
+                val existing = existingGroceries[grocery.uuid]
+                if (existing == null || grocery.lastUpdate.isAfter(existing.lastUpdate)) {
+                    val docRef = getGroupCollection(groupCode, GROCERIES_COLLECTION)
+                        .document(grocery.uuid)
+                    batch.set(docRef, groceryToMap(grocery))
+                    uploadedCount++
+                } else {
+                    skippedCount++
+                    android.util.Log.d("FirebaseManager", "⏭️ Skipped grocery ${grocery.name} (Firebase version is newer)")
+                }
             }
             
+            // Upload stores with conflict resolution
             stores.forEach { store ->
-                val docRef = getGroupCollection(groupCode, STORES_COLLECTION)
-                    .document(store.uuid)
-                batch.set(docRef, storeToMap(store))
+                val existing = existingStores[store.uuid]
+                if (existing == null || store.lastUpdate.isAfter(existing.lastUpdate)) {
+                    val docRef = getGroupCollection(groupCode, STORES_COLLECTION)
+                        .document(store.uuid)
+                    batch.set(docRef, storeToMap(store))
+                    uploadedCount++
+                } else {
+                    skippedCount++
+                    android.util.Log.d("FirebaseManager", "⏭️ Skipped store ${store.name} (Firebase version is newer)")
+                }
             }
             
             // Commit batch
             batch.commit().await()
             
-            android.util.Log.d("FirebaseManager", "✅ Data uploaded successfully to group: $groupCode")
+            android.util.Log.d("FirebaseManager", "✅ Upload complete: $uploadedCount items uploaded, $skippedCount items skipped (Firebase had newer version)")
             
             // Batch upload images to Firebase Storage
             if (context != null) {
