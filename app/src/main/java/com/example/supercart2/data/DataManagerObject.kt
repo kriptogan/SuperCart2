@@ -27,7 +27,26 @@ object DataManagerObject {
     
     // Get categories sorted by viewOrder for consistent display order
     fun getSortedCategories(): List<CategoryWithSubCategories> {
-        return categories.sortedBy { it.category.viewOrder }
+        // Filter out deleted categories, subcategories, and groceries
+        return categories
+            .filter { !it.category.deleted }
+            .map { categoryWithSubs ->
+                CategoryWithSubCategories(
+                    category = categoryWithSubs.category,
+                    subCategories = categoryWithSubs.subCategories
+                        .filter { !it.subCategory.deleted }
+                        .map { subCategoryWithGroceries ->
+                            SubCategoryWithGroceries(
+                                subCategory = subCategoryWithGroceries.subCategory,
+                                groceries = subCategoryWithGroceries.groceries
+                                    .filterNot { it.deleted }
+                                    .toMutableList()
+                            )
+                        }
+                        .toMutableList()
+                )
+            }
+            .sortedBy { it.category.viewOrder }
     }
     
     // Helper function to update a grocery item
@@ -37,7 +56,12 @@ object DataManagerObject {
                 val index = subCategory.groceries.indexOfFirst { it.uuid == groceryUuid }
                 if (index != -1) {
                     val oldGrocery = subCategory.groceries[index]
-                    val newGrocery = update(oldGrocery)
+                    val updatedGrocery = update(oldGrocery)
+                    
+                    // Automatically update lastUpdate timestamp
+                    val newGrocery = updatedGrocery.copy(
+                        lastUpdate = java.time.LocalDateTime.now()
+                    )
                     
                     // Create new groceries list with the updated item
                     val updatedGroceries = subCategory.groceries.toMutableList().apply {
@@ -75,10 +99,7 @@ object DataManagerObject {
             // When toggling shopping list status, also set isBought to false
             grocery.copy(
                 inShoppingList = !grocery.inShoppingList,
-                isBought = false, // Reset bought status whenever shopping list status changes
-                // Preserve existing values for new properties
-                buyEvents = grocery.buyEvents,
-                imageUUID = grocery.imageUUID
+                isBought = false // Reset bought status whenever shopping list status changes
             )
         }
         android.util.Log.d("DataManagerObject", "Toggled shopping list status and reset bought status")
@@ -88,9 +109,7 @@ object DataManagerObject {
     fun toggleBoughtStatus(groceryUuid: String) {
         updateGrocery(groceryUuid) { grocery ->
             grocery.copy(
-                isBought = !grocery.isBought,
-                buyEvents = grocery.buyEvents ?: emptyList(),
-                imageUUID = grocery.imageUUID
+                isBought = !grocery.isBought
             )
         }
     }
@@ -100,8 +119,15 @@ object DataManagerObject {
         val index = categories.indexOfFirst { it.category.uuid == categoryUuid }
         if (index != -1) {
             val categoryWithSubs = categories[index]
+            val updatedCategory = update(categoryWithSubs.category)
+            
+            // Automatically update lastUpdate timestamp
+            val categoryWithTimestamp = updatedCategory.copy(
+                lastUpdate = java.time.LocalDateTime.now()
+            )
+            
             categories[index] = categoryWithSubs.copy(
-                category = update(categoryWithSubs.category)
+                category = categoryWithTimestamp
             )
             updateData()
         }
@@ -131,8 +157,11 @@ object DataManagerObject {
     }
 
     fun deleteCategory(categoryUuid: String) {
-        categories.removeAll { it.category.uuid == categoryUuid }
-        updateData()
+        updateCategory(categoryUuid) { category ->
+            // Soft delete - mark as deleted instead of removing
+            category.copy(deleted = true)
+        }
+        android.util.Log.d("DataManagerObject", "Soft-deleted category: $categoryUuid")
     }
 
     // Sub-Category Management Helpers
@@ -146,8 +175,14 @@ object DataManagerObject {
             
             if (subCategoryIndex != -1) {
                 val updatedSubCategory = update(categoryWithSubs.subCategories[subCategoryIndex].subCategory)
+                
+                // Automatically update lastUpdate timestamp
+                val subCategoryWithTimestamp = updatedSubCategory.copy(
+                    lastUpdate = java.time.LocalDateTime.now()
+                )
+                
                 categoryWithSubs.subCategories[subCategoryIndex] = SubCategoryWithGroceries(
-                    subCategory = updatedSubCategory,
+                    subCategory = subCategoryWithTimestamp,
                     groceries = categoryWithSubs.subCategories[subCategoryIndex].groceries
                 )
                 updateData()
@@ -180,24 +215,11 @@ object DataManagerObject {
     }
 
     fun deleteSubCategory(categoryUuid: String, subCategoryUuid: String) {
-        val categoryIndex = categories.indexOfFirst { it.category.uuid == categoryUuid }
-        if (categoryIndex != -1) {
-            val categoryWithSubs = categories[categoryIndex]
-            
-            // Create new list without the deleted sub-category
-            val updatedSubCategories = categoryWithSubs.subCategories.filterNot { 
-                it.subCategory.uuid == subCategoryUuid 
-            }.toMutableList()
-            
-            // Update the category with the new sub-categories list
-            categories[categoryIndex] = CategoryWithSubCategories(
-                category = categoryWithSubs.category,
-                subCategories = updatedSubCategories
-            )
-            
-            updateData()
-            android.util.Log.d("DataManagerObject", "Deleted sub-category $subCategoryUuid from category $categoryUuid")
+        updateSubCategory(categoryUuid, subCategoryUuid) { subCategory ->
+            // Soft delete - mark as deleted instead of removing
+            subCategory.copy(deleted = true)
         }
+        android.util.Log.d("DataManagerObject", "Soft-deleted sub-category $subCategoryUuid from category $categoryUuid")
     }
 
     fun moveGroceriesToSubCategory(
@@ -229,9 +251,7 @@ object DataManagerObject {
                 grocery.copy(
                     categoryId = targetSubCategory!!.subCategory.categoryId,
                     subCategoryId = targetSubCategory!!.subCategory.uuid,
-                    // Preserve existing values for new properties
-                    buyEvents = grocery.buyEvents,
-                    imageUUID = grocery.imageUUID
+                    lastUpdate = java.time.LocalDateTime.now()
                 )
             }
 
@@ -379,47 +399,26 @@ object DataManagerObject {
     }
 
     fun deleteGrocery(groceryUuid: String) {
-        categories.forEachIndexed { categoryIndex, category ->
-            category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
-                if (subCategory.groceries.any { it.uuid == groceryUuid }) {
-                    // Find the grocery and delete its image if it exists
-                    val grocery = subCategory.groceries.find { it.uuid == groceryUuid }
-                    grocery?.imageUUID?.let { imageUUID ->
-                        val context = DataStoreManager.globalContext
-                        if (context != null) {
-                            ImageManager.deleteLocalImage(imageUUID, context)
-                            android.util.Log.d("DataManagerObject", "Deleted image for grocery: $imageUUID")
-                        }
+        updateGrocery(groceryUuid) { grocery ->
+            // Soft delete - mark as deleted instead of removing
+            grocery.copy(deleted = true)
+        }
+        
+        // Delete local image if exists
+        categories.forEach { category ->
+            category.subCategories.forEach { subCategory ->
+                val grocery = subCategory.groceries.find { it.uuid == groceryUuid }
+                grocery?.imageUUID?.let { imageUUID ->
+                    val context = DataStoreManager.globalContext
+                    if (context != null) {
+                        ImageManager.deleteLocalImage(imageUUID, context)
+                        android.util.Log.d("DataManagerObject", "Deleted image for grocery: $imageUUID")
                     }
-                    
-                    // Create new list without the deleted grocery
-                    val updatedGroceries = subCategory.groceries.filterNot { 
-                        it.uuid == groceryUuid 
-                    }.toMutableList()
-                    
-                    // Create new sub-category with updated groceries list
-                    val updatedSubCategory = SubCategoryWithGroceries(
-                        subCategory = subCategory.subCategory,
-                        groceries = updatedGroceries
-                    )
-                    
-                    // Update sub-categories list
-                    val updatedSubCategories = category.subCategories.toMutableList().apply {
-                        set(subCategoryIndex, updatedSubCategory)
-                    }
-                    
-                    // Update category with new sub-categories list
-                    categories[categoryIndex] = CategoryWithSubCategories(
-                        category = category.category,
-                        subCategories = updatedSubCategories
-                    )
-                    
-                    updateData()
-                    android.util.Log.d("DataManagerObject", "Deleted grocery $groceryUuid")
-                    return
                 }
             }
         }
+        
+        android.util.Log.d("DataManagerObject", "Soft-deleted grocery: $groceryUuid")
     }
 
     // Calculate average days between buy events
@@ -474,7 +473,8 @@ object DataManagerObject {
                                 inShoppingList = false,
                                 buyEvents = updatedEvents,
                                 imageUUID = grocery.imageUUID,
-                                averageBuyDays = newAverageBuyDays
+                                averageBuyDays = newAverageBuyDays,
+                                lastUpdate = java.time.LocalDateTime.now()
                             )
                         } else {
                             // For non-bought items: keep as is
@@ -535,7 +535,13 @@ object DataManagerObject {
     fun updateStore(storeUuid: String, update: (Store) -> Store) {
         val index = stores.indexOfFirst { it.uuid == storeUuid }
         if (index != -1) {
-            stores[index] = update(stores[index])
+            val updatedStore = update(stores[index])
+            
+            // Automatically update lastUpdate timestamp
+            stores[index] = updatedStore.copy(
+                lastUpdate = java.time.LocalDateTime.now()
+            )
+            
             updateData()
             android.util.Log.d("DataManagerObject", "Updated store")
         }

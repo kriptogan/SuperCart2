@@ -141,39 +141,33 @@ object FirebaseManager {
             )
             val stores = DataManagerObject.stores.toList()
             
-            // Filter only non-deleted items (upload everything in local storage)
-            val activeCategories = categories.filter { !it.deleted }
-            val activeSubCategories = subCategories.filter { !it.deleted }
-            val activeGroceries = groceries.filter { !it.deleted }
-            val activeStores = stores.filter { !it.deleted }
-            
-            android.util.Log.d("FirebaseManager", "Uploading: ${activeCategories.size} categories, " +
-                "${activeSubCategories.size} subcategories, ${activeGroceries.size} groceries, " +
-                "${activeStores.size} stores")
+            android.util.Log.d("FirebaseManager", "Uploading: ${categories.size} categories, " +
+                "${subCategories.size} subcategories, ${groceries.size} groceries, " +
+                "${stores.size} stores")
             
             // Create batch operation
             val batch = db.batch()
             
-            // Upload ALL local data to group-based paths
-            activeCategories.forEach { category ->
+            // Upload ALL items (including those with deleted: true)
+            categories.forEach { category ->
                 val docRef = getGroupCollection(groupCode, CATEGORIES_COLLECTION)
                     .document(category.uuid)
                 batch.set(docRef, categoryToMap(category))
             }
             
-            activeSubCategories.forEach { subCategory ->
+            subCategories.forEach { subCategory ->
                 val docRef = getGroupCollection(groupCode, SUBCATEGORIES_COLLECTION)
                     .document(subCategory.uuid)
                 batch.set(docRef, subCategoryToMap(subCategory))
             }
             
-            activeGroceries.forEach { grocery ->
+            groceries.forEach { grocery ->
                 val docRef = getGroupCollection(groupCode, GROCERIES_COLLECTION)
                     .document(grocery.uuid)
                 batch.set(docRef, groceryToMap(grocery))
             }
             
-            activeStores.forEach { store ->
+            stores.forEach { store ->
                 val docRef = getGroupCollection(groupCode, STORES_COLLECTION)
                     .document(store.uuid)
                 batch.set(docRef, storeToMap(store))
@@ -346,12 +340,12 @@ object FirebaseManager {
                     downloadedGroceries
                 )
                 
-                // Replace ALL local data with downloaded data
+                // Replace ALL local data with downloaded data (including deleted items)
                 DataManagerObject.categories.clear()
                 DataManagerObject.categories.addAll(nestedCategories)
                 
                 DataManagerObject.stores.clear()
-                DataManagerObject.stores.addAll(downloadedStores.filter { !it.deleted })
+                DataManagerObject.stores.addAll(downloadedStores)  // Keep deleted items too
                 
                 DataManagerObject.updateData()
                 DataStoreManager.saveDataGlobally()
