@@ -27,6 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -52,7 +55,7 @@ fun EditSubCategoryDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = {
                 Text(
-                    text = "Delete Sub-Category",
+                    text = stringResource(R.string.delete_subcategory),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -65,7 +68,7 @@ fun EditSubCategoryDialog(
                 ) {
                     if (subCategory.protected) {
                         Text(
-                            text = "⚠️ This sub-category is protected and cannot be deleted.",
+                            text = stringResource(R.string.subcategory_protected_cannot_delete),
                             style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
                             color = Color.Red,
@@ -73,7 +76,7 @@ fun EditSubCategoryDialog(
                         )
                     }
                     Text(
-                        text = "Are you sure you want to delete '${subCategory.name}'? This will also delete all groceries linked to it.",
+                        text = stringResource(R.string.delete_subcategory_confirmation, subCategory.name),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -95,7 +98,7 @@ fun EditSubCategoryDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Cancel"
+                            contentDescription = stringResource(R.string.cancel)
                         )
                     }
                     
@@ -123,7 +126,7 @@ fun EditSubCategoryDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = if (subCategory.protected) "Sub-Category Protected" else "Delete"
+                            contentDescription = if (subCategory.protected) stringResource(R.string.subcategory_protected) else stringResource(R.string.delete)
                         )
                     }
                 }
@@ -141,7 +144,7 @@ fun EditSubCategoryDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Edit Sub-Category",
+                    text = stringResource(R.string.edit_subcategory),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
@@ -154,7 +157,7 @@ fun EditSubCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = if (subCategory.protected) "Sub-Category Protected" else "Delete Sub-Category",
+                        contentDescription = if (subCategory.protected) stringResource(R.string.subcategory_protected) else stringResource(R.string.delete_subcategory),
                         tint = if (subCategory.protected) SuperCartColors.gray else Color.Red
                     )
                 }
@@ -164,7 +167,7 @@ fun EditSubCategoryDialog(
             OutlinedTextField(
                 value = subCategoryName,
                 onValueChange = { subCategoryName = it },
-                label = { Text("Sub-Category Name") },
+                label = { Text(stringResource(R.string.subcategory_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -192,7 +195,7 @@ fun EditSubCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cancel)
                     )
                 }
                 
@@ -234,7 +237,7 @@ fun EditSubCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Save Changes"
+                        contentDescription = stringResource(R.string.save_changes)
                     )
                 }
             }

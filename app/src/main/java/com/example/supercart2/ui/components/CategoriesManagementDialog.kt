@@ -36,6 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -215,7 +217,7 @@ fun CategoriesManagementDialog(
         modifier = Modifier.fillMaxSize(), // This makes it full-screen
         title = { 
             Text(
-                text = "Categories Management",
+                text = stringResource(R.string.categories_management),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -311,7 +313,7 @@ fun CategoriesManagementDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cancel)
                     )
                 }
                 
@@ -326,7 +328,7 @@ fun CategoriesManagementDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Create New Category"
+                        contentDescription = stringResource(R.string.create_new_category)
                     )
                 }
             }
@@ -376,13 +378,13 @@ private fun CategoryCard(
                 // Left side: Sub-categories and Groceries count
                 Column {
                     Text(
-                        text = "Sub-Categories: $subCategoriesCount",
+                        text = stringResource(R.string.sub_categories_count, subCategoriesCount),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         color = SuperCartColors.darkGray
                     )
                     
                     Text(
-                        text = "Groceries: $groceriesCount",
+                        text = stringResource(R.string.groceries_count, groceriesCount),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         color = SuperCartColors.darkGray
                     )
@@ -423,7 +425,7 @@ private fun CategoryCard(
                     ) {
                         Icon(
                             imageVector = androidx.compose.material.icons.Icons.Default.Edit,
-                            contentDescription = "Edit Category",
+                            contentDescription = stringResource(R.string.edit_category),
                             tint = SuperCartColors.primaryGreen
                         )
                     }

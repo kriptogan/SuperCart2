@@ -21,6 +21,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -41,7 +43,7 @@ fun CreateStoreDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Create New Store",
+                text = stringResource(R.string.create_store),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -54,7 +56,7 @@ fun CreateStoreDialog(
                 OutlinedTextField(
                     value = storeName,
                     onValueChange = { storeName = it },
-                    label = { Text("Store Name") },
+                    label = { Text(stringResource(R.string.store_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -83,7 +85,7 @@ fun CreateStoreDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cancel)
                     )
                 }
                 
@@ -121,7 +123,7 @@ fun CreateStoreDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Create Store"
+                        contentDescription = stringResource(R.string.create_store)
                     )
                 }
             }

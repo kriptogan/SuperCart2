@@ -40,6 +40,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.components.BurgerMenu
 import com.example.supercart2.ui.components.CategoriesManagementDialog
 import com.example.supercart2.ui.components.StoresManagementDialog
@@ -48,6 +50,7 @@ import com.example.supercart2.ui.components.GroceryCreationDialog
 import com.example.supercart2.ui.components.ImportGroceriesDialog
 import com.example.supercart2.ui.components.HierarchicalCategoryDisplay
 import com.example.supercart2.ui.components.SettingsDialog
+import com.example.supercart2.ui.components.LanguageSelectionDialog
 import com.example.supercart2.data.SettingsManager
 import androidx.compose.runtime.collectAsState
 import com.example.supercart2.ui.theme.SuperCartSpacing
@@ -68,6 +71,7 @@ fun HomeScreen() {
     var showGroceryCreation by remember { mutableStateOf(false) }
     var showImportGroceries by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showLanguageSelection by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
     var isAlertFilterActive by remember { mutableStateOf(false) }
@@ -192,6 +196,9 @@ fun HomeScreen() {
                         },
                         onSettingsClick = {
                             showSettings = true
+                        },
+                        onLanguageClick = {
+                            showLanguageSelection = true
                         }
                     )
                 }
@@ -274,7 +281,7 @@ fun HomeScreen() {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search groceries...") },
+                    placeholder = { Text(stringResource(R.string.search_hint)) },
                     modifier = Modifier.fillMaxWidth(0.78f), // 70% of available width - responsive!
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SuperCartColors.primaryGreen,
@@ -388,6 +395,12 @@ fun HomeScreen() {
     if (showSettings) {
         SettingsDialog(
             onDismiss = { showSettings = false }
+        )
+    }
+    
+    if (showLanguageSelection) {
+        LanguageSelectionDialog(
+            onDismiss = { showLanguageSelection = false }
         )
     }
     

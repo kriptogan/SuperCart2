@@ -60,6 +60,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -139,7 +141,7 @@ fun GroceryCreationDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = {
                 Text(
-                    text = "Delete Grocery",
+                    text = stringResource(R.string.delete_grocery),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -147,7 +149,7 @@ fun GroceryCreationDialog(
             },
             text = {
                 Text(
-                    text = "Are you sure you want to delete '${groceryToEdit.name}'?",
+                    text = stringResource(R.string.delete_grocery_confirmation, groceryToEdit.name),
                     style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
@@ -168,7 +170,7 @@ fun GroceryCreationDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Cancel"
+                            contentDescription = stringResource(R.string.cancel)
                         )
                     }
                     
@@ -193,7 +195,7 @@ fun GroceryCreationDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete"
+                            contentDescription = stringResource(R.string.delete)
                         )
                     }
                 }
@@ -218,7 +220,7 @@ fun GroceryCreationDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (groceryToEdit != null) "Edit Grocery" else "Create New Grocery",
+                    text = if (groceryToEdit != null) stringResource(R.string.edit_grocery) else stringResource(R.string.create_new_grocery),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
@@ -231,7 +233,7 @@ fun GroceryCreationDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete Grocery",
+                            contentDescription = stringResource(R.string.delete_grocery),
                             tint = Color.Red
                         )
                     }
@@ -267,7 +269,7 @@ fun GroceryCreationDialog(
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Processing image...",
+                                    text = stringResource(R.string.processing_image),
                                     color = SuperCartColors.gray,
                                     fontSize = 12.sp
                                 )
@@ -281,7 +283,7 @@ fun GroceryCreationDialog(
                             if (imageFile != null && imageFile.exists()) {
                                 AsyncImage(
                                     model = imageFile,
-                                    contentDescription = "Grocery Image",
+                                    contentDescription = stringResource(R.string.grocery_image),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
@@ -302,7 +304,7 @@ fun GroceryCreationDialog(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Remove Image",
+                                        contentDescription = stringResource(R.string.remove_image),
                                         tint = Color.White,
                                         modifier = Modifier
                                             .background(
@@ -325,12 +327,12 @@ fun GroceryCreationDialog(
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "Add Image",
+                                        text = stringResource(R.string.add_image_prompt),
                                         color = SuperCartColors.gray,
                                         fontSize = 14.sp
                                     )
                                     Text(
-                                        text = "Tap to upload",
+                                        text = stringResource(R.string.tap_to_upload),
                                         color = SuperCartColors.gray,
                                         fontSize = 12.sp
                                     )
@@ -349,12 +351,12 @@ fun GroceryCreationDialog(
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Add Image",
+                                    text = stringResource(R.string.add_image_prompt),
                                     color = SuperCartColors.gray,
                                     fontSize = 14.sp
                                 )
                                 Text(
-                                    text = "Tap to upload",
+                                    text = stringResource(R.string.tap_to_upload),
                                     color = SuperCartColors.gray,
                                     fontSize = 12.sp
                                 )
@@ -369,7 +371,7 @@ fun GroceryCreationDialog(
                 OutlinedTextField(
                     value = groceryName,
                     onValueChange = { groceryName = it },
-                    label = { Text("Grocery Name") },
+                    label = { Text(stringResource(R.string.grocery_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -386,7 +388,7 @@ fun GroceryCreationDialog(
                 // Category Selector
                 Column {
                     Text(
-                        text = "Category",
+                        text = stringResource(R.string.category),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         color = SuperCartColors.black,
                         modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
@@ -407,12 +409,12 @@ fun GroceryCreationDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = selectedCategory?.name ?: "Select Category",
+                                text = selectedCategory?.name ?: stringResource(R.string.select_category),
                                 color = if (selectedCategory != null) SuperCartColors.black else SuperCartColors.gray
                             )
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Select Category"
+                                contentDescription = stringResource(R.string.select_category)
                             )
                         }
                     }
@@ -423,7 +425,7 @@ fun GroceryCreationDialog(
                 // Sub-Category Selector
                 Column {
                     Text(
-                        text = "Sub-Category",
+                        text = stringResource(R.string.sub_category),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         color = SuperCartColors.black,
                         modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
@@ -449,12 +451,12 @@ fun GroceryCreationDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = selectedSubCategory?.name ?: "Select Sub-Category",
+                                text = selectedSubCategory?.name ?: stringResource(R.string.select_sub_category),
                                 color = if (selectedSubCategory != null) SuperCartColors.black else SuperCartColors.gray
                             )
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Select Sub-Category"
+                                contentDescription = stringResource(R.string.select_sub_category)
                             )
                         }
                     }
@@ -465,7 +467,7 @@ fun GroceryCreationDialog(
                 // Store Selector
                 Column {
                     Text(
-                        text = "Stores",
+                        text = stringResource(R.string.stores),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         color = SuperCartColors.black,
                         modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
@@ -493,16 +495,16 @@ fun GroceryCreationDialog(
                             
                             Text(
                                 text = when {
-                                    storeNames.isEmpty() -> "Select Stores (Optional)"
+                                    storeNames.isEmpty() -> stringResource(R.string.select_stores_optional)
                                     storeNames.size == 1 -> storeNames[0]
-                                    else -> "${storeNames.size} stores selected"
+                                    else -> stringResource(R.string.stores_selected, storeNames.size)
                                 },
                                 color = if (storeNames.isNotEmpty()) 
                                     SuperCartColors.black else SuperCartColors.gray
                             )
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Select Stores"
+                                contentDescription = stringResource(R.string.select_stores)
                             )
                         }
                     }
@@ -513,7 +515,7 @@ fun GroceryCreationDialog(
                 // Date Selector
                 Column {
                                          Text(
-                         text = "Expiration Date",
+                         text = stringResource(R.string.expiration_date),
                          style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                          color = SuperCartColors.black,
                          modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
@@ -569,7 +571,7 @@ fun GroceryCreationDialog(
                                 ),
                                 shape = SuperCartShapes.small
                             ) {
-                                Text("Clear")
+                                Text(stringResource(R.string.clear))
                             }
                         }
                     }
@@ -748,7 +750,7 @@ fun GroceryCreationDialog(
                         contentColor = SuperCartColors.white
                     )
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
@@ -759,7 +761,7 @@ fun GroceryCreationDialog(
                         contentColor = SuperCartColors.primaryGreen
                     )
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         ) {

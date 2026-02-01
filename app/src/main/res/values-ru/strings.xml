@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">SuperCart2</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Главная</string>
+    <string name="nav_shopping_list">Список покупок</string>
+    <string name="nav_categories">Категории</string>
+    
+    <!-- Menu -->
+    <string name="menu">Меню</string>
+    <string name="menu_categories_management">Управление категориями</string>
+    <string name="menu_manage_stores">Управление магазинами</string>
+    <string name="menu_family_group">Семейная группа</string>
+    <string name="menu_import_groceries">Импорт продуктов</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="menu_upload_cloud">Загрузить в облако</string>
+    <string name="menu_download_cloud">Скачать из облака</string>
+    <string name="menu_language">Язык</string>
+    <string name="requires_family_group">Требуется семейная группа</string>
+    <string name="please_create_or_join_group">Пожалуйста, сначала создайте или присоединитесь к семейной группе</string>
+    
+    <!-- Categories -->
+    <string name="create_category">Создать категорию</string>
+    <string name="edit_category">Редактировать категорию</string>
+    <string name="delete_category">Удалить категорию</string>
+    <string name="category_name">Название категории</string>
+    
+    <!-- Sub-Categories -->
+    <string name="create_subcategory">Создать подкатегорию</string>
+    <string name="edit_subcategory">Редактировать подкатегорию</string>
+    <string name="delete_subcategory">Удалить подкатегорию</string>
+    <string name="subcategory_name">Название подкатегории</string>
+    <string name="create_new_subcategory">Создать новую подкатегорию</string>
+    <string name="add_sub_category">Добавить подкатегорию</string>
+    <string name="category_protected_cannot_delete">⚠️ Эта категория защищена и не может быть удалена.</string>
+    <string name="subcategory_protected_cannot_delete">⚠️ Эта подкатегория защищена и не может быть удалена.</string>
+    <string name="delete_category_confirmation">Вы уверены, что хотите удалить \'%s\'? Это также удалит все подкатегории и связанные продукты.</string>
+    <string name="delete_subcategory_confirmation">Вы уверены, что хотите удалить \'%s\'? Это также удалит все связанные продукты.</string>
+    <string name="category_protected">Категория защищена</string>
+    <string name="subcategory_protected">Подкатегория защищена</string>
+    <string name="protected_label">(Защищено)</string>
+    
+    <!-- Groceries -->
+    <string name="add_to_shopping_list">Добавить в список покупок</string>
+    <string name="mark_as_bought">Отметить как купленное</string>
+    <string name="edit_grocery">Редактировать продукт</string>
+    <string name="delete_grocery">Удалить продукт</string>
+    <string name="grocery_name">Название продукта</string>
+    <string name="expiration_date">Срок годности</string>
+    <string name="remove_from_shopping_list">Удалить из списка покупок</string>
+    <string name="edit_item">Редактировать товар</string>
+    <string name="view_buy_history">Просмотр истории покупок</string>
+    <string name="create_new_grocery">Создать новый продукт</string>
+    <string name="delete_grocery_confirmation">Вы уверены, что хотите удалить \'%s\'?</string>
+    <string name="processing_image">Обработка изображения...</string>
+    <string name="add_image_prompt">Добавить изображение</string>
+    <string name="tap_to_upload">Нажмите для загрузки</string>
+    <string name="category">Категория</string>
+    <string name="sub_category">Подкатегория</string>
+    <string name="stores">Магазины</string>
+    <string name="select_stores_optional">Выбрать магазины (необязательно)</string>
+    <string name="remove_image">Удалить изображение</string>
+    <string name="grocery_image">Изображение продукта</string>
+    <string name="select_category">Выбрать категорию</string>
+    <string name="select_sub_category">Выбрать подкатегорию</string>
+    <string name="stores_selected">Выбрано магазинов: %d</string>
+    
+    <!-- Stores -->    
+    <!-- Stores -->
+    <string name="manage_stores">Управление магазинами</string>
+    <string name="create_store">Создать магазин</string>
+    <string name="edit_store">Редактировать магазин</string>
+    <string name="delete_store">Удалить магазин</string>
+    <string name="store_name">Название магазина</string>
+    <string name="link_to_store">Привязать к магазину</string>
+    <string name="select_stores">Выбрать магазины</string>
+    
+    <!-- Group Sharing -->
+    <string name="family_group">Семейная группа</string>
+    <string name="create_group">Создать новую группу</string>
+    <string name="create_family_group">Создать семейную группу</string>
+    <string name="join_group">Присоединиться к существующей группе</string>
+    <string name="join_family_group">Присоединиться к семейной группе</string>
+    <string name="leave_group">Покинуть группу</string>
+    <string name="group_code">Код группы</string>
+    <string name="copy_code">Копировать код</string>
+    <string name="enter_group_code">Введите код группы</string>
+    <string name="youre_in_group">Вы в семейной группе!</string>
+    <string name="share_groceries_message">Делитесь продуктами с членами семьи!</string>
+    <string name="local_data_will_be_replaced">⚠️ Предупреждение: Ваши локальные данные будут заменены данными группы.</string>
+    <string name="local_data_kept">Ваши локальные данные сохранятся, но синхронизация с группой прекратится.</string>
+    <string name="leave_group_question">Покинуть группу?</string>
+    <string name="group_not_found">Группа не найдена или неверный код</string>
+    <string name="failed_to_join">Не удалось присоединиться: %s</string>
+    <string name="failed_to_create">Не удалось создать группу: %s</string>
+    <string name="copy">Копировать</string>
+    <string name="leave_action">Покинуть</string>
+    
+    <!-- Actions -->
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
+    <string name="edit">Редактировать</string>
+    <string name="create">Создать</string>
+    <string name="save_changes">Сохранить изменения</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="close">Закрыть</string>
+    <string name="done">Готово</string>
+    <string name="clear">Очистить</string>
+    <string name="import_action">Импортировать</string>
+    <string name="leave">Покинуть</string>
+    
+    <!-- Confirmations -->
+    <string name="are_you_sure">Вы уверены?</string>
+    <string name="delete_confirmation">Вы уверены, что хотите удалить этот элемент?</string>
+    <string name="leave_group_confirmation">Вы уверены, что хотите покинуть группу?</string>
+    
+    <!-- Messages -->
+    <string name="uploading_to_cloud">Загрузка в облако</string>
+    <string name="downloading_from_cloud">Скачивание из облака</string>
+    <string name="please_wait_upload">Пожалуйста, подождите, пока загружаются ваши данные...</string>
+    <string name="please_wait_download">Пожалуйста, подождите, пока скачиваются ваши данные...</string>
+    <string name="upload_successful">Загрузка успешна</string>
+    <string name="download_successful">Скачивание успешно</string>
+    <string name="upload_success_message">Ваши данные успешно загружены в облако.</string>
+    <string name="download_success_message">Ваши данные успешно скачаны из облака.</string>
+    <string name="upload_failed">Загрузка не удалась: %s</string>
+    <string name="download_failed">Скачивание не удалось: %s</string>
+    <string name="error">Ошибка</string>
+    <string name="group_created">Группа успешно создана</string>
+    <string name="group_joined">Вы успешно присоединились к группе</string>
+    <string name="code_copied">Код скопирован в буфер обмена</string>
+    
+    <!-- View Modes -->
+    <string name="category_view">Вид категорий</string>
+    <string name="store_view">Вид магазинов</string>
+    <string name="not_linked_to_store">Не привязано к магазину</string>
+    
+    <!-- Shopping List -->
+    <string name="things_to_buy">Что купить</string>
+    <string name="already_bought">Уже куплено</string>
+    <string name="no_items_to_buy">Нет товаров для покупки</string>
+    <string name="no_bought_items">Нет купленных товаров</string>
+    <string name="finish_shopping">Завершить покупки</string>
+    <string name="finish_shopping_button">Завершить покупки (%d товаров)</string>
+    <string name="finish_shopping_confirmation_intro">Вы уверены, что хотите завершить покупки? Это приведёт к:</string>
+    <string name="finish_shopping_bullet_history">• Добавлению сегодняшней даты в историю покупок всех купленных товаров</string>
+    <string name="finish_shopping_bullet_remove">• Удалению всех купленных товаров из списка покупок</string>
+    <string name="switch_to_store_view">Переключить на вид по магазинам</string>
+    <string name="switch_to_category_view">Переключить на вид по категориям</string>
+    <string name="show_hide_stores_hidden">Показать/Скрыть магазины (%d скрыто)</string>
+    <string name="add_new_grocery">Добавить продукт</string>
+    <string name="clear_search">Очистить поиск</string>
+    <string name="collapse_all">Свернуть всё</string>
+    <string name="expand_all">Развернуть всё</string>
+    <string name="remove_from_list">Удалить из списка</string>
+    
+    <!-- Search -->
+    <string name="search">Поиск</string>
+    <string name="search_hint">Поиск продуктов...</string>
+    
+    <!-- Language Selection -->
+    <string name="select_language">Выбрать язык</string>
+    
+    <!-- Images -->
+    <string name="select_image_source">Выбрать источник изображения</string>
+    <string name="choose_from_gallery">Выбрать из галереи</string>
+    <string name="take_photo">Сделать фото</string>
+    <string name="camera_permission_required">Требуется разрешение камеры для съемки</string>
+    <string name="add_image">Добавить изображение</string>
+    
+    <!-- Import -->
+    <string name="import_groceries">Импорт продуктов</string>
+    <string name="add_to_shopping_list_question">Добавить в список покупок?</string>
+    <string name="should_add_to_shopping_list">Добавить товары в список покупок?</string>
+    <string name="enter_grocery_names">Введите названия продуктов (по одному на строку):</string>
+    <string name="show_hide_stores">Показать/Скрыть магазины</string>
+    <string name="sub_categories">Подкатегории</string>
+    <string name="create_new_category">Создать новую категорию</string>
+    <string name="general">Общие</string>
+    <string name="items">элементов</string>
+    <string name="more">еще</string>
+    <string name="no_groceries_yet">Продуктов пока нет</string>
+    <string name="categories_management">Управление категориями</string>
+    <string name="sub_categories_count">Подкатегории: %d</string>
+    <string name="groceries_count">Продукты: %d</string>
+    <string name="no_stores_available">Магазины недоступны.</string>
+    <string name="unchecked_stores_hidden">Неотмеченные магазины будут скрыты из вида магазина.</string>
+    <string name="no_stores_available_create">Магазины недоступны. Создайте первый магазин для начала.</string>
+</resources>

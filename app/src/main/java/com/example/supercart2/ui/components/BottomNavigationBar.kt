@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
@@ -29,12 +30,12 @@ fun BottomNavigationBar(
     val items = listOf(
         NavigationItem(
             route = "home",
-            title = "Home",
+            titleRes = R.string.nav_home,
             icon = R.drawable.ic_home
         ),
         NavigationItem(
             route = "shopping_list",
-            title = "Shopping List",
+            titleRes = R.string.nav_shopping_list,
             icon = R.drawable.ic_shopping_cart
         )
     )
@@ -48,13 +49,13 @@ fun BottomNavigationBar(
                 icon = { 
                     Icon(
                         painter = painterResource(id = item.icon), 
-                        contentDescription = item.title,
+                        contentDescription = stringResource(item.titleRes),
                         modifier = Modifier.padding(4.dp)
                     ) 
                 },
                 label = { 
                     Text(
-                        text = item.title,
+                        text = stringResource(item.titleRes),
                         style = androidx.compose.material3.MaterialTheme.typography.labelSmall
                     ) 
                 },
@@ -77,6 +78,6 @@ fun BottomNavigationBar(
 
 data class NavigationItem(
     val route: String,
-    val title: String,
+    val titleRes: Int,
     val icon: Int
 )

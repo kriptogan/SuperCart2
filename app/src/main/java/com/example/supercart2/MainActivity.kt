@@ -1,5 +1,6 @@
 package com.example.supercart2
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +18,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.supercart2.ui.components.BottomNavigationBar
 import com.example.supercart2.ui.screens.HomeScreen
@@ -23,15 +26,40 @@ import com.example.supercart2.ui.screens.ShoppingListScreen
 import com.example.supercart2.ui.theme.SuperCart2Theme
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.data.SettingsManager
+import com.example.supercart2.utils.LanguageManager
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
+    
+    override fun attachBaseContext(newBase: Context) {
+        // Force app language (ignore device OS language)
+        val language = runBlocking {
+            LanguageManager.getCurrentLanguage(newBase)
+        }
+        val context = LanguageManager.applyLanguage(newBase, language)
+        super.attachBaseContext(context)
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SuperCart2Theme {
-                MainApp()
+            // Get current language for layout direction
+            val context = LocalContext.current
+            var currentLanguage by remember {
+                mutableStateOf(
+                    runBlocking { LanguageManager.getCurrentLanguage(context) }
+                )
+            }
+            
+            // Force layout direction based on language
+            CompositionLocalProvider(
+                LocalLayoutDirection provides currentLanguage.toLayoutDirection()
+            ) {
+                SuperCart2Theme {
+                    MainApp()
+                }
             }
         }
     }

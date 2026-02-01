@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.models.Grocery
@@ -246,7 +248,7 @@ fun ShoppingListScreen() {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Add New Grocery",
+                                contentDescription = stringResource(R.string.add_new_grocery),
                                 tint = SuperCartColors.primaryGreen,
                                 modifier = Modifier.size(34.dp)
                             )
@@ -269,7 +271,7 @@ fun ShoppingListScreen() {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search groceries...") },
+                    placeholder = { Text(stringResource(R.string.search_hint)) },
                     modifier = Modifier.fillMaxWidth(0.78f),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SuperCartColors.primaryGreen,
@@ -280,7 +282,7 @@ fun ShoppingListScreen() {
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
+                            contentDescription = stringResource(R.string.search),
                             tint = SuperCartColors.gray,
                             modifier = Modifier.size(24.dp)
                         )
@@ -293,7 +295,7 @@ fun ShoppingListScreen() {
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear search",
+                                    contentDescription = stringResource(R.string.clear_search),
                                     tint = SuperCartColors.darkGray,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -324,7 +326,7 @@ fun ShoppingListScreen() {
                     ) {
                         Icon(
                             imageVector = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            contentDescription = if (isAllExpanded) "Collapse All" else "Expand All",
+                            contentDescription = if (isAllExpanded) stringResource(R.string.collapse_all) else stringResource(R.string.expand_all),
                             tint = SuperCartColors.primaryGreen,
                             modifier = Modifier.size(28.dp)
                         )
@@ -369,9 +371,9 @@ fun ShoppingListScreen() {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (viewMode == ShoppingListViewMode.CATEGORY) {
-                        "Switch to Store View"
+                        stringResource(R.string.switch_to_store_view)
                     } else {
-                        "Switch to Category View"
+                        stringResource(R.string.switch_to_category_view)
                     }
                 )
             }
@@ -408,9 +410,9 @@ fun ShoppingListScreen() {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = if (hiddenCount > 0) {
-                            "Show/Hide Stores ($hiddenCount hidden)"
+                            stringResource(R.string.show_hide_stores_hidden, hiddenCount)
                         } else {
-                            "Show/Hide Stores"
+                            stringResource(R.string.show_hide_stores)
                         }
                     )
                 }
@@ -441,7 +443,7 @@ fun ShoppingListScreen() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Things to Buy",
+                                text = stringResource(R.string.things_to_buy),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = SuperCartColors.primaryGreen
@@ -486,7 +488,7 @@ fun ShoppingListScreen() {
                             )
                         ) {
                             Text(
-                                text = "No items to buy",
+                                text = stringResource(R.string.no_items_to_buy),
                                 modifier = Modifier.padding(SuperCartSpacing.md),
                                 color = SuperCartColors.gray
                             )
@@ -509,7 +511,7 @@ fun ShoppingListScreen() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Already Bought",
+                                text = stringResource(R.string.already_bought),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = SuperCartColors.primaryGreen
@@ -559,7 +561,7 @@ fun ShoppingListScreen() {
                             )
                         ) {
                             Text(
-                                text = "No bought items",
+                                text = stringResource(R.string.no_bought_items),
                                 modifier = Modifier.padding(SuperCartSpacing.md),
                                 color = SuperCartColors.gray
                             )
@@ -588,7 +590,7 @@ fun ShoppingListScreen() {
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Finish Shopping (${boughtCategories.sumOf { it.getGroceriesCount() }} items)",
+                                text = stringResource(R.string.finish_shopping_button, boughtCategories.sumOf { it.getGroceriesCount() }),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
@@ -603,7 +605,7 @@ fun ShoppingListScreen() {
                 onDismissRequest = { showFinishConfirmation = false },
                 title = {
                     Text(
-                        text = "Finish Shopping",
+                        text = stringResource(R.string.finish_shopping),
                         style = MaterialTheme.typography.headlineMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -615,18 +617,18 @@ fun ShoppingListScreen() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Are you sure you want to finish shopping? This will:",
+                            text = stringResource(R.string.finish_shopping_confirmation_intro),
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(SuperCartSpacing.sm))
                         Text(
-                            text = "• Add today's date to the buy history of all bought items",
+                            text = stringResource(R.string.finish_shopping_bullet_history),
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Start
                         )
                         Text(
-                            text = "• Remove all bought items from the shopping list",
+                            text = stringResource(R.string.finish_shopping_bullet_remove),
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Start
                         )
@@ -648,7 +650,7 @@ fun ShoppingListScreen() {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Cancel"
+                                contentDescription = stringResource(R.string.cancel)
                             )
                         }
                         
@@ -674,7 +676,7 @@ fun ShoppingListScreen() {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Confirm"
+                                contentDescription = stringResource(R.string.confirm)
                             )
                         }
                     }
@@ -828,7 +830,7 @@ private fun BoughtGroceryCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Remove from list",
+                    contentDescription = stringResource(R.string.remove_from_list),
                     tint = Color.Red,
                     modifier = Modifier.size(20.dp)
                 )

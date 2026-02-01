@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.FirebaseManager
 import com.example.supercart2.data.GroupManager
 import com.example.supercart2.ui.theme.SuperCartColors
@@ -26,7 +28,7 @@ fun CreateGroupDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Create Family Group") },
+        title = { Text(stringResource(R.string.create_family_group)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -37,9 +39,9 @@ fun CreateGroupDialog(
                         color = SuperCartColors.primaryGreen
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Creating group and uploading data...")
+                    Text(stringResource(R.string.please_wait_upload))
                 } else {
-                    Text("This will create a new family group and upload your current data to the cloud.")
+                    Text(stringResource(R.string.upload_success_message))
                     
                     if (errorMessage != null) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -62,7 +64,7 @@ fun CreateGroupDialog(
                             val groupCode = GroupManager.createGroup(context)
                             FirebaseManager.uploadData()
                             onGroupCreated(groupCode)
-                            Toast.makeText(context, "Group created!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.group_created), Toast.LENGTH_SHORT).show()
                         } catch (e: Exception) {
                             errorMessage = "Failed to create group: ${e.message}"
                             isCreating = false
@@ -74,7 +76,7 @@ fun CreateGroupDialog(
                     containerColor = SuperCartColors.primaryGreen
                 )
             ) {
-                Text("Create & Upload")
+                Text(stringResource(R.string.create_group))
             }
         },
         dismissButton = {
@@ -82,7 +84,7 @@ fun CreateGroupDialog(
                 onClick = onDismiss,
                 enabled = !isCreating
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

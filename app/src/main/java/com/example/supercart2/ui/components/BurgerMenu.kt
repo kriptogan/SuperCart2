@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.data.FirebaseManager
@@ -37,7 +39,8 @@ fun BurgerMenu(
     onManageStoresClick: () -> Unit = {},
     onManageGroupClick: () -> Unit = {},
     onImportGroceriesClick: () -> Unit,
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    onLanguageClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
@@ -78,7 +81,7 @@ fun BurgerMenu(
         ) {
             Icon(
                 imageVector = Icons.Default.Menu,
-                contentDescription = "Menu",
+                contentDescription = stringResource(R.string.menu),
                 modifier = Modifier.size(36.dp) // Exact size requested
             )
         }
@@ -89,37 +92,44 @@ fun BurgerMenu(
         onDismissRequest = { expanded = false }
     ) {
         DropdownMenuItem(
-            text = { Text("Categories Management") },
+            text = { Text(stringResource(R.string.menu_categories_management)) },
             onClick = {
                 onCategoriesManagementClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text("Manage Stores") },
+            text = { Text(stringResource(R.string.menu_manage_stores)) },
             onClick = {
                 onManageStoresClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text("Family Group") },
+            text = { Text(stringResource(R.string.menu_family_group)) },
             onClick = {
                 onManageGroupClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text("Import Groceries") },
+            text = { Text(stringResource(R.string.menu_import_groceries)) },
             onClick = {
                 onImportGroceriesClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text("Settings") },
+            text = { Text(stringResource(R.string.menu_settings)) },
             onClick = {
                 onSettingsClick()
+                expanded = false
+            }
+        )
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.menu_language)) },
+            onClick = {
+                onLanguageClick()
                 expanded = false
             }
         )
@@ -127,10 +137,10 @@ fun BurgerMenu(
         DropdownMenuItem(
             text = {
                 Column {
-                    Text("Upload to Cloud")
+                    Text(stringResource(R.string.menu_upload_cloud))
                     if (!hasGroupCode) {
                         Text(
-                            "Requires family group",
+                            stringResource(R.string.requires_family_group),
                             fontSize = 10.sp,
                             color = Color.Red
                         )
@@ -148,7 +158,7 @@ fun BurgerMenu(
                             showUploadSuccess = true
                         } catch (e: Exception) {
                             isUploading = false
-                            errorMessage = "Upload failed: ${e.message ?: "Unknown error"}"
+                            errorMessage = context.getString(R.string.upload_failed, e.message ?: "Unknown error")
                             showError = true
                             android.util.Log.e("BurgerMenu", "Upload failed", e)
                         }
@@ -156,7 +166,7 @@ fun BurgerMenu(
                 } else {
                     Toast.makeText(
                         context,
-                        "Please create or join a family group first",
+                        context.getString(R.string.please_create_or_join_group),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -167,10 +177,10 @@ fun BurgerMenu(
         DropdownMenuItem(
             text = {
                 Column {
-                    Text("Download from Cloud")
+                    Text(stringResource(R.string.menu_download_cloud))
                     if (!hasGroupCode) {
                         Text(
-                            "Requires family group",
+                            stringResource(R.string.requires_family_group),
                             fontSize = 10.sp,
                             color = Color.Red
                         )
@@ -189,7 +199,7 @@ fun BurgerMenu(
                             showDownloadSuccess = true
                         } catch (e: Exception) {
                             isDownloading = false
-                            errorMessage = "Download failed: ${e.message ?: "Unknown error"}"
+                            errorMessage = context.getString(R.string.download_failed, e.message ?: "Unknown error")
                             showError = true
                             android.util.Log.e("BurgerMenu", "Download failed", e)
                         }
@@ -197,7 +207,7 @@ fun BurgerMenu(
                 } else {
                     Toast.makeText(
                         context,
-                        "Please create or join a family group first",
+                        context.getString(R.string.please_create_or_join_group),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -212,7 +222,7 @@ fun BurgerMenu(
             onDismissRequest = { /* Prevent dismissal during upload */ },
             title = {
                 Text(
-                    text = "Uploading to Cloud",
+                    text = stringResource(R.string.uploading_to_cloud),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -228,7 +238,7 @@ fun BurgerMenu(
                     )
                     Spacer(modifier = Modifier.height(SuperCartSpacing.md))
                     Text(
-                        text = "Please wait while your data is being uploaded...",
+                        text = stringResource(R.string.please_wait_upload),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -243,7 +253,7 @@ fun BurgerMenu(
             onDismissRequest = { /* Prevent dismissal during download */ },
             title = {
                 Text(
-                    text = "Downloading from Cloud",
+                    text = stringResource(R.string.downloading_from_cloud),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -259,7 +269,7 @@ fun BurgerMenu(
                     )
                     Spacer(modifier = Modifier.height(SuperCartSpacing.md))
                     Text(
-                        text = "Please wait while your data is being downloaded...",
+                        text = stringResource(R.string.please_wait_download),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -286,7 +296,7 @@ fun BurgerMenu(
                     )
                     Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
                     Text(
-                        text = "Upload Successful",
+                        text = stringResource(R.string.upload_successful),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         color = SuperCartColors.primaryGreen
@@ -295,7 +305,7 @@ fun BurgerMenu(
             },
             text = {
                 Text(
-                    text = "Your data has been successfully uploaded to the cloud.",
+                    text = stringResource(R.string.upload_success_message),
                     textAlign = TextAlign.Center
                 )
             },
@@ -306,7 +316,7 @@ fun BurgerMenu(
                         containerColor = SuperCartColors.primaryGreen
                     )
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             }
         )
@@ -330,7 +340,7 @@ fun BurgerMenu(
                     )
                     Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
                     Text(
-                        text = "Download Successful",
+                        text = stringResource(R.string.download_successful),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         color = SuperCartColors.primaryGreen
@@ -339,7 +349,7 @@ fun BurgerMenu(
             },
             text = {
                 Text(
-                    text = "Your data has been successfully downloaded from the cloud.",
+                    text = stringResource(R.string.download_success_message),
                     textAlign = TextAlign.Center
                 )
             },
@@ -350,7 +360,7 @@ fun BurgerMenu(
                         containerColor = SuperCartColors.primaryGreen
                     )
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             }
         )
@@ -374,7 +384,7 @@ fun BurgerMenu(
                     )
                     Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
                     Text(
-                        text = "Error",
+                        text = stringResource(R.string.error),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         color = Color.Red
@@ -394,7 +404,7 @@ fun BurgerMenu(
                         containerColor = Color.Red
                     )
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             }
         )

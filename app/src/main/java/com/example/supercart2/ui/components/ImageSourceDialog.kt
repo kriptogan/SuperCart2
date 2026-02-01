@@ -12,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import androidx.core.content.FileProvider
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
@@ -58,7 +60,7 @@ fun ImageSourceDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Image Source") },
+        title = { Text(stringResource(R.string.select_image_source)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -81,7 +83,7 @@ fun ImageSourceDialog(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
-                    Text("Choose from Gallery")
+                    Text(stringResource(R.string.choose_from_gallery))
                 }
                 
                 // Camera Option
@@ -113,7 +115,7 @@ fun ImageSourceDialog(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
-                    Text("Take Photo")
+                    Text(stringResource(R.string.take_photo))
                 }
                 
                 // Show permission explanation if denied
@@ -128,7 +130,7 @@ fun ImageSourceDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

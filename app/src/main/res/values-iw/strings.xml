@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">SuperCart2</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">בית</string>
+    <string name="nav_shopping_list">רשימת קניות</string>
+    <string name="nav_categories">קטגוריות</string>
+    
+    <!-- Menu -->
+    <string name="menu">תפריט</string>
+    <string name="menu_categories_management">ניהול קטגוריות</string>
+    <string name="menu_manage_stores">נהל חנויות</string>
+    <string name="menu_family_group">קבוצה משפחתית</string>
+    <string name="menu_import_groceries">ייבוא מוצרים</string>
+    <string name="menu_settings">הגדרות</string>
+    <string name="menu_upload_cloud">העלה לענן</string>
+    <string name="menu_download_cloud">הורד מהענן</string>
+    <string name="menu_language">שפה</string>
+    <string name="requires_family_group">דורש קבוצה משפחתית</string>
+    <string name="please_create_or_join_group">אנא צור או הצטרף לקבוצה משפחתית תחילה</string>
+    
+    <!-- Categories -->
+    <string name="create_category">צור קטגוריה</string>
+    <string name="edit_category">ערוך קטגוריה</string>
+    <string name="delete_category">מחק קטגוריה</string>
+    <string name="category_name">שם קטגוריה</string>
+    
+    <!-- Sub-Categories -->
+    <string name="create_subcategory">צור תת-קטגוריה</string>
+    <string name="edit_subcategory">ערוך תת-קטגוריה</string>
+    <string name="delete_subcategory">מחק תת-קטגוריה</string>
+    <string name="subcategory_name">שם תת-קטגוריה</string>
+    <string name="create_new_subcategory">צור תת-קטגוריה חדשה</string>
+    <string name="add_sub_category">הוסף תת-קטגוריה</string>
+    <string name="category_protected_cannot_delete">⚠️ קטגוריה זו מוגנת ולא ניתן למחוק אותה.</string>
+    <string name="subcategory_protected_cannot_delete">⚠️ תת-קטגוריה זו מוגנת ולא ניתן למחוק אותה.</string>
+    <string name="delete_category_confirmation">האם אתה בטוח שברצונך למחוק את \'%s\'? פעולה זו תמחק גם את כל תת-הקטגוריות והמוצרים המקושרים.</string>
+    <string name="delete_subcategory_confirmation">האם אתה בטוח שברצונך למחוק את \'%s\'? פעולה זו תמחק גם את כל המוצרים המקושרים.</string>
+    <string name="category_protected">קטגוריה מוגנת</string>
+    <string name="subcategory_protected">תת-קטגוריה מוגנת</string>
+    <string name="protected_label">(מוגן)</string>
+    
+    <!-- Groceries -->
+    <string name="add_to_shopping_list">הוסף לרשימת קניות</string>
+    <string name="mark_as_bought">סמן כנקנה</string>
+    <string name="edit_grocery">ערוך מוצר</string>
+    <string name="delete_grocery">מחק מוצר</string>
+    <string name="grocery_name">שם מוצר</string>
+    <string name="expiration_date">תאריך תפוגה</string>
+    <string name="remove_from_shopping_list">הסר מרשימת קניות</string>
+    <string name="edit_item">ערוך פריט</string>
+    <string name="view_buy_history">הצג היסטוריית רכישות</string>
+    <string name="create_new_grocery">צור מוצר חדש</string>
+    <string name="delete_grocery_confirmation">האם אתה בטוח שברצונך למחוק את \'%s\'?</string>
+    <string name="processing_image">מעבד תמונה...</string>
+    <string name="add_image_prompt">הוסף תמונה</string>
+    <string name="tap_to_upload">הקש להעלאה</string>
+    <string name="category">קטגוריה</string>
+    <string name="sub_category">תת-קטגוריה</string>
+    <string name="stores">חנויות</string>
+    <string name="select_stores_optional">בחר חנויות (אופציונלי)</string>
+    <string name="remove_image">הסר תמונה</string>
+    <string name="grocery_image">תמונת מוצר</string>
+    <string name="select_category">בחר קטגוריה</string>
+    <string name="select_sub_category">בחר תת-קטגוריה</string>
+    <string name="stores_selected">%d חנויות נבחרו</string>
+    
+    <!-- Stores -->    
+    <!-- Stores -->
+    <string name="manage_stores">נהל חנויות</string>
+    <string name="create_store">צור חנות</string>
+    <string name="edit_store">ערוך חנות</string>
+    <string name="delete_store">מחק חנות</string>
+    <string name="store_name">שם חנות</string>
+    <string name="link_to_store">קשר לחנות</string>
+    <string name="select_stores">בחר חנויות</string>
+    
+    <!-- Group Sharing -->
+    <string name="family_group">קבוצה משפחתית</string>
+    <string name="create_group">צור קבוצה חדשה</string>
+    <string name="create_family_group">צור קבוצה משפחתית</string>
+    <string name="join_group">הצטרף לקבוצה קיימת</string>
+    <string name="join_family_group">הצטרף לקבוצה משפחתית</string>
+    <string name="leave_group">עזוב קבוצה</string>
+    <string name="group_code">קוד קבוצה</string>
+    <string name="copy_code">העתק קוד</string>
+    <string name="enter_group_code">הזן קוד קבוצה</string>
+    <string name="youre_in_group">אתה בקבוצה משפחתית!</string>
+    <string name="share_groceries_message">שתף מוצרים עם בני משפחה!</string>
+    <string name="local_data_will_be_replaced">⚠️ אזהרה: הנתונים המקומיים שלך יוחלפו בנתוני הקבוצה.</string>
+    <string name="local_data_kept">הנתונים המקומיים שלך יישארו, אך תפסיק לסנכרן עם הקבוצה.</string>
+    <string name="leave_group_question">לעזוב את הקבוצה?</string>
+    <string name="group_not_found">קבוצה לא נמצאה או קוד לא תקין</string>
+    <string name="failed_to_join">הצטרפות נכשלה: %s</string>
+    <string name="failed_to_create">יצירת קבוצה נכשלה: %s</string>
+    <string name="copy">העתק</string>
+    <string name="leave_action">עזוב</string>
+    
+    <!-- Actions -->
+    <string name="ok">אישור</string>
+    <string name="cancel">ביטול</string>
+    <string name="save">שמור</string>
+    <string name="delete">מחק</string>
+    <string name="edit">ערוך</string>
+    <string name="create">צור</string>
+    <string name="save_changes">שמור שינויים</string>
+    <string name="confirm">אשר</string>
+    <string name="yes">כן</string>
+    <string name="no">לא</string>
+    <string name="close">סגור</string>
+    <string name="done">בוצע</string>
+    <string name="clear">נקה</string>
+    <string name="import_action">ייבא</string>
+    <string name="leave">עזוב</string>
+    
+    <!-- Confirmations -->
+    <string name="are_you_sure">האם אתה בטוח?</string>
+    <string name="delete_confirmation">האם אתה בטוח שברצונך למחוק פריט זה?</string>
+    <string name="leave_group_confirmation">האם אתה בטוח שברצונך לעזוב את הקבוצה?</string>
+    
+    <!-- Messages -->
+    <string name="uploading_to_cloud">מעלה לענן</string>
+    <string name="downloading_from_cloud">מוריד מהענן</string>
+    <string name="please_wait_upload">אנא המתן בזמן שהנתונים שלך מועלים...</string>
+    <string name="please_wait_download">אנא המתן בזמן שהנתונים שלך מורדים...</string>
+    <string name="upload_successful">העלאה הצליחה</string>
+    <string name="download_successful">הורדה הצליחה</string>
+    <string name="upload_success_message">הנתונים שלך הועלו בהצלחה לענן.</string>
+    <string name="download_success_message">הנתונים שלך הורדו בהצלחה מהענן.</string>
+    <string name="upload_failed">העלאה נכשלה: %s</string>
+    <string name="download_failed">הורדה נכשלה: %s</string>
+    <string name="error">שגיאה</string>
+    <string name="group_created">הקבוצה נוצרה בהצלחה</string>
+    <string name="group_joined">הצטרפת לקבוצה בהצלחה</string>
+    <string name="code_copied">הקוד הועתק ללוח</string>
+    
+    <!-- View Modes -->
+    <string name="category_view">תצוגת קטגוריות</string>
+    <string name="store_view">תצוגת חנויות</string>
+    <string name="not_linked_to_store">לא מקושר לחנות</string>
+    
+    <!-- Shopping List -->
+    <string name="things_to_buy">דברים לקנות</string>
+    <string name="already_bought">כבר נקנה</string>
+    <string name="no_items_to_buy">אין פריטים לקנות</string>
+    <string name="no_bought_items">אין פריטים שנקנו</string>
+    <string name="finish_shopping">סיים קניות</string>
+    <string name="finish_shopping_button">סיים קניות (%d פריטים)</string>
+    <string name="finish_shopping_confirmation_intro">האם אתה בטוח שברצונך לסיים את הקניות? פעולה זו תבצע:</string>
+    <string name="finish_shopping_bullet_history">• הוספת תאריך היום להיסטוריית הרכישה של כל הפריטים שנקנו</string>
+    <string name="finish_shopping_bullet_remove">• הסרת כל הפריטים שנקנו מרשימת הקניות</string>
+    <string name="switch_to_store_view">עבור לתצוגת חנויות</string>
+    <string name="switch_to_category_view">עבור לתצוגת קטגוריות</string>
+    <string name="show_hide_stores_hidden">הצג/הסתר חנויות (%d מוסתרות)</string>
+    <string name="add_new_grocery">הוסף מוצר חדש</string>
+    <string name="clear_search">נקה חיפוש</string>
+    <string name="collapse_all">כווץ הכל</string>
+    <string name="expand_all">הרחב הכל</string>
+    <string name="remove_from_list">הסר מהרשימה</string>
+    
+    <!-- Search -->
+    <string name="search">חיפוש</string>
+    <string name="search_hint">חפש מוצרים...</string>
+    
+    <!-- Language Selection -->
+    <string name="select_language">בחר שפה</string>
+    
+    <!-- Images -->
+    <string name="select_image_source">בחר מקור תמונה</string>
+    <string name="choose_from_gallery">בחר מגלריה</string>
+    <string name="take_photo">צלם תמונה</string>
+    <string name="camera_permission_required">נדרש הרשאה למצלמה לצילום תמונות</string>
+    <string name="add_image">הוסף תמונה</string>
+    
+    <!-- Import -->
+    <string name="import_groceries">ייבוא מוצרים</string>
+    <string name="add_to_shopping_list_question">להוסיף לרשימת קניות?</string>
+    <string name="should_add_to_shopping_list">האם להוסיף את הפריטים לרשימת הקניות?</string>
+    <string name="enter_grocery_names">הזן שמות מוצרים (אחד בכל שורה):</string>
+    <string name="show_hide_stores">הצג/הסתר חנויות</string>
+    <string name="sub_categories">תת-קטגוריות</string>
+    <string name="create_new_category">צור קטגוריה חדשה</string>
+    <string name="general">כללי</string>
+    <string name="items">פריטים</string>
+    <string name="more">עוד</string>
+    <string name="no_groceries_yet">אין מוצרים עדיין</string>
+    <string name="categories_management">ניהול קטגוריות</string>
+    <string name="sub_categories_count">תת-קטגוריות: %d</string>
+    <string name="groceries_count">מוצרים: %d</string>
+    <string name="no_stores_available">אין חנויות זמינות.</string>
+    <string name="unchecked_stores_hidden">חנויות לא מסומנות יוסתרו מתצוגת החנויות.</string>
+    <string name="no_stores_available_create">אין חנויות זמינות. צור את החנות הראשונה שלך כדי להתחיל.</string>
+</resources>

@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -149,7 +151,7 @@ fun EditStoreDialog(
                 OutlinedTextField(
                     value = storeName,
                     onValueChange = { storeName = it },
-                    label = { Text("Store Name") },
+                    label = { Text(stringResource(R.string.store_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -178,7 +180,7 @@ fun EditStoreDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cancel)
                     )
                 }
                 

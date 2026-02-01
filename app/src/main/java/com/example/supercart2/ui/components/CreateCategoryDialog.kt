@@ -24,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -42,7 +44,7 @@ fun CreateCategoryDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Create New Category",
+                text = stringResource(R.string.create_category),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -55,7 +57,7 @@ fun CreateCategoryDialog(
                 OutlinedTextField(
                     value = categoryName,
                     onValueChange = { categoryName = it },
-                    label = { Text("Category Name") },
+                    label = { Text(stringResource(R.string.category_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -84,7 +86,7 @@ fun CreateCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cancel)
                     )
                 }
                 
@@ -124,7 +126,7 @@ fun CreateCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Create Category"
+                        contentDescription = stringResource(R.string.create_category)
                     )
                 }
             }

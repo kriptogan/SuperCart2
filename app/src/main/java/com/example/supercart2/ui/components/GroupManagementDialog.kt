@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.GroupManager
 import com.example.supercart2.ui.theme.SuperCartColors
 import kotlinx.coroutines.launch
@@ -41,14 +43,14 @@ fun GroupManagementDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Family Group") },
+        title = { Text(stringResource(R.string.family_group)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (groupCode != null) {
                     // Already in a group - show code and leave option
-                    Text("You're in a family group!")
+                    Text(stringResource(R.string.youre_in_group))
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     // Group code with copy button
@@ -69,7 +71,7 @@ fun GroupManagementDialog(
                         IconButton(onClick = {
                             copyToClipboard(context, groupCode!!)
                         }) {
-                            Icon(Icons.Default.ContentCopy, "Copy")
+                            Icon(Icons.Default.ContentCopy, stringResource(R.string.copy))
                         }
                     }
                     
@@ -83,13 +85,13 @@ fun GroupManagementDialog(
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.ExitToApp, "Leave")
+                        Icon(Icons.Default.ExitToApp, stringResource(R.string.leave_action))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Leave Group")
+                        Text(stringResource(R.string.leave_group))
                     }
                 } else {
                     // Not in a group - show create/join options
-                    Text("Share groceries with family members!")
+                    Text(stringResource(R.string.share_groceries_message))
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Button(
@@ -99,9 +101,9 @@ fun GroupManagementDialog(
                             containerColor = SuperCartColors.primaryGreen
                         )
                     ) {
-                        Icon(Icons.Default.Add, "Create")
+                        Icon(Icons.Default.Add, stringResource(R.string.create))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Create New Group")
+                        Text(stringResource(R.string.create_group))
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -113,16 +115,16 @@ fun GroupManagementDialog(
                             containerColor = SuperCartColors.primaryGreen
                         )
                     ) {
-                        Icon(Icons.Default.GroupAdd, "Join")
+                        Icon(Icons.Default.GroupAdd, stringResource(R.string.join_group))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Join Existing Group")
+                        Text(stringResource(R.string.join_group))
                     }
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -153,8 +155,8 @@ fun GroupManagementDialog(
     if (showLeaveConfirmation) {
         AlertDialog(
             onDismissRequest = { showLeaveConfirmation = false },
-            title = { Text("Leave Group?") },
-            text = { Text("Your local data will be kept, but you'll stop syncing with the group.") },
+            title = { Text(stringResource(R.string.leave_group_question)) },
+            text = { Text(stringResource(R.string.local_data_kept)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -162,19 +164,19 @@ fun GroupManagementDialog(
                             GroupManager.leaveGroup(context)
                             groupCode = null
                             showLeaveConfirmation = false
-                            Toast.makeText(context, "Left group", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.group_code), Toast.LENGTH_SHORT).show()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Red
                     )
                 ) {
-                    Text("Leave")
+                    Text(stringResource(R.string.leave_action))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLeaveConfirmation = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -183,7 +185,7 @@ fun GroupManagementDialog(
 
 private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clip = ClipData.newPlainText("Group Code", text)
+    val clip = ClipData.newPlainText(context.getString(R.string.group_code), text)
     clipboard.setPrimaryClip(clip)
     Toast.makeText(context, "Group code copied!", Toast.LENGTH_SHORT).show()
 }

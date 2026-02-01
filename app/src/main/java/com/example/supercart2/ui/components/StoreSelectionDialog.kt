@@ -30,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.data.DataManagerObject
@@ -59,11 +61,11 @@ fun StoreSelectionDialog(
             onStoresSelected(selectedIds.toList())
             onDismiss()
         },
-        title = { Text("Select Stores") },
+        title = { Text(stringResource(R.string.select_stores)) },
         text = {
             if (allStores.isEmpty() && !showCreateStore) {
                 Text(
-                    "No stores available. Create your first store to get started.",
+                    stringResource(R.string.no_stores_available_create),
                     color = SuperCartColors.gray,
                     fontStyle = FontStyle.Italic
                 )
@@ -122,7 +124,7 @@ fun StoreSelectionDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close"
+                        contentDescription = stringResource(R.string.close)
                     )
                 }
                 
@@ -137,7 +139,7 @@ fun StoreSelectionDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Create Store"
+                        contentDescription = stringResource(R.string.create_store)
                     )
                 }
             }

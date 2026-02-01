@@ -27,6 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.CategoryWithSubCategories
 import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.models.Grocery
@@ -138,7 +140,7 @@ private fun CategorySection(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "${categoryWithSubs.getGroceriesCount()} items",
+                        text = "${categoryWithSubs.getGroceriesCount()} ${stringResource(R.string.items)}",
                         fontSize = 12.sp,
                         color = SuperCartColors.gray
                     )
@@ -256,7 +258,7 @@ private fun SubCategorySection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "No groceries yet",
+                        text = stringResource(R.string.no_groceries_yet),
                         fontSize = 12.sp,
                         color = SuperCartColors.gray,
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
@@ -418,7 +420,7 @@ private fun GroceryItem(
                         // Show "+X more" if more than 3 stores
                         if (currentGrocery.storeIds.size > 3) {
                             Text(
-                                text = "+${currentGrocery.storeIds.size - 3} more",
+                                text = "+${currentGrocery.storeIds.size - 3} ${stringResource(R.string.more)}",
                                 fontSize = 10.sp,
                                 color = SuperCartColors.gray,
                                 modifier = Modifier.align(Alignment.CenterVertically)
@@ -451,7 +453,7 @@ private fun GroceryItem(
                     ) {
                         // Remove from cart option
                         DropdownMenuItem(
-                            text = { Text("Remove from shopping list") },
+                            text = { Text(stringResource(R.string.remove_from_shopping_list)) },
                             onClick = {
                                 DataManagerObject.updateGrocery(currentGrocery.uuid) { 
                                     it.copy(inShoppingList = false)
@@ -477,7 +479,7 @@ private fun GroceryItem(
 
                         // View Buy History option
                         DropdownMenuItem(
-                            text = { Text("View Buy History") },
+                            text = { Text(stringResource(R.string.view_buy_history)) },
                             onClick = {
                                 showBuyHistory = true
                                 expanded = false
@@ -493,7 +495,7 @@ private fun GroceryItem(
 
                         // Edit option
                         DropdownMenuItem(
-                            text = { Text("Edit item") },
+                            text = { Text(stringResource(R.string.edit_item)) },
                             onClick = {
                                 onEdit()
                                 expanded = false
@@ -582,7 +584,7 @@ private fun GroceryItem(
                     ) {
                         // Edit option
                         DropdownMenuItem(
-                            text = { Text("Edit item") },
+                            text = { Text(stringResource(R.string.edit_item)) },
                             onClick = {
                                 onEdit()
                                 expanded = false
@@ -598,7 +600,7 @@ private fun GroceryItem(
 
                         // View Buy History option
                         DropdownMenuItem(
-                            text = { Text("View Buy History") },
+                            text = { Text(stringResource(R.string.view_buy_history)) },
                             onClick = {
                                 showBuyHistory = true
                                 expanded = false
@@ -674,7 +676,7 @@ private fun GroceryItem(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Close")
+                    Text(stringResource(R.string.close))
                 }
             }
         )

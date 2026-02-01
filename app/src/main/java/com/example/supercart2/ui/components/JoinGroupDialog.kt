@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.GroupManager
 import com.example.supercart2.ui.theme.SuperCartColors
 import kotlinx.coroutines.launch
@@ -26,7 +28,7 @@ fun JoinGroupDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Join Family Group") },
+        title = { Text(stringResource(R.string.join_family_group)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -37,9 +39,9 @@ fun JoinGroupDialog(
                         color = SuperCartColors.primaryGreen
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Joining group and downloading data...")
+                    Text(stringResource(R.string.please_wait_download))
                 } else {
-                    Text("Enter the group code shared by a family member.")
+                    Text(stringResource(R.string.enter_group_code))
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     OutlinedTextField(
@@ -48,7 +50,7 @@ fun JoinGroupDialog(
                             groupCode = it
                             errorMessage = null
                         },
-                        label = { Text("Group Code") },
+                        label = { Text(stringResource(R.string.group_code)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -85,7 +87,7 @@ fun JoinGroupDialog(
                             val success = GroupManager.joinGroup(context, groupCode.trim())
                             if (success) {
                                 onGroupJoined(groupCode.trim())
-                                Toast.makeText(context, "Joined group!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.group_joined), Toast.LENGTH_SHORT).show()
                             } else {
                                 errorMessage = "Group not found or invalid code"
                                 isJoining = false
@@ -101,7 +103,7 @@ fun JoinGroupDialog(
                     containerColor = SuperCartColors.primaryGreen
                 )
             ) {
-                Text("Join & Download")
+                Text(stringResource(R.string.join_group))
             }
         },
         dismissButton = {
@@ -109,7 +111,7 @@ fun JoinGroupDialog(
                 onClick = onDismiss,
                 enabled = !isJoining
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

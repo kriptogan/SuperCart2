@@ -5,6 +5,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
@@ -31,8 +33,8 @@ fun ImportGroceriesDialog(
                 showAddToShoppingListDialog = false
                 onImportComplete()
             },
-            title = { Text("Add to Shopping List?") },
-            text = { Text("Should we add the items to the shopping list?") },
+            title = { Text(stringResource(R.string.add_to_shopping_list_question)) },
+            text = { Text(stringResource(R.string.should_add_to_shopping_list)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -59,7 +61,7 @@ fun ImportGroceriesDialog(
                         }
                     }
                 ) {
-                    Text("Yes")
+                    Text(stringResource(R.string.yes))
                 }
             },
             dismissButton = {
@@ -69,7 +71,7 @@ fun ImportGroceriesDialog(
                         onImportComplete()
                     }
                 ) {
-                    Text("No")
+                    Text(stringResource(R.string.no))
                 }
             }
         )
@@ -77,10 +79,10 @@ fun ImportGroceriesDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import Groceries") },
+        title = { Text(stringResource(R.string.import_groceries)) },
         text = {
             Column {
-                Text("Enter grocery names (one per line):")
+                Text(stringResource(R.string.enter_grocery_names))
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = importText,
@@ -165,12 +167,12 @@ fun ImportGroceriesDialog(
                 },
                 enabled = importText.isNotBlank()
             ) {
-                Text("Import")
+                Text(stringResource(R.string.import_action))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

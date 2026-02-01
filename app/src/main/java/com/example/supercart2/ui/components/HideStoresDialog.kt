@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.ui.theme.SuperCartColors
@@ -47,19 +49,19 @@ fun HideStoresDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { 
-            Text("Show/Hide Stores") 
+            Text(stringResource(R.string.show_hide_stores)) 
         },
         text = {
             if (allStores.isEmpty()) {
                 Text(
-                    "No stores available.",
+                    stringResource(R.string.no_stores_available),
                     color = SuperCartColors.gray,
                     fontStyle = FontStyle.Italic
                 )
             } else {
                 Column {
                     Text(
-                        "Unchecked stores will be hidden from the store view.",
+                        stringResource(R.string.unchecked_stores_hidden),
                         fontSize = 12.sp,
                         color = SuperCartColors.gray,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -130,7 +132,7 @@ fun HideStoresDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Done")
+                Text(stringResource(R.string.done))
             }
         }
     )

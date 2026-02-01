@@ -35,6 +35,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import kotlinx.coroutines.launch
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
@@ -115,7 +117,7 @@ fun EditCategoryDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = {
                 Text(
-                    text = "Delete Category",
+                    text = stringResource(R.string.delete_category),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -128,7 +130,7 @@ fun EditCategoryDialog(
                 ) {
                     if (category.protected) {
                         Text(
-                            text = "⚠️ This category is protected and cannot be deleted.",
+                            text = stringResource(R.string.category_protected_cannot_delete),
                             style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
                             color = androidx.compose.ui.graphics.Color.Red,
@@ -136,7 +138,7 @@ fun EditCategoryDialog(
                         )
                     }
                     Text(
-                        text = "Are you sure you want to delete '${category.name}'? This will also delete all sub-categories and groceries linked to it.",
+                        text = stringResource(R.string.delete_category_confirmation, category.name),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -158,7 +160,7 @@ fun EditCategoryDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Cancel"
+                            contentDescription = stringResource(R.string.cancel)
                         )
                     }
                     
@@ -177,7 +179,7 @@ fun EditCategoryDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = if (category.protected) "Category Protected" else "Delete"
+                            contentDescription = if (category.protected) stringResource(R.string.category_protected) else stringResource(R.string.delete)
                         )
                     }
                 }
@@ -194,7 +196,7 @@ fun EditCategoryDialog(
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Edit Category",
+                    text = stringResource(R.string.edit_category),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
@@ -207,7 +209,7 @@ fun EditCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = if (category.protected) "Category Protected" else "Delete Category",
+                        contentDescription = if (category.protected) stringResource(R.string.category_protected) else stringResource(R.string.delete_category),
                         tint = if (category.protected) SuperCartColors.gray else androidx.compose.ui.graphics.Color.Red
                     )
                 }
@@ -221,7 +223,7 @@ fun EditCategoryDialog(
                 OutlinedTextField(
                     value = categoryName,
                     onValueChange = { categoryName = it },
-                    label = { Text("Category Name") },
+                    label = { Text(stringResource(R.string.category_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -242,7 +244,7 @@ fun EditCategoryDialog(
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Sub-Categories",
+                        text = stringResource(R.string.sub_categories),
                         style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                         color = SuperCartColors.black
                     )
@@ -253,7 +255,7 @@ fun EditCategoryDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Add Sub-Category",
+                            contentDescription = stringResource(R.string.add_sub_category),
                             tint = SuperCartColors.primaryGreen
                         )
                     }
@@ -306,7 +308,7 @@ fun EditCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cancel)
                     )
                 }
                 
@@ -333,7 +335,7 @@ fun EditCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Save Changes"
+                        contentDescription = stringResource(R.string.save_changes)
                     )
                 }
             }
@@ -383,7 +385,7 @@ private fun SubCategoryCard(
                     if (subCategory.protected) {
                         Spacer(modifier = Modifier.width(SuperCartSpacing.xs))
                         Text(
-                            text = "(Protected)",
+                            text = stringResource(R.string.protected_label),
                             style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                             color = SuperCartColors.gray
                         )
@@ -391,7 +393,7 @@ private fun SubCategoryCard(
                 }
                 
                 Text(
-                    text = "Groceries: $groceriesCount",
+                    text = stringResource(R.string.groceries_count, groceriesCount),
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                     color = SuperCartColors.darkGray
                 )
@@ -408,7 +410,7 @@ private fun SubCategoryCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Sub-Category",
+                        contentDescription = stringResource(R.string.edit_subcategory),
                         tint = SuperCartColors.primaryGreen
                     )
                 }
@@ -420,7 +422,7 @@ private fun SubCategoryCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = if (subCategory.protected) "Sub-Category Protected" else "Delete Sub-Category",
+                        contentDescription = if (subCategory.protected) stringResource(R.string.subcategory_protected) else stringResource(R.string.delete_subcategory),
                         tint = if (subCategory.protected) SuperCartColors.gray else androidx.compose.ui.graphics.Color.Red
                     )
                 }

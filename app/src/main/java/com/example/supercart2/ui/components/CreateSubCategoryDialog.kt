@@ -21,6 +21,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -36,7 +39,7 @@ fun CreateSubCategoryDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Create New Sub-Category",
+                text = stringResource(R.string.create_new_subcategory),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -46,7 +49,7 @@ fun CreateSubCategoryDialog(
             OutlinedTextField(
                 value = subCategoryName,
                 onValueChange = { subCategoryName = it },
-                label = { Text("Sub-Category Name") },
+                label = { Text(stringResource(R.string.subcategory_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -74,7 +77,7 @@ fun CreateSubCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cancel)
                     )
                 }
                 
@@ -94,7 +97,7 @@ fun CreateSubCategoryDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Create Sub-Category"
+                        contentDescription = stringResource(R.string.create_subcategory)
                     )
                 }
             }
