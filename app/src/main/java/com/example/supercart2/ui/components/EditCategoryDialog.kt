@@ -46,6 +46,7 @@ import com.example.supercart2.models.SubCategory
 import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
+import com.example.supercart2.utils.localizedSubCategoryDisplayName
 
 @Composable
 fun EditCategoryDialog(
@@ -377,7 +378,7 @@ private fun SubCategoryCard(
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                     Text(
-                        text = subCategory.name,
+                        text = localizedSubCategoryDisplayName(subCategory.name),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
                         color = SuperCartColors.black
                     )

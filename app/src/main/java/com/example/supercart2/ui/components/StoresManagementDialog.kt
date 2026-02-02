@@ -38,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -82,7 +84,7 @@ fun StoresManagementDialog(
         modifier = Modifier.fillMaxSize(),
         title = { 
             Text(
-                text = "Stores Management",
+                text = stringResource(R.string.stores_management),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -105,13 +107,13 @@ fun StoresManagementDialog(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "No stores yet",
+                            text = stringResource(R.string.no_stores_yet),
                             style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                             color = SuperCartColors.gray
                         )
                         Spacer(modifier = Modifier.height(SuperCartSpacing.sm))
                         Text(
-                            text = "Create your first store to get started",
+                            text = stringResource(R.string.no_stores_available_create),
                             style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                             color = SuperCartColors.gray,
                             textAlign = TextAlign.Center
@@ -175,7 +177,7 @@ fun StoresManagementDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel"
+                        contentDescription = stringResource(R.string.cancel)
                     )
                 }
                 
@@ -190,7 +192,7 @@ fun StoresManagementDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Create New Store"
+                        contentDescription = stringResource(R.string.create_new_store)
                     )
                 }
             }
@@ -246,7 +248,7 @@ private fun StoreCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Move Up",
+                            contentDescription = stringResource(R.string.move_up),
                             tint = if (canMoveUp) SuperCartColors.primaryGreen else SuperCartColors.gray
                         )
                     }
@@ -258,7 +260,7 @@ private fun StoreCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Move Down",
+                            contentDescription = stringResource(R.string.move_down),
                             tint = if (canMoveDown) SuperCartColors.primaryGreen else SuperCartColors.gray
                         )
                     }
@@ -269,7 +271,7 @@ private fun StoreCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit Store",
+                            contentDescription = stringResource(R.string.edit_store),
                             tint = SuperCartColors.primaryGreen
                         )
                     }

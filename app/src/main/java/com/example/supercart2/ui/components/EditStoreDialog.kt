@@ -53,7 +53,7 @@ fun EditStoreDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = {
                 Text(
-                    text = "Delete Store",
+                    text = stringResource(R.string.delete_store),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -61,7 +61,7 @@ fun EditStoreDialog(
             },
             text = {
                 Text(
-                    text = "Are you sure you want to delete '${store.name}'? This will unlink all groceries from this store.",
+                    text = stringResource(R.string.delete_store_confirmation, store.name),
                     style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
@@ -82,7 +82,7 @@ fun EditStoreDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Cancel"
+                            contentDescription = stringResource(R.string.cancel)
                         )
                     }
                     
@@ -107,7 +107,7 @@ fun EditStoreDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete"
+                            contentDescription = stringResource(R.string.delete)
                         )
                     }
                 }
@@ -125,7 +125,7 @@ fun EditStoreDialog(
             ) {
                 Spacer(modifier = Modifier.weight(0.1f))
                 Text(
-                    text = "Edit Store",
+                    text = stringResource(R.string.edit_store),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(0.8f)
@@ -138,7 +138,7 @@ fun EditStoreDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete Store",
+                        contentDescription = stringResource(R.string.delete_store),
                         tint = Color.Red
                     )
                 }
@@ -213,7 +213,7 @@ fun EditStoreDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Update Store"
+                        contentDescription = stringResource(R.string.update_store)
                     )
                 }
             }

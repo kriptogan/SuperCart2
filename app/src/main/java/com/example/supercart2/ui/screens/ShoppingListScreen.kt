@@ -47,6 +47,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.LaunchedEffect
 import com.example.supercart2.ui.components.StoreBasedDisplay
 import com.example.supercart2.ui.components.HideStoresDialog
+import com.example.supercart2.utils.localizedCategoryDisplayName
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -419,13 +420,13 @@ fun ShoppingListScreen() {
             }
         }
 
-        // Scrollable content area
+        // Scrollable content area (bottom padding from Scaffold innerPadding in MainActivity)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     top = if (viewMode == ShoppingListViewMode.STORE) 280.dp else 230.dp, // Extra space for hide button in store view
-                    bottom = 100.dp, // Height of the bottom navigation bar + extra gap
+                    bottom = SuperCartSpacing.md,
                     start = SuperCartSpacing.md,
                     end = SuperCartSpacing.md
                 )
@@ -533,7 +534,7 @@ fun ShoppingListScreen() {
                                     subCategory.groceries.forEach { grocery ->
                                         BoughtGroceryCard(
                                             grocery = grocery,
-                                            categoryName = category.category.name,
+                                            categoryName = localizedCategoryDisplayName(category.category.name),
                                             onRemove = {
                                                 // Update grocery using DataManagerObject helper
                                                 DataManagerObject.updateGrocery(grocery.uuid) { 

@@ -350,13 +350,13 @@ fun HomeScreen() {
             }
         }
 
-        // Scrollable content
+        // Scrollable content (bottom padding from Scaffold innerPadding in MainActivity)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     top = 180.dp, // Height of the top bar + extra gap
-                    bottom = 100.dp, // Height of the bottom navigation bar + extra gap
+                    bottom = SuperCartSpacing.md,
                     start = SuperCartSpacing.md,
                     end = SuperCartSpacing.md
                 )

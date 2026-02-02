@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.example.supercart2.R
+import com.example.supercart2.utils.localizedCategoryDisplayName
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartShapes
@@ -363,7 +364,7 @@ private fun CategoryCard(
             modifier = Modifier.padding(SuperCartSpacing.md)
         ) {
             Text(
-                text = category.name,
+                text = localizedCategoryDisplayName(category.name),
                 style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                 color = SuperCartColors.black
             )

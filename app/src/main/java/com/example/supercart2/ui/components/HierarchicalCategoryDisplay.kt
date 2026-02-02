@@ -34,6 +34,8 @@ import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.models.Grocery
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.data.DataManagerObject
+import com.example.supercart2.utils.localizedCategoryDisplayName
+import com.example.supercart2.utils.localizedSubCategoryDisplayName
 import com.example.supercart2.data.DataStoreManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -135,7 +137,7 @@ private fun CategorySection(
                 // Category name and count
                 Column {
                     Text(
-                        text = categoryWithSubs.category.name,
+                        text = localizedCategoryDisplayName(categoryWithSubs.category.name),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -202,7 +204,7 @@ private fun SubCategorySection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = subCategoryWithGroceries.subCategory.name,
+                    text = localizedSubCategoryDisplayName(subCategoryWithGroceries.subCategory.name),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -348,7 +350,7 @@ private fun GroceryItem(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = categoryName,
+                    text = localizedCategoryDisplayName(categoryName),
                     fontSize = 12.sp,
                     color = SuperCartColors.gray
                 )

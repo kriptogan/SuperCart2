@@ -70,12 +70,19 @@
     <!-- Stores -->    
     <!-- Stores -->
     <string name="manage_stores">Управление на магазини</string>
+    <string name="stores_management">Управление на магазини</string>
     <string name="create_store">Създаване на магазин</string>
+    <string name="create_new_store">Създаване на нов магазин</string>
     <string name="edit_store">Редактиране на магазин</string>
+    <string name="update_store">Актуализиране на магазин</string>
     <string name="delete_store">Изтриване на магазин</string>
+    <string name="delete_store_confirmation">Сигурни ли сте, че искате да изтриете \'%s\'? Това ще отмени връзката на всички продукти с този магазин.</string>
     <string name="store_name">Име на магазин</string>
     <string name="link_to_store">Свързване с магазин</string>
     <string name="select_stores">Избор на магазини</string>
+    <string name="no_stores_yet">Все още няма магазини</string>
+    <string name="move_up">Премести нагоре</string>
+    <string name="move_down">Премести надолу</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Семейна група</string>
@@ -183,6 +190,10 @@
     <string name="sub_categories">Подкатегории</string>
     <string name="create_new_category">Създаване на нова категория</string>
     <string name="general">Общи</string>
+    <!-- Default category/subcategory display names (translated) -->
+    <string name="default_category_other">Други</string>
+    <string name="default_category_vegetables">Зеленчуци</string>
+    <string name="default_category_fruits">Плодове</string>
     <string name="items">артикула</string>
     <string name="more">повече</string>
     <string name="no_groceries_yet">Все още няма продукти</string>

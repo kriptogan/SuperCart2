@@ -70,12 +70,19 @@
     <!-- Stores -->    
     <!-- Stores -->
     <string name="manage_stores">Управление магазинами</string>
+    <string name="stores_management">Управление магазинами</string>
     <string name="create_store">Создать магазин</string>
+    <string name="create_new_store">Создать новый магазин</string>
     <string name="edit_store">Редактировать магазин</string>
+    <string name="update_store">Обновить магазин</string>
     <string name="delete_store">Удалить магазин</string>
+    <string name="delete_store_confirmation">Вы уверены, что хотите удалить \'%s\'? Это отвяжет все продукты от этого магазина.</string>
     <string name="store_name">Название магазина</string>
     <string name="link_to_store">Привязать к магазину</string>
     <string name="select_stores">Выбрать магазины</string>
+    <string name="no_stores_yet">Пока нет магазинов</string>
+    <string name="move_up">Переместить вверх</string>
+    <string name="move_down">Переместить вниз</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Семейная группа</string>
@@ -183,6 +190,10 @@
     <string name="sub_categories">Подкатегории</string>
     <string name="create_new_category">Создать новую категорию</string>
     <string name="general">Общие</string>
+    <!-- Default category/subcategory display names (translated) -->
+    <string name="default_category_other">Другое</string>
+    <string name="default_category_vegetables">Овощи</string>
+    <string name="default_category_fruits">Фрукты</string>
     <string name="items">элементов</string>
     <string name="more">еще</string>
     <string name="no_groceries_yet">Продуктов пока нет</string>

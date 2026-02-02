@@ -25,6 +25,7 @@ import com.example.supercart2.data.SubCategoryWithGroceries
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import com.example.supercart2.data.DataStoreManager
+import com.example.supercart2.utils.localizedSubCategoryDisplayName
 
 @Composable
 fun SubCategorySelectionDialog(
@@ -79,7 +80,7 @@ fun SubCategorySelectionDialog(
                             Spacer(modifier = Modifier.width(28.dp))
                         }
                         Text(
-                            text = subCategory.name,
+                            text = localizedSubCategoryDisplayName(subCategory.name),
                             modifier = Modifier.weight(1f),
                             fontWeight = FontWeight.Medium
                         )

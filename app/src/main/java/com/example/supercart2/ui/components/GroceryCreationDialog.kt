@@ -72,6 +72,8 @@ import com.example.supercart2.models.Grocery
 import com.example.supercart2.ui.components.CategorySelectionDialog
 import com.example.supercart2.ui.components.SubCategorySelectionDialog
 import com.example.supercart2.ui.components.StoreSelectionDialog
+import com.example.supercart2.utils.localizedCategoryDisplayName
+import com.example.supercart2.utils.localizedSubCategoryDisplayName
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -409,7 +411,7 @@ fun GroceryCreationDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = selectedCategory?.name ?: stringResource(R.string.select_category),
+                                text = selectedCategory?.let { localizedCategoryDisplayName(it.name) } ?: stringResource(R.string.select_category),
                                 color = if (selectedCategory != null) SuperCartColors.black else SuperCartColors.gray
                             )
                             Icon(
@@ -451,7 +453,7 @@ fun GroceryCreationDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = selectedSubCategory?.name ?: stringResource(R.string.select_sub_category),
+                                text = selectedSubCategory?.let { localizedSubCategoryDisplayName(it.name) } ?: stringResource(R.string.select_sub_category),
                                 color = if (selectedSubCategory != null) SuperCartColors.black else SuperCartColors.gray
                             )
                             Icon(

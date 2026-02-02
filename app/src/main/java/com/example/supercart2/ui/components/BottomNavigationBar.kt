@@ -1,6 +1,7 @@
 package com.example.supercart2.ui.components
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -41,6 +42,7 @@ fun BottomNavigationBar(
     )
     
     NavigationBar(
+        modifier = Modifier.navigationBarsPadding(),
         containerColor = SuperCartColors.primaryGreen,
         contentColor = SuperCartColors.white
     ) {

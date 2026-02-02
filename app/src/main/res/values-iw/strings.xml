@@ -70,12 +70,19 @@
     <!-- Stores -->    
     <!-- Stores -->
     <string name="manage_stores">נהל חנויות</string>
+    <string name="stores_management">ניהול חנויות</string>
     <string name="create_store">צור חנות</string>
+    <string name="create_new_store">צור חנות חדשה</string>
     <string name="edit_store">ערוך חנות</string>
+    <string name="update_store">עדכן חנות</string>
     <string name="delete_store">מחק חנות</string>
+    <string name="delete_store_confirmation">האם אתה בטוח שברצונך למחוק את \'%s\'? פעולה זו תנתק את כל המוצרים מהחנות הזו.</string>
     <string name="store_name">שם חנות</string>
     <string name="link_to_store">קשר לחנות</string>
     <string name="select_stores">בחר חנויות</string>
+    <string name="no_stores_yet">אין חנויות עדיין</string>
+    <string name="move_up">הזז למעלה</string>
+    <string name="move_down">הזז למטה</string>
     
     <!-- Group Sharing -->
     <string name="family_group">קבוצה משפחתית</string>
@@ -183,6 +190,10 @@
     <string name="sub_categories">תת-קטגוריות</string>
     <string name="create_new_category">צור קטגוריה חדשה</string>
     <string name="general">כללי</string>
+    <!-- Default category/subcategory display names (translated) -->
+    <string name="default_category_other">אחר</string>
+    <string name="default_category_vegetables">ירקות</string>
+    <string name="default_category_fruits">פירות</string>
     <string name="items">פריטים</string>
     <string name="more">עוד</string>
     <string name="no_groceries_yet">אין מוצרים עדיין</string>

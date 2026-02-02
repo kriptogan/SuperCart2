@@ -70,12 +70,19 @@
     
     <!-- Stores -->
     <string name="manage_stores">Manage Stores</string>
+    <string name="stores_management">Stores Management</string>
     <string name="create_store">Create Store</string>
+    <string name="create_new_store">Create New Store</string>
     <string name="edit_store">Edit Store</string>
+    <string name="update_store">Update Store</string>
     <string name="delete_store">Delete Store</string>
+    <string name="delete_store_confirmation">Are you sure you want to delete \'%s\'? This will unlink all groceries from this store.</string>
     <string name="store_name">Store Name</string>
     <string name="link_to_store">Link to Store</string>
     <string name="select_stores">Select Stores</string>
+    <string name="no_stores_yet">No stores yet</string>
+    <string name="move_up">Move Up</string>
+    <string name="move_down">Move Down</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Family Group</string>
@@ -183,6 +190,10 @@
     <string name="sub_categories">Sub-Categories</string>
     <string name="create_new_category">Create New Category</string>
     <string name="general">General</string>
+    <!-- Default category/subcategory display names (translated) -->
+    <string name="default_category_other">Other</string>
+    <string name="default_category_vegetables">Vegetables</string>
+    <string name="default_category_fruits">Fruits</string>
     <string name="items">items</string>
     <string name="more">more</string>
     <string name="no_groceries_yet">No groceries yet</string>
