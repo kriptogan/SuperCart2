@@ -39,8 +39,7 @@ fun BurgerMenu(
     onManageStoresClick: () -> Unit = {},
     onManageGroupClick: () -> Unit = {},
     onImportGroceriesClick: () -> Unit,
-    onSettingsClick: () -> Unit = {},
-    onLanguageClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
@@ -92,27 +91,7 @@ fun BurgerMenu(
         onDismissRequest = { expanded = false },
         containerColor = SuperCartColors.white
     ) {
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_categories_management), fontWeight = FontWeight.Bold) },
-            onClick = {
-                onCategoriesManagementClick()
-                expanded = false
-            }
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_manage_stores), fontWeight = FontWeight.Bold) },
-            onClick = {
-                onManageStoresClick()
-                expanded = false
-            }
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_family_group), fontWeight = FontWeight.Bold) },
-            onClick = {
-                onManageGroupClick()
-                expanded = false
-            }
-        )
+        // 1. Import Groceries
         DropdownMenuItem(
             text = { Text(stringResource(R.string.menu_import_groceries), fontWeight = FontWeight.Bold) },
             onClick = {
@@ -120,6 +99,23 @@ fun BurgerMenu(
                 expanded = false
             }
         )
+        // 2. Manage Categories
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.menu_categories_management), fontWeight = FontWeight.Bold) },
+            onClick = {
+                onCategoriesManagementClick()
+                expanded = false
+            }
+        )
+        // 3. Manage Stores
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.menu_manage_stores), fontWeight = FontWeight.Bold) },
+            onClick = {
+                onManageStoresClick()
+                expanded = false
+            }
+        )
+        // 4. Settings
         DropdownMenuItem(
             text = { Text(stringResource(R.string.menu_settings), fontWeight = FontWeight.Bold) },
             onClick = {
@@ -127,14 +123,15 @@ fun BurgerMenu(
                 expanded = false
             }
         )
+        // 5. Group Sharing
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_language), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.menu_family_group), fontWeight = FontWeight.Bold) },
             onClick = {
-                onLanguageClick()
+                onManageGroupClick()
                 expanded = false
             }
         )
-        // Firebase Upload Option
+        // 6. Upload to Cloud
         DropdownMenuItem(
             text = {
                 Column {
@@ -174,7 +171,7 @@ fun BurgerMenu(
             },
             enabled = hasGroupCode && !isUploading && !isDownloading
         )
-        // Firebase Download Option
+        // 7. Download from Cloud
         DropdownMenuItem(
             text = {
                 Column {

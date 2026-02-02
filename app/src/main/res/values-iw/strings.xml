@@ -10,9 +10,9 @@
     
     <!-- Menu -->
     <string name="menu">תפריט</string>
-    <string name="menu_categories_management">ניהול קטגוריות</string>
+    <string name="menu_categories_management">נהל קטגוריות</string>
     <string name="menu_manage_stores">נהל חנויות</string>
-    <string name="menu_family_group">קבוצה משפחתית</string>
+    <string name="menu_family_group">שיתוף קבוצה</string>
     <string name="menu_import_groceries">ייבוא מוצרים</string>
     <string name="menu_settings">הגדרות</string>
     <string name="menu_upload_cloud">העלה לענן</string>

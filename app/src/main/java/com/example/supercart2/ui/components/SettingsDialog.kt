@@ -1,5 +1,6 @@
 package com.example.supercart2.ui.components
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -14,24 +15,35 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.supercart2.R
 import com.example.supercart2.data.SettingsManager
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
+import com.example.supercart2.utils.AppLanguage
+import com.example.supercart2.utils.LanguageManager
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsDialog(
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
+    val activity = context as? ComponentActivity
     var showAlerts by remember { mutableStateOf(true) }
+    var currentLanguage by remember { mutableStateOf<AppLanguage?>(null) }
+    var expandedLanguage by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // Load current settings
     LaunchedEffect(Unit) {
         showAlerts = SettingsManager.getShowAlerts()
+        currentLanguage = LanguageManager.getCurrentLanguage(context)
     }
     
     AlertDialog(
@@ -85,6 +97,71 @@ fun SettingsDialog(
                             checkedTrackColor = SuperCartColors.primaryGreen.copy(alpha = 0.5f)
                         )
                     )
+                }
+                
+                // Language Selection
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = SuperCartSpacing.sm)
+                ) {
+                    Text(
+                        text = stringResource(R.string.menu_language),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+                    )
+                    ExposedDropdownMenuBox(
+                        expanded = expandedLanguage,
+                        onExpandedChange = { expandedLanguage = !expandedLanguage }
+                    ) {
+                        OutlinedTextField(
+                            value = currentLanguage?.nativeDisplayName ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedLanguage)
+                            },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = SuperCartColors.primaryGreen,
+                                unfocusedBorderColor = SuperCartColors.gray
+                            )
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedLanguage,
+                            onDismissRequest = { expandedLanguage = false }
+                        ) {
+                            AppLanguage.values().forEach { language ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = language.displayName,
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                            Text(
+                                                text = language.nativeDisplayName,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = SuperCartColors.gray
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        scope.launch {
+                                            LanguageManager.setLanguage(context, language)
+                                            currentLanguage = language
+                                            expandedLanguage = false
+                                            // Recreate activity to apply new language
+                                            activity?.recreate()
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         },

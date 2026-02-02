@@ -50,7 +50,6 @@ import com.example.supercart2.ui.components.GroceryCreationDialog
 import com.example.supercart2.ui.components.ImportGroceriesDialog
 import com.example.supercart2.ui.components.HierarchicalCategoryDisplay
 import com.example.supercart2.ui.components.SettingsDialog
-import com.example.supercart2.ui.components.LanguageSelectionDialog
 import com.example.supercart2.data.SettingsManager
 import androidx.compose.runtime.collectAsState
 import com.example.supercart2.ui.theme.SuperCartSpacing
@@ -71,7 +70,6 @@ fun HomeScreen() {
     var showGroceryCreation by remember { mutableStateOf(false) }
     var showImportGroceries by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
-    var showLanguageSelection by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
     var isAlertFilterActive by remember { mutableStateOf(false) }
@@ -198,9 +196,6 @@ fun HomeScreen() {
                         },
                         onSettingsClick = {
                             showSettings = true
-                        },
-                        onLanguageClick = {
-                            showLanguageSelection = true
                         }
                     )
                 }
@@ -397,12 +392,6 @@ fun HomeScreen() {
     if (showSettings) {
         SettingsDialog(
             onDismiss = { showSettings = false }
-        )
-    }
-    
-    if (showLanguageSelection) {
-        LanguageSelectionDialog(
-            onDismiss = { showLanguageSelection = false }
         )
     }
     

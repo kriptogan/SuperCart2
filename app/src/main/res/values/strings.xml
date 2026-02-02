@@ -10,9 +10,9 @@
     
     <!-- Menu -->
     <string name="menu">Menu</string>
-    <string name="menu_categories_management">Categories Management</string>
+    <string name="menu_categories_management">Manage Categories</string>
     <string name="menu_manage_stores">Manage Stores</string>
-    <string name="menu_family_group">Family Group</string>
+    <string name="menu_family_group">Group Sharing</string>
     <string name="menu_import_groceries">Import Groceries</string>
     <string name="menu_settings">Settings</string>
     <string name="menu_upload_cloud">Upload to Cloud</string>
