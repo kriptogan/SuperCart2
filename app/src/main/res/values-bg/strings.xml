@@ -17,6 +17,7 @@
     <string name="menu_settings">Настройки</string>
     <string name="menu_upload_cloud">Качване в облак</string>
     <string name="menu_download_cloud">Изтегляне от облак</string>
+    <string name="menu_sync_data">Синхронизация на данни</string>
     <string name="menu_language">Език</string>
     <string name="requires_family_group">Изисква семейна група</string>
     <string name="please_create_or_join_group">Моля, първо създайте или се присъединете към семейна група</string>
@@ -141,6 +142,9 @@
     <string name="download_success_message">Вашите данни бяха успешно изтеглени от облака.</string>
     <string name="upload_failed">Качването се провали: %s</string>
     <string name="download_failed">Изтеглянето се провали: %s</string>
+    <string name="sync_successful">Синхронизацията е успешна</string>
+    <string name="sync_success_message">Вашите данни са синхронизирани с облака.</string>
+    <string name="sync_failed">Синхронизацията се провали: %s</string>
     <string name="error">Грешка</string>
     <string name="group_created">Групата е създадена успешно</string>
     <string name="group_joined">Успешно се присъединихте към групата</string>

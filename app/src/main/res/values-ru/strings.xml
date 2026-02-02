@@ -17,6 +17,7 @@
     <string name="menu_settings">Настройки</string>
     <string name="menu_upload_cloud">Загрузить в облако</string>
     <string name="menu_download_cloud">Скачать из облака</string>
+    <string name="menu_sync_data">Синхронизация данных</string>
     <string name="menu_language">Язык</string>
     <string name="requires_family_group">Требуется семейная группа</string>
     <string name="please_create_or_join_group">Пожалуйста, сначала создайте или присоединитесь к семейной группе</string>
@@ -141,6 +142,9 @@
     <string name="download_success_message">Ваши данные успешно скачаны из облака.</string>
     <string name="upload_failed">Загрузка не удалась: %s</string>
     <string name="download_failed">Скачивание не удалось: %s</string>
+    <string name="sync_successful">Синхронизация успешна</string>
+    <string name="sync_success_message">Ваши данные синхронизированы с облаком.</string>
+    <string name="sync_failed">Синхронизация не удалась: %s</string>
     <string name="error">Ошибка</string>
     <string name="group_created">Группа успешно создана</string>
     <string name="group_joined">Вы успешно присоединились к группе</string>

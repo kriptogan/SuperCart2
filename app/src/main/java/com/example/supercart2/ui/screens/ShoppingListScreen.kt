@@ -42,6 +42,7 @@ import com.example.supercart2.ui.components.StoresManagementDialog
 import com.example.supercart2.ui.components.GroceryCreationDialog
 import com.example.supercart2.ui.components.ImportGroceriesDialog
 import com.example.supercart2.ui.components.SettingsDialog
+import com.example.supercart2.ui.components.GroupManagementDialog
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +67,7 @@ fun ShoppingListScreen() {
     var showFinishConfirmation by remember { mutableStateOf(false) }
     var showImportGroceries by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showGroupManagement by remember { mutableStateOf(false) }
     var showHideStoresDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var isAllExpanded by remember { mutableStateOf(false) }
@@ -207,6 +209,9 @@ fun ShoppingListScreen() {
                         },
                         onManageStoresClick = {
                             showStoresManagement = true
+                        },
+                        onManageGroupClick = {
+                            showGroupManagement = true
                         },
                         onImportGroceriesClick = {
                             showImportGroceries = true
@@ -713,6 +718,12 @@ fun ShoppingListScreen() {
         if (showSettings) {
             SettingsDialog(
                 onDismiss = { showSettings = false }
+            )
+        }
+        
+        if (showGroupManagement) {
+            GroupManagementDialog(
+                onDismiss = { showGroupManagement = false }
             )
         }
         

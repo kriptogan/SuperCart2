@@ -53,13 +53,12 @@ fun BurgerMenu(
         }
     }
     
-    // Upload/Download state
-    var isUploading by remember { mutableStateOf(false) }
-    var isDownloading by remember { mutableStateOf(false) }
-    var showUploadSuccess by remember { mutableStateOf(false) }
-    var showDownloadSuccess by remember { mutableStateOf(false) }
+    // Sync state: null = idle, "uploading" = phase 1, "downloading" = phase 2
+    var syncPhase by remember { mutableStateOf<String?>(null) }
+    var showSyncSuccess by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    val isSyncing = syncPhase != null
     
     Card(
         modifier = Modifier
@@ -131,11 +130,11 @@ fun BurgerMenu(
                 expanded = false
             }
         )
-        // 6. Upload to Cloud
+        // 6. Sync data (upload then download)
         DropdownMenuItem(
             text = {
                 Column {
-                    Text(stringResource(R.string.menu_upload_cloud), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.menu_sync_data), fontWeight = FontWeight.Bold)
                     if (!hasGroupCode) {
                         Text(
                             stringResource(R.string.requires_family_group),
@@ -149,57 +148,18 @@ fun BurgerMenu(
                 if (hasGroupCode) {
                     expanded = false
                     scope.launch {
-                        isUploading = true
+                        syncPhase = "uploading"
                         try {
                             FirebaseManager.uploadData()
-                            isUploading = false
-                            showUploadSuccess = true
-                        } catch (e: Exception) {
-                            isUploading = false
-                            errorMessage = context.getString(R.string.upload_failed, e.message ?: "Unknown error")
-                            showError = true
-                            android.util.Log.e("BurgerMenu", "Upload failed", e)
-                        }
-                    }
-                } else {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.please_create_or_join_group),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            },
-            enabled = hasGroupCode && !isUploading && !isDownloading
-        )
-        // 7. Download from Cloud
-        DropdownMenuItem(
-            text = {
-                Column {
-                    Text(stringResource(R.string.menu_download_cloud), fontWeight = FontWeight.Bold)
-                    if (!hasGroupCode) {
-                        Text(
-                            stringResource(R.string.requires_family_group),
-                            fontSize = 10.sp,
-                            color = Color.Red
-                        )
-                    }
-                }
-            },
-            onClick = {
-                if (hasGroupCode) {
-                    expanded = false
-                    scope.launch {
-                        isDownloading = true
-                        try {
+                            syncPhase = "downloading"
                             FirebaseManager.downloadData()
-                            // UI update is already triggered inside downloadData()
-                            isDownloading = false
-                            showDownloadSuccess = true
+                            syncPhase = null
+                            showSyncSuccess = true
                         } catch (e: Exception) {
-                            isDownloading = false
-                            errorMessage = context.getString(R.string.download_failed, e.message ?: "Unknown error")
+                            syncPhase = null
+                            errorMessage = context.getString(R.string.sync_failed, e.message ?: "Unknown error")
                             showError = true
-                            android.util.Log.e("BurgerMenu", "Download failed", e)
+                            android.util.Log.e("BurgerMenu", "Sync failed", e)
                         }
                     }
                 } else {
@@ -210,17 +170,21 @@ fun BurgerMenu(
                     ).show()
                 }
             },
-            enabled = hasGroupCode && !isUploading && !isDownloading
+            enabled = hasGroupCode && !isSyncing
         )
     }
     
-    // Progress Dialog for Upload
-    if (isUploading) {
+    // Progress Dialog for Sync (phase: uploading or downloading)
+    syncPhase?.let { phase ->
+        val (titleRes, messageRes) = when (phase) {
+            "uploading" -> R.string.uploading_to_cloud to R.string.please_wait_upload
+            else -> R.string.downloading_from_cloud to R.string.please_wait_download
+        }
         AlertDialog(
-            onDismissRequest = { /* Prevent dismissal during upload */ },
+            onDismissRequest = { /* Prevent dismissal during sync */ },
             title = {
                 Text(
-                    text = stringResource(R.string.uploading_to_cloud),
+                    text = stringResource(titleRes),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -236,50 +200,19 @@ fun BurgerMenu(
                     )
                     Spacer(modifier = Modifier.height(SuperCartSpacing.md))
                     Text(
-                        text = stringResource(R.string.please_wait_upload),
+                        text = stringResource(messageRes),
                         textAlign = TextAlign.Center
                     )
                 }
             },
-            confirmButton = { /* No button during upload */ }
+            confirmButton = { /* No button during sync */ }
         )
     }
     
-    // Progress Dialog for Download
-    if (isDownloading) {
+    // Success Dialog for Sync
+    if (showSyncSuccess) {
         AlertDialog(
-            onDismissRequest = { /* Prevent dismissal during download */ },
-            title = {
-                Text(
-                    text = stringResource(R.string.downloading_from_cloud),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = SuperCartColors.primaryGreen
-                    )
-                    Spacer(modifier = Modifier.height(SuperCartSpacing.md))
-                    Text(
-                        text = stringResource(R.string.please_wait_download),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            },
-            confirmButton = { /* No button during download */ }
-        )
-    }
-    
-    // Success Dialog for Upload
-    if (showUploadSuccess) {
-        AlertDialog(
-            onDismissRequest = { showUploadSuccess = false },
+            onDismissRequest = { showSyncSuccess = false },
             title = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -294,7 +227,7 @@ fun BurgerMenu(
                     )
                     Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
                     Text(
-                        text = stringResource(R.string.upload_successful),
+                        text = stringResource(R.string.sync_successful),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         color = SuperCartColors.primaryGreen
@@ -303,57 +236,13 @@ fun BurgerMenu(
             },
             text = {
                 Text(
-                    text = stringResource(R.string.upload_success_message),
+                    text = stringResource(R.string.sync_success_message),
                     textAlign = TextAlign.Center
                 )
             },
             confirmButton = {
                 Button(
-                    onClick = { showUploadSuccess = false },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.primaryGreen
-                    )
-                ) {
-                    Text(stringResource(R.string.ok))
-                }
-            }
-        )
-    }
-    
-    // Success Dialog for Download
-    if (showDownloadSuccess) {
-        AlertDialog(
-            onDismissRequest = { showDownloadSuccess = false },
-            title = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = SuperCartColors.primaryGreen,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
-                    Text(
-                        text = stringResource(R.string.download_successful),
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Bold,
-                        color = SuperCartColors.primaryGreen
-                    )
-                }
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.download_success_message),
-                    textAlign = TextAlign.Center
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showDownloadSuccess = false },
+                    onClick = { showSyncSuccess = false },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SuperCartColors.primaryGreen
                     )

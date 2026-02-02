@@ -17,6 +17,7 @@
     <string name="menu_settings">Settings</string>
     <string name="menu_upload_cloud">Upload to Cloud</string>
     <string name="menu_download_cloud">Download from Cloud</string>
+    <string name="menu_sync_data">Sync data</string>
     <string name="menu_language">Language</string>
     <string name="requires_family_group">Requires family group</string>
     <string name="please_create_or_join_group">Please create or join a family group first</string>
@@ -141,6 +142,9 @@
     <string name="download_success_message">Your data has been successfully downloaded from the cloud.</string>
     <string name="upload_failed">Upload failed: %s</string>
     <string name="download_failed">Download failed: %s</string>
+    <string name="sync_successful">Sync Successful</string>
+    <string name="sync_success_message">Your data has been synced with the cloud.</string>
+    <string name="sync_failed">Sync failed: %s</string>
     <string name="error">Error</string>
     <string name="group_created">Group created successfully</string>
     <string name="group_joined">Joined group successfully</string>

@@ -169,15 +169,15 @@ fun HomeScreen() {
                     top = SuperCartSpacing.xl
                 )
         ) {
-            // Burger menu and add grocery button row
+            // Burger menu and add grocery button row (same layout as ShoppingListScreen: burger left, center, plus right)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = SuperCartSpacing.md),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Burger menu with right padding
+                // Burger menu
                 Box(
                     modifier = Modifier.padding(start = 5.dp)
                 ) {

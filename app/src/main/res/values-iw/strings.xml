@@ -17,6 +17,7 @@
     <string name="menu_settings">הגדרות</string>
     <string name="menu_upload_cloud">העלה לענן</string>
     <string name="menu_download_cloud">הורד מהענן</string>
+    <string name="menu_sync_data">סנכרן נתונים</string>
     <string name="menu_language">שפה</string>
     <string name="requires_family_group">דורש קבוצה משפחתית</string>
     <string name="please_create_or_join_group">אנא צור או הצטרף לקבוצה משפחתית תחילה</string>
@@ -141,6 +142,9 @@
     <string name="download_success_message">הנתונים שלך הורדו בהצלחה מהענן.</string>
     <string name="upload_failed">העלאה נכשלה: %s</string>
     <string name="download_failed">הורדה נכשלה: %s</string>
+    <string name="sync_successful">סנכרון הצליח</string>
+    <string name="sync_success_message">הנתונים שלך סונכרנו עם הענן.</string>
+    <string name="sync_failed">סנכרון נכשל: %s</string>
     <string name="error">שגיאה</string>
     <string name="group_created">הקבוצה נוצרה בהצלחה</string>
     <string name="group_joined">הצטרפת לקבוצה בהצלחה</string>
