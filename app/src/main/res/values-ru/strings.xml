@@ -83,6 +83,9 @@
     <string name="no_stores_yet">Пока нет магазинов</string>
     <string name="move_up">Переместить вверх</string>
     <string name="move_down">Переместить вниз</string>
+    <string name="reorder_categories">Изменить порядок категорий</string>
+    <string name="reorder_categories_for_store">Изменить порядок категорий для %s</string>
+    <string name="save_order">Сохранить порядок</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Семейная группа</string>

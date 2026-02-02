@@ -23,6 +23,7 @@ object FirebaseManager {
     const val SUBCATEGORIES_COLLECTION = "subcategories"
     const val GROCERIES_COLLECTION = "groceries"
     const val STORES_COLLECTION = "stores"
+    const val STORE_CATEGORY_ORDERS_COLLECTION = "storeCategoryOrders"
     
     /**
      * Get Firestore collection reference for a group
@@ -217,6 +218,15 @@ object FirebaseManager {
                 }
             }
             
+            // Upload store category orders (single document per group)
+            val storeCategoryOrders = DataManagerObject.storeCategoryOrders.toMap()
+            val ordersDocRef = db.collection("groups")
+                .document(groupCode)
+                .collection(STORE_CATEGORY_ORDERS_COLLECTION)
+                .document("orders")
+            batch.set(ordersDocRef, mapOf("orders" to storeCategoryOrders), SetOptions.merge())
+            uploadedCount++
+            
             // Commit batch
             batch.commit().await()
             
@@ -371,9 +381,34 @@ object FirebaseManager {
             val storesSnapshot = getGroupCollection(groupCode, STORES_COLLECTION).get().await()
             val downloadedStores = storesSnapshot.documents.map { documentToStore(it) }
             
+            // Download store category orders
+            val ordersDocRef = db.collection("groups")
+                .document(groupCode)
+                .collection(STORE_CATEGORY_ORDERS_COLLECTION)
+                .document("orders")
+            val ordersDoc = try {
+                ordersDocRef.get().await()
+            } catch (e: Exception) {
+                android.util.Log.w("FirebaseManager", "No store category orders found (this is OK for new groups)", e)
+                null
+            }
+            
+            val downloadedStoreCategoryOrders = if (ordersDoc != null && ordersDoc.exists()) {
+                val ordersData = ordersDoc.data?.get("orders") as? Map<*, *>
+                ordersData?.mapNotNull { (key, value) ->
+                    val storeId = key as? String
+                    val categoryIds = (value as? List<*>)?.mapNotNull { it as? String }
+                    if (storeId != null && categoryIds != null) {
+                        storeId to categoryIds
+                    } else null
+                }?.toMap() ?: emptyMap()
+            } else {
+                emptyMap()
+            }
+            
             android.util.Log.d("FirebaseManager", "Downloaded: ${downloadedCategories.size} categories, " +
                 "${downloadedSubCategories.size} subcategories, ${downloadedGroceries.size} groceries, " +
-                "${downloadedStores.size} stores")
+                "${downloadedStores.size} stores, ${downloadedStoreCategoryOrders.size} store category orders")
             
             // Validate relationships
             if (DataConverter.validateRelationships(downloadedCategories, downloadedSubCategories, downloadedGroceries)) {
@@ -390,6 +425,10 @@ object FirebaseManager {
                 
                 DataManagerObject.stores.clear()
                 DataManagerObject.stores.addAll(downloadedStores)  // Keep deleted items too
+                
+                // Load store category orders
+                DataManagerObject.storeCategoryOrders.clear()
+                DataManagerObject.storeCategoryOrders.putAll(downloadedStoreCategoryOrders)
                 
                 DataManagerObject.updateData()
                 DataStoreManager.saveDataGlobally()

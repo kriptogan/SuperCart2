@@ -1,0 +1,63 @@
+PHASE 3: UI COMPONENTS
+=======================
+
+STEP 3.1: Create StoreCategoryOrderDialog.kt
+---------------------------------------------
+File: app/src/main/java/com/example/supercart2/ui/components/StoreCategoryOrderDialog.kt
+
+Create new file with structure:
+- AlertDialog with title, scrollable content, and buttons
+- LazyColumn showing categories that have items in the store
+- CategoryOrderCard for each category with up/down arrows
+- Save and Cancel buttons
+
+STEP 3.2: CategoryOrderCard Component
+-------------------------------------
+Similar to StoreCard in StoresManagementDialog:
+- Category name display
+- Up arrow (disabled if first)
+- Down arrow (disabled if last)
+- Row layout with proper spacing
+
+STEP 3.3: Add Button to StoreCard
+----------------------------------
+File: app/src/main/java/com/example/supercart2/ui/components/StoresManagementDialog.kt
+
+In StoreCard component, add new IconButton:
+- Icon: Icons.Default.Sort or similar
+- ContentDescription: "Reorder Categories"
+- onClick: Opens StoreCategoryOrderDialog
+- Position: Next to Edit button
+
+STEP 3.4: Dialog State Management
+----------------------------------
+In StoresManagementDialog:
+- Add state: var showCategoryOrderDialog by remember { mutableStateOf<Store?>(null) }
+- Pass store to dialog when opened
+- Handle onDismiss and onOrderUpdated callbacks
+
+STEP 3.5: Save Functionality
+-----------------------------
+In StoreCategoryOrderDialog:
+- On Save button click:
+  1. Get current order from UI state
+  2. Call DataManagerObject.setStoreCategoryOrder(storeId, categoryIds)
+  3. Call DataStoreManager.saveDataGlobally()
+  4. Call onOrderUpdated callback
+  5. Dismiss dialog
+
+STEP 3.6: Cancel Functionality
+------------------------------
+In StoreCategoryOrderDialog:
+- On Cancel button click:
+  1. Reset UI state to original order
+  2. Dismiss dialog without saving
+
+UI FLOW:
+--------
+1. User clicks "Reorder Categories" icon on StoreCard
+2. StoreCategoryOrderDialog opens showing categories for that store
+3. User clicks up/down arrows to reorder
+4. User clicks Save → order is persisted
+5. User clicks Cancel → changes are discarded
+6. Dialog closes, store management dialog refreshes

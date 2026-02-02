@@ -1,0 +1,218 @@
+PHASE 2: DATA MANAGEMENT LOGIC
+===============================
+
+STEP 2.1: getStoreCategoryOrder() Helper
+-----------------------------------------
+File: app/src/main/java/com/example/supercart2/data/DataManagerObject.kt
+
+Add function:
+```kotlin
+/**
+ * Get custom category order for a store
+ * @param storeId Store UUID
+ * @return List of category UUIDs in custom order, or null if no custom order exists
+ */
+fun getStoreCategoryOrder(storeId: String): List<String>? {
+    return storeCategoryOrders[storeId]
+}
+```
+
+STEP 2.2: setStoreCategoryOrder() Helper
+-----------------------------------------
+File: app/src/main/java/com/example/supercart2/data/DataManagerObject.kt
+
+Add function:
+```kotlin
+/**
+ * Set custom category order for a store
+ * @param storeId Store UUID
+ * @param categoryIds List of category UUIDs in desired order
+ */
+fun setStoreCategoryOrder(storeId: String, categoryIds: List<String>) {
+    storeCategoryOrders[storeId] = categoryIds.toList() // Create copy
+    version++ // Trigger recomposition
+}
+```
+
+STEP 2.3: swapStoreCategoryOrder() Helper
+-----------------------------------------
+File: app/src/main/java/com/example/supercart2/data/DataManagerObject.kt
+
+Add function:
+```kotlin
+/**
+ * Swap two categories in a store's custom order
+ * @param storeId Store UUID
+ * @param categoryId1 First category UUID
+ * @param categoryId2 Second category UUID
+ */
+fun swapStoreCategoryOrder(storeId: String, categoryId1: String, categoryId2: String) {
+    val currentOrder = storeCategoryOrders[storeId]?.toMutableList() 
+        ?: getSortedCategories().map { it.category.uuid }.toMutableList()
+    
+    val index1 = currentOrder.indexOf(categoryId1)
+    val index2 = currentOrder.indexOf(categoryId2)
+    
+    if (index1 != -1 && index2 != -1) {
+        // Swap
+        val temp = currentOrder[index1]
+        currentOrder[index1] = currentOrder[index2]
+        currentOrder[index2] = temp
+        
+        // Save updated order
+        storeCategoryOrders[storeId] = currentOrder
+        version++
+    }
+}
+```
+
+STEP 2.4: Modify groupGroceriesByStore()
+-----------------------------------------
+File: app/src/main/java/com/example/supercart2/data/DataManagerObject.kt
+
+Modify the function to apply custom ordering:
+
+```kotlin
+fun groupGroceriesByStore(
+    categories: List<CategoryWithSubCategories>
+): List<com.example.supercart2.ui.components.StoreWithCategories> {
+    val result = mutableListOf<com.example.supercart2.ui.components.StoreWithCategories>()
+    
+    // Group by each store
+    getSortedStores().forEach { store ->
+        val storeCategories = mutableListOf<CategoryWithSubCategories>()
+        
+        categories.forEach { categoryWithSubs ->
+            val categorySubCategories = mutableListOf<SubCategoryWithGroceries>()
+            
+            categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+                val groceriesForStore = subCategoryWithGroceries.groceries
+                    .filter { grocery ->
+                        grocery.storeIds.contains(store.uuid)
+                    }
+                
+                if (groceriesForStore.isNotEmpty()) {
+                    categorySubCategories.add(
+                        SubCategoryWithGroceries(
+                            subCategory = subCategoryWithGroceries.subCategory,
+                            groceries = groceriesForStore.toMutableList()
+                        )
+                    )
+                }
+            }
+            
+            if (categorySubCategories.isNotEmpty()) {
+                storeCategories.add(
+                    CategoryWithSubCategories(
+                        category = categoryWithSubs.category,
+                        subCategories = categorySubCategories.toMutableList()
+                    )
+                )
+            }
+        }
+        
+        // Apply custom ordering if exists, otherwise use global order
+        val customOrder = getStoreCategoryOrder(store.uuid)
+        if (customOrder != null) {
+            // Sort by custom order, then by viewOrder for any missing categories
+            val orderedCategories = mutableListOf<CategoryWithSubCategories>()
+            val unorderedCategories = storeCategories.toMutableList()
+            
+            // Add categories in custom order
+            customOrder.forEach { categoryId ->
+                val category = unorderedCategories.find { it.category.uuid == categoryId }
+                if (category != null) {
+                    orderedCategories.add(category)
+                    unorderedCategories.remove(category)
+                }
+            }
+            
+            // Add any remaining categories (not in custom order) sorted by viewOrder
+            orderedCategories.addAll(
+                unorderedCategories.sortedBy { it.category.viewOrder }
+            )
+            
+            storeCategories.clear()
+            storeCategories.addAll(orderedCategories)
+        } else {
+            // Use global order (viewOrder)
+            storeCategories.sortBy { it.category.viewOrder }
+        }
+        
+        if (storeCategories.isNotEmpty()) {
+            result.add(
+                com.example.supercart2.ui.components.StoreWithCategories(
+                    store = store,
+                    categories = storeCategories
+                )
+            )
+        }
+    }
+    
+    // Handle "Not Linked" section
+    val notLinkedCategories = mutableListOf<CategoryWithSubCategories>()
+    
+    categories.forEach { categoryWithSubs ->
+        val categorySubCategories = mutableListOf<SubCategoryWithGroceries>()
+        
+        categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
+            val groceriesNotLinked = subCategoryWithGroceries.groceries
+                .filter { grocery ->
+                    grocery.storeIds.isEmpty()
+                }
+            
+            if (groceriesNotLinked.isNotEmpty()) {
+                categorySubCategories.add(
+                    SubCategoryWithGroceries(
+                        subCategory = subCategoryWithGroceries.subCategory,
+                        groceries = groceriesNotLinked.toMutableList()
+                    )
+                )
+            }
+        }
+        
+        if (categorySubCategories.isNotEmpty()) {
+            notLinkedCategories.add(
+                CategoryWithSubCategories(
+                    category = categoryWithSubs.category,
+                    subCategories = categorySubCategories.toMutableList()
+                )
+            )
+        }
+    }
+    
+    // Sort not-linked categories by global order
+    notLinkedCategories.sortBy { it.category.viewOrder }
+    
+    if (notLinkedCategories.isNotEmpty()) {
+        result.add(
+            com.example.supercart2.ui.components.StoreWithCategories(
+                store = null,
+                categories = notLinkedCategories
+            )
+        )
+    }
+    
+    return result
+}
+```
+
+STEP 2.5: Cleanup on Category/Store Deletion (Optional)
+--------------------------------------------------------
+File: app/src/main/java/com/example/supercart2/data/DataManagerObject.kt
+
+Add cleanup logic when categories or stores are deleted:
+
+In deleteCategory():
+```kotlin
+// Remove category from all store orders
+storeCategoryOrders.forEach { (storeId, categoryIds) ->
+    storeCategoryOrders[storeId] = categoryIds.filter { it != category.uuid }
+}
+```
+
+In deleteStore():
+```kotlin
+// Remove store's custom order
+storeCategoryOrders.remove(store.uuid)
+```

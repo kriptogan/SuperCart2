@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
@@ -27,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
@@ -45,7 +50,20 @@ fun EditStoreDialog(
 ) {
     var storeName by remember { mutableStateOf(store.name) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showReorderCategories by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    
+    // Reorder Categories Dialog
+    if (showReorderCategories) {
+        StoreCategoryOrderDialog(
+            store = store,
+            onDismiss = { showReorderCategories = false },
+            onOrderUpdated = {
+                // Order is already saved in StoreCategoryOrderDialog
+                showReorderCategories = false
+            }
+        )
+    }
     
     // Delete confirmation dialog
     if (showDeleteConfirmation) {
@@ -162,6 +180,34 @@ fun EditStoreDialog(
                     ),
                     shape = SuperCartShapes.small
                 )
+                
+                Spacer(modifier = Modifier.height(SuperCartSpacing.md))
+                
+                // Reorder Categories Button
+                Button(
+                    onClick = { showReorderCategories = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen.copy(alpha = 0.1f),
+                        contentColor = SuperCartColors.primaryGreen
+                    ),
+                    shape = SuperCartShapes.small
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sort,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.reorder_categories),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             }
         },
         confirmButton = {

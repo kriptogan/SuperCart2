@@ -83,6 +83,9 @@
     <string name="no_stores_yet">אין חנויות עדיין</string>
     <string name="move_up">הזז למעלה</string>
     <string name="move_down">הזז למטה</string>
+    <string name="reorder_categories">סדר מחדש קטגוריות</string>
+    <string name="reorder_categories_for_store">סדר מחדש קטגוריות עבור %s</string>
+    <string name="save_order">שמור סדר</string>
     
     <!-- Group Sharing -->
     <string name="family_group">קבוצה משפחתית</string>

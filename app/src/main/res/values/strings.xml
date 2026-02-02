@@ -83,6 +83,9 @@
     <string name="no_stores_yet">No stores yet</string>
     <string name="move_up">Move Up</string>
     <string name="move_down">Move Down</string>
+    <string name="reorder_categories">Reorder Categories</string>
+    <string name="reorder_categories_for_store">Reorder Categories for %s</string>
+    <string name="save_order">Save Order</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Family Group</string>

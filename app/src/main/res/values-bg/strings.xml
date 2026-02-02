@@ -83,6 +83,9 @@
     <string name="no_stores_yet">Все още няма магазини</string>
     <string name="move_up">Премести нагоре</string>
     <string name="move_down">Премести надолу</string>
+    <string name="reorder_categories">Пренареждане на категории</string>
+    <string name="reorder_categories_for_store">Пренареждане на категории за %s</string>
+    <string name="save_order">Запази ред</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Семейна група</string>

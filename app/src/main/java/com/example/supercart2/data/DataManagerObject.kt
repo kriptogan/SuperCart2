@@ -16,6 +16,9 @@ object DataManagerObject {
     val stores: SnapshotStateList<Store> = mutableStateListOf()
     val hiddenStoreIds: SnapshotStateList<String> = mutableStateListOf()
     
+    // Store-specific category ordering: Map<StoreUUID, List<CategoryUUID>>
+    var storeCategoryOrders: MutableMap<String, List<String>> = mutableMapOf()
+    
     // Version counter to force recomposition
     private var _version by mutableStateOf(0)
     val version: Int get() = _version
@@ -161,6 +164,12 @@ object DataManagerObject {
             // Soft delete - mark as deleted instead of removing
             category.copy(deleted = true)
         }
+        
+        // Remove category from all store orders
+        storeCategoryOrders.forEach { (storeId, categoryIds) ->
+            storeCategoryOrders[storeId] = categoryIds.filter { it != categoryUuid }
+        }
+        
         android.util.Log.d("DataManagerObject", "Soft-deleted category: $categoryUuid")
     }
 
@@ -588,6 +597,9 @@ object DataManagerObject {
         // Remove from hidden list if present
         hiddenStoreIds.remove(storeUuid)
         
+        // Remove store's custom category order
+        storeCategoryOrders.remove(storeUuid)
+        
         android.util.Log.d("DataManagerObject", "Deleted store")
     }
 
@@ -603,6 +615,54 @@ object DataManagerObject {
 
     fun isStoreHidden(storeUuid: String): Boolean {
         return hiddenStoreIds.contains(storeUuid)
+    }
+
+    // ========== Store Category Order Management ==========
+    
+    /**
+     * Get custom category order for a store
+     * @param storeId Store UUID
+     * @return List of category UUIDs in custom order, or null if no custom order exists
+     */
+    fun getStoreCategoryOrder(storeId: String): List<String>? {
+        return storeCategoryOrders[storeId]
+    }
+    
+    /**
+     * Set custom category order for a store
+     * @param storeId Store UUID
+     * @param categoryIds List of category UUIDs in desired order
+     */
+    fun setStoreCategoryOrder(storeId: String, categoryIds: List<String>) {
+        storeCategoryOrders[storeId] = categoryIds.toList() // Create copy
+        notifyUpdate()
+        android.util.Log.d("DataManagerObject", "Set category order for store $storeId: ${categoryIds.size} categories")
+    }
+    
+    /**
+     * Swap two categories in a store's custom order
+     * @param storeId Store UUID
+     * @param categoryId1 First category UUID
+     * @param categoryId2 Second category UUID
+     */
+    fun swapStoreCategoryOrder(storeId: String, categoryId1: String, categoryId2: String) {
+        val currentOrder = storeCategoryOrders[storeId]?.toMutableList() 
+            ?: getSortedCategories().map { it.category.uuid }.toMutableList()
+        
+        val index1 = currentOrder.indexOf(categoryId1)
+        val index2 = currentOrder.indexOf(categoryId2)
+        
+        if (index1 != -1 && index2 != -1) {
+            // Swap
+            val temp = currentOrder[index1]
+            currentOrder[index1] = currentOrder[index2]
+            currentOrder[index2] = temp
+            
+            // Save updated order
+            storeCategoryOrders[storeId] = currentOrder
+            notifyUpdate()
+            android.util.Log.d("DataManagerObject", "Swapped category order for store $storeId")
+        }
     }
 
     // Group groceries by store for store view mode
@@ -642,6 +702,34 @@ object DataManagerObject {
                         )
                     )
                 }
+            }
+            
+            // Apply custom ordering if exists, otherwise use global order
+            val customOrder = getStoreCategoryOrder(store.uuid)
+            if (customOrder != null) {
+                // Sort by custom order, then by viewOrder for any missing categories
+                val orderedCategories = mutableListOf<CategoryWithSubCategories>()
+                val unorderedCategories = storeCategories.toMutableList()
+                
+                // Add categories in custom order
+                customOrder.forEach { categoryId ->
+                    val category = unorderedCategories.find { it.category.uuid == categoryId }
+                    if (category != null) {
+                        orderedCategories.add(category)
+                        unorderedCategories.remove(category)
+                    }
+                }
+                
+                // Add any remaining categories (not in custom order) sorted by viewOrder
+                orderedCategories.addAll(
+                    unorderedCategories.sortedBy { it.category.viewOrder }
+                )
+                
+                storeCategories.clear()
+                storeCategories.addAll(orderedCategories)
+            } else {
+                // Use global order (viewOrder)
+                storeCategories.sortBy { it.category.viewOrder }
             }
             
             // Only add if store has groceries and is not hidden
@@ -685,6 +773,9 @@ object DataManagerObject {
                 )
             }
         }
+        
+        // Sort not-linked categories by global order
+        notLinkedCategories.sortBy { it.category.viewOrder }
         
         if (notLinkedCategories.isNotEmpty()) {
             result.add(

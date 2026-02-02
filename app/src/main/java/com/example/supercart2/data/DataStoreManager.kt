@@ -35,6 +35,7 @@ object DataStoreManager {
     private val HIDDEN_STORES_KEY = stringPreferencesKey("hidden_stores")
     private val STORE_VIEW_MODE_KEY = stringPreferencesKey("store_view_mode")
     private val GROUP_CODE_KEY = stringPreferencesKey("group_code")
+    private val STORE_CATEGORY_ORDERS_KEY = stringPreferencesKey("store_category_orders")
     
     // LocalDate adapter for Gson
     private class LocalDateAdapter : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
@@ -104,6 +105,7 @@ object DataStoreManager {
             // Get stores list
             val stores = DataManagerObject.stores.toList()
             val hiddenStoreIds = DataManagerObject.hiddenStoreIds.toList()
+            val storeCategoryOrders = DataManagerObject.storeCategoryOrders.toMap()
             
             // Save each list separately
             context.dataStore.edit { preferences ->
@@ -112,6 +114,7 @@ object DataStoreManager {
                 preferences[GROCERIES_KEY] = gson.toJson(groceries)
                 preferences[STORES_KEY] = gson.toJson(stores)
                 preferences[HIDDEN_STORES_KEY] = gson.toJson(hiddenStoreIds)
+                preferences[STORE_CATEGORY_ORDERS_KEY] = gson.toJson(storeCategoryOrders)
             }
             
             android.util.Log.d("DataStoreManager", "Data saved successfully. Categories: ${categories.size}, SubCategories: ${subCategories.size}, Groceries: ${groceries.size}, Stores: ${stores.size}")
@@ -147,6 +150,17 @@ object DataStoreManager {
                 gson.fromJson<List<String>>(it, object : TypeToken<List<String>>() {}.type)
             } ?: emptyList()
             
+            // Load store category orders
+            val storeCategoryOrders = preferences[STORE_CATEGORY_ORDERS_KEY]?.let {
+                try {
+                    val type = object : TypeToken<Map<String, List<String>>>() {}.type
+                    gson.fromJson<Map<String, List<String>>>(it, type) ?: emptyMap()
+                } catch (e: Exception) {
+                    android.util.Log.e("DataStoreManager", "Error loading store category orders", e)
+                    emptyMap()
+                }
+            } ?: emptyMap()
+            
             // Validate relationships
             if (DataConverter.validateRelationships(categories, subCategories, groceries)) {
                 // Convert to nested structure
@@ -162,7 +176,11 @@ object DataStoreManager {
                 DataManagerObject.hiddenStoreIds.clear()
                 DataManagerObject.hiddenStoreIds.addAll(hiddenStoreIds)
                 
-                android.util.Log.d("DataStoreManager", "Data loaded successfully. Categories: ${categories.size}, SubCategories: ${subCategories.size}, Groceries: ${groceries.size}, Stores: ${stores.size}")
+                // Load store category orders
+                DataManagerObject.storeCategoryOrders.clear()
+                DataManagerObject.storeCategoryOrders.putAll(storeCategoryOrders)
+                
+                android.util.Log.d("DataStoreManager", "Data loaded successfully. Categories: ${categories.size}, SubCategories: ${subCategories.size}, Groceries: ${groceries.size}, Stores: ${stores.size}, Store Category Orders: ${storeCategoryOrders.size}")
             } else {
                 android.util.Log.e("DataStoreManager", "Invalid data relationships detected")
                 DataInitializer.initializeDefaultData(context)

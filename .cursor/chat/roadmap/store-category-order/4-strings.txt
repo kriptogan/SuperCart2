@@ -1,0 +1,26 @@
+PHASE 4: STRING RESOURCES
+==========================
+
+Add to app/src/main/res/values/strings.xml:
+-------------------------------------------
+<string name="reorder_categories">Reorder Categories</string>
+<string name="reorder_categories_for_store">Reorder Categories for %s</string>
+<string name="save_order">Save Order</string>
+
+Add to app/src/main/res/values-iw/strings.xml:
+---------------------------------------------
+<string name="reorder_categories">סדר מחדש קטגוריות</string>
+<string name="reorder_categories_for_store">סדר מחדש קטגוריות עבור %s</string>
+<string name="save_order">שמור סדר</string>
+
+Add to app/src/main/res/values-ru/strings.xml:
+----------------------------------------------
+<string name="reorder_categories">Изменить порядок категорий</string>
+<string name="reorder_categories_for_store">Изменить порядок категорий для %s</string>
+<string name="save_order">Сохранить порядок</string>
+
+Add to app/src/main/res/values-bg/strings.xml:
+----------------------------------------------
+<string name="reorder_categories">Пренареждане на категории</string>
+<string name="reorder_categories_for_store">Пренареждане на категории за %s</string>
+<string name="save_order">Запази ред</string>
