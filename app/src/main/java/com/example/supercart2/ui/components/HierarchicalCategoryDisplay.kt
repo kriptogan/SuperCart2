@@ -113,6 +113,13 @@ private fun CategorySection(
         subCategoriesExpanded = isAllExpanded
     }
     
+    // Auto-expand single sub-category when category is expanded
+    LaunchedEffect(isExpanded, categoryWithSubs.subCategories.size) {
+        if (isExpanded && categoryWithSubs.subCategories.size == 1) {
+            subCategoriesExpanded = true
+        }
+    }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
