@@ -156,13 +156,15 @@ fun HomeScreen() {
     }
     
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SuperCartColors.lightGreen)
     ) {
         // Fixed top bar
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(SuperCartColors.white)
+                .background(SuperCartColors.lightGreen)
                 .padding(
                     start = SuperCartSpacing.md,
                     end = SuperCartSpacing.md,
@@ -209,9 +211,8 @@ fun HomeScreen() {
                         modifier = Modifier.size(56.dp),
                         shape = CircleShape,
                         colors = CardDefaults.cardColors(
-                            containerColor = SuperCartColors.white
+                            containerColor = SuperCartColors.orange // Orange background
                         ),
-                        border = CardDefaults.outlinedCardBorder(),
                         elevation = CardDefaults.cardElevation(
                             defaultElevation = 2.dp
                         )
@@ -223,7 +224,7 @@ fun HomeScreen() {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = "Alerts",
-                                tint = if (isAlertFilterActive) SuperCartColors.primaryGreen else SuperCartColors.orange,
+                                tint = SuperCartColors.white, // White icon
                                 modifier = Modifier.size(34.dp)
                             )
                         }
@@ -241,9 +242,8 @@ fun HomeScreen() {
                         modifier = Modifier.size(56.dp), // Same size as burger menu
                         shape = CircleShape,
                         colors = CardDefaults.cardColors(
-                            containerColor = SuperCartColors.white
+                            containerColor = SuperCartColors.primaryGreen // Green background
                         ),
-                        border = CardDefaults.outlinedCardBorder(),
                         elevation = CardDefaults.cardElevation(
                             defaultElevation = 2.dp
                         )
@@ -260,7 +260,7 @@ fun HomeScreen() {
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Add New Grocery",
-                                tint = SuperCartColors.primaryGreen,
+                                tint = SuperCartColors.white, // White icon
                                 modifier = Modifier.size(34.dp) // Slightly larger for better visual balance
                             )
                         }
@@ -286,7 +286,9 @@ fun HomeScreen() {
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SuperCartColors.primaryGreen,
                         unfocusedBorderColor = SuperCartColors.gray,
-                        focusedLabelColor = SuperCartColors.primaryGreen
+                        focusedLabelColor = SuperCartColors.primaryGreen,
+                        focusedContainerColor = SuperCartColors.white,
+                        unfocusedContainerColor = SuperCartColors.white
                     ),
                     singleLine = true,
                     leadingIcon = {

@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -96,6 +97,7 @@ fun MainApp() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(com.example.supercart2.ui.theme.SuperCartColors.lightGreen)
                 .padding(innerPadding)
         ) {
             when (currentRoute) {

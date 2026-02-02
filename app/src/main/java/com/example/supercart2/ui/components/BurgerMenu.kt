@@ -68,9 +68,8 @@ fun BurgerMenu(
             .padding(SuperCartSpacing.sm),
         shape = CircleShape,
         colors = CardDefaults.cardColors(
-            containerColor = SuperCartColors.white
+            containerColor = SuperCartColors.darkGray // Dark grey background
         ),
-        border = CardDefaults.outlinedCardBorder(),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
         )
@@ -82,6 +81,7 @@ fun BurgerMenu(
             Icon(
                 imageVector = Icons.Default.Menu,
                 contentDescription = stringResource(R.string.menu),
+                tint = SuperCartColors.white, // White icon
                 modifier = Modifier.size(36.dp) // Exact size requested
             )
         }
@@ -89,45 +89,46 @@ fun BurgerMenu(
     
     DropdownMenu(
         expanded = expanded,
-        onDismissRequest = { expanded = false }
+        onDismissRequest = { expanded = false },
+        containerColor = SuperCartColors.white
     ) {
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_categories_management)) },
+            text = { Text(stringResource(R.string.menu_categories_management), fontWeight = FontWeight.Bold) },
             onClick = {
                 onCategoriesManagementClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_manage_stores)) },
+            text = { Text(stringResource(R.string.menu_manage_stores), fontWeight = FontWeight.Bold) },
             onClick = {
                 onManageStoresClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_family_group)) },
+            text = { Text(stringResource(R.string.menu_family_group), fontWeight = FontWeight.Bold) },
             onClick = {
                 onManageGroupClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_import_groceries)) },
+            text = { Text(stringResource(R.string.menu_import_groceries), fontWeight = FontWeight.Bold) },
             onClick = {
                 onImportGroceriesClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_settings)) },
+            text = { Text(stringResource(R.string.menu_settings), fontWeight = FontWeight.Bold) },
             onClick = {
                 onSettingsClick()
                 expanded = false
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_language)) },
+            text = { Text(stringResource(R.string.menu_language), fontWeight = FontWeight.Bold) },
             onClick = {
                 onLanguageClick()
                 expanded = false
@@ -137,7 +138,7 @@ fun BurgerMenu(
         DropdownMenuItem(
             text = {
                 Column {
-                    Text(stringResource(R.string.menu_upload_cloud))
+                    Text(stringResource(R.string.menu_upload_cloud), fontWeight = FontWeight.Bold)
                     if (!hasGroupCode) {
                         Text(
                             stringResource(R.string.requires_family_group),
@@ -177,7 +178,7 @@ fun BurgerMenu(
         DropdownMenuItem(
             text = {
                 Column {
-                    Text(stringResource(R.string.menu_download_cloud))
+                    Text(stringResource(R.string.menu_download_cloud), fontWeight = FontWeight.Bold)
                     if (!hasGroupCode) {
                         Text(
                             stringResource(R.string.requires_family_group),
