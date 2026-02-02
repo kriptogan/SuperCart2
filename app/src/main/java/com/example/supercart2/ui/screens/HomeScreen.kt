@@ -272,7 +272,7 @@ fun HomeScreen() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = SuperCartSpacing.md),
+                    .padding(bottom = SuperCartSpacing.lg), // Increased spacing below search bar
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Left spacer to align with burger icon

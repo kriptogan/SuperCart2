@@ -2,6 +2,7 @@ package com.example.supercart2.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -33,6 +34,7 @@ import com.example.supercart2.data.CategoryWithSubCategories
 import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.models.Grocery
 import com.example.supercart2.ui.theme.SuperCartColors
+import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.utils.localizedCategoryDisplayName
 import com.example.supercart2.utils.localizedSubCategoryDisplayName
@@ -64,6 +66,11 @@ fun HierarchicalCategoryDisplay(
         LazyColumn(
             modifier = modifier.fillMaxSize()
         ) {
+            // Add spacing at the top before first category
+            item {
+                Spacer(modifier = Modifier.height(SuperCartSpacing.lg))
+            }
+            
             items(categories) { categoryWithSubs ->
                 CategorySection(
                     categoryWithSubs = categoryWithSubs,
@@ -79,6 +86,9 @@ fun HierarchicalCategoryDisplay(
         }
     } else {
         Column(modifier = modifier) {
+            // Add spacing at the top before first category
+            Spacer(modifier = Modifier.height(SuperCartSpacing.lg))
+            
             categories.forEach { categoryWithSubs ->
                 CategorySection(
                     categoryWithSubs = categoryWithSubs,
@@ -335,15 +345,27 @@ private fun GroceryItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .height(102.dp) // Fixed height to ensure all items take the same vertical space
+            .padding(horizontal = 16.dp, vertical = 12.dp) // Outer padding like old design
             .background(
                 when {
                     isShoppingList && currentGrocery.isBought -> SuperCartColors.lightGreen.copy(alpha = 0.1f)
-                    hasAlert -> SuperCartColors.orange.copy(alpha = 0.15f) // Orange background for alert items
-                    else -> Color.White
+                    else -> Color(0xFFF8F9FA) // Very light gray background (matching old design)
                 },
-                shape = RoundedCornerShape(6.dp)
+                shape = RoundedCornerShape(8.dp) // 8dp rounded corners like old design
             )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .then(
+                if (hasAlert) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = Color(0xFFE53935), // Red border for alert items
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp), // Inner padding like old design
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (isShoppingList && currentGrocery.isBought) {
