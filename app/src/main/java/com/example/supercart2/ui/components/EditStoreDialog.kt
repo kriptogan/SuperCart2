@@ -69,6 +69,7 @@ fun EditStoreDialog(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
+            containerColor = SuperCartColors.lightGreen,
             title = {
                 Text(
                     text = stringResource(R.string.delete_store),
@@ -135,6 +136,7 @@ fun EditStoreDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperCartColors.lightGreen,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -175,8 +177,10 @@ fun EditStoreDialog(
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SuperCartColors.primaryGreen,
                         unfocusedBorderColor = SuperCartColors.gray,
-                        focusedLabelColor = SuperCartColors.primaryGreen,
-                        unfocusedLabelColor = SuperCartColors.gray
+                        focusedLabelColor = SuperCartColors.black,
+                        unfocusedLabelColor = SuperCartColors.black,
+                        focusedContainerColor = SuperCartColors.white,
+                        unfocusedContainerColor = SuperCartColors.white
                     ),
                     shape = SuperCartShapes.small
                 )

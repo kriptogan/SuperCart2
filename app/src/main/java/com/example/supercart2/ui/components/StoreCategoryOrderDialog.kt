@@ -102,6 +102,7 @@ fun StoreCategoryOrderDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxSize(),
+        containerColor = SuperCartColors.lightGreen,
         title = {
             Text(
                 text = stringResource(R.string.reorder_categories_for_store, store.name),

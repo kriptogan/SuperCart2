@@ -48,6 +48,7 @@ fun SettingsDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperCartColors.lightGreen,
         title = {
             Text(
                 text = "Settings",
@@ -127,7 +128,11 @@ fun SettingsDialog(
                                 .fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SuperCartColors.primaryGreen,
-                                unfocusedBorderColor = SuperCartColors.gray
+                                unfocusedBorderColor = SuperCartColors.gray,
+                                focusedLabelColor = SuperCartColors.black,
+                                unfocusedLabelColor = SuperCartColors.black,
+                                focusedContainerColor = SuperCartColors.white,
+                                unfocusedContainerColor = SuperCartColors.white
                             )
                         )
                         ExposedDropdownMenu(

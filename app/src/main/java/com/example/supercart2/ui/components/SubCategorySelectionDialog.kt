@@ -22,6 +22,7 @@ import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.ui.components.CreateSubCategoryDialog
 import com.example.supercart2.data.SubCategoryWithGroceries
+import com.example.supercart2.ui.theme.SuperCartColors
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import com.example.supercart2.data.DataStoreManager
@@ -44,6 +45,7 @@ fun SubCategorySelectionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxSize(),
+        containerColor = SuperCartColors.lightGreen,
         title = { 
             Text(
                 text = "Select Sub-Category",

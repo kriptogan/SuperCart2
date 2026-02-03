@@ -82,6 +82,7 @@ fun StoresManagementDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxSize(),
+        containerColor = SuperCartColors.lightGreen,
         title = { 
             Text(
                 text = stringResource(R.string.stores_management),

@@ -216,6 +216,7 @@ fun CategoriesManagementDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxSize(), // This makes it full-screen
+        containerColor = SuperCartColors.lightGreen,
         title = { 
             Text(
                 text = stringResource(R.string.categories_management),

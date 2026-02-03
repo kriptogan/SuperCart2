@@ -42,6 +42,7 @@ fun CreateCategoryDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperCartColors.lightGreen,
         title = {
             Text(
                 text = stringResource(R.string.create_category),
@@ -63,8 +64,10 @@ fun CreateCategoryDialog(
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SuperCartColors.primaryGreen,
                         unfocusedBorderColor = SuperCartColors.gray,
-                        focusedLabelColor = SuperCartColors.primaryGreen,
-                        unfocusedLabelColor = SuperCartColors.gray
+                        focusedLabelColor = SuperCartColors.black,
+                        unfocusedLabelColor = SuperCartColors.black,
+                        focusedContainerColor = SuperCartColors.white,
+                        unfocusedContainerColor = SuperCartColors.white
                     ),
                     shape = SuperCartShapes.small
                 )

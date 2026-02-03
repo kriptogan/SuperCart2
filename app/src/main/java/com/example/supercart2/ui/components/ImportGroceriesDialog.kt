@@ -33,6 +33,7 @@ fun ImportGroceriesDialog(
                 showAddToShoppingListDialog = false
                 onImportComplete()
             },
+            containerColor = SuperCartColors.lightGreen,
             title = { Text(stringResource(R.string.add_to_shopping_list_question)) },
             text = { Text(stringResource(R.string.should_add_to_shopping_list)) },
             confirmButton = {
@@ -79,6 +80,7 @@ fun ImportGroceriesDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperCartColors.lightGreen,
         title = { Text(stringResource(R.string.import_groceries)) },
         text = {
             Column {
@@ -92,7 +94,11 @@ fun ImportGroceriesDialog(
                         .height(200.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SuperCartColors.primaryGreen,
-                        unfocusedBorderColor = SuperCartColors.gray
+                        unfocusedBorderColor = SuperCartColors.gray,
+                        focusedLabelColor = SuperCartColors.black,
+                        unfocusedLabelColor = SuperCartColors.black,
+                        focusedContainerColor = SuperCartColors.white,
+                        unfocusedContainerColor = SuperCartColors.white
                     )
                 )
             }

@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.supercart2.data.DataManagerObject
+import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.ui.components.CreateCategoryDialog
@@ -42,6 +43,7 @@ fun CategorySelectionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxSize(),
+        containerColor = SuperCartColors.lightGreen,
         title = { 
             Text(
                 text = "Select Category",

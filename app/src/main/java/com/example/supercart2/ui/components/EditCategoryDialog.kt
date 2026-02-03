@@ -116,6 +116,7 @@ fun EditCategoryDialog(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
+            containerColor = SuperCartColors.lightGreen,
             title = {
                 Text(
                     text = stringResource(R.string.delete_category),
@@ -190,6 +191,7 @@ fun EditCategoryDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperCartColors.lightGreen,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -230,8 +232,10 @@ fun EditCategoryDialog(
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SuperCartColors.primaryGreen,
                         unfocusedBorderColor = SuperCartColors.gray,
-                        focusedLabelColor = SuperCartColors.primaryGreen,
-                        unfocusedLabelColor = SuperCartColors.gray
+                        focusedLabelColor = SuperCartColors.black,
+                        unfocusedLabelColor = SuperCartColors.black,
+                        focusedContainerColor = SuperCartColors.white,
+                        unfocusedContainerColor = SuperCartColors.white
                     ),
                     shape = SuperCartShapes.small
                 )

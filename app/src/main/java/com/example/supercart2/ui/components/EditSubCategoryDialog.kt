@@ -53,6 +53,7 @@ fun EditSubCategoryDialog(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
+            containerColor = SuperCartColors.lightGreen,
             title = {
                 Text(
                     text = stringResource(R.string.delete_subcategory),
@@ -137,6 +138,7 @@ fun EditSubCategoryDialog(
     // Main edit dialog
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperCartColors.lightGreen,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -173,8 +175,10 @@ fun EditSubCategoryDialog(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = SuperCartColors.primaryGreen,
                     unfocusedBorderColor = SuperCartColors.gray,
-                    focusedLabelColor = SuperCartColors.primaryGreen,
-                    unfocusedLabelColor = SuperCartColors.gray
+                    focusedLabelColor = SuperCartColors.black,
+                    unfocusedLabelColor = SuperCartColors.black,
+                    focusedContainerColor = SuperCartColors.white,
+                    unfocusedContainerColor = SuperCartColors.white
                 ),
                 shape = SuperCartShapes.small
             )
