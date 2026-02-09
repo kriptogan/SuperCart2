@@ -2,6 +2,7 @@ package com.example.supercart2.ui.theme
 
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -23,12 +24,18 @@ object SuperCartShapes {
     val circle = CircleShape
 }
 
-// SuperCart Design System - Colors (for direct use in components)
+// SuperCart Design System - Colors. Primary and light background come from selected palette.
 object SuperCartColors {
-    val primaryGreen = SuperCartGreen
+    private val paletteState = mutableStateOf(AppPalettes.GREEN)
+
+    fun updatePalette(palette: ColorPalette) {
+        paletteState.value = palette
+    }
+
+    val primaryGreen: Color get() = paletteState.value.primary
+    val lightGreen: Color get() = paletteState.value.lightPrimary
+    val lightGray: Color get() = paletteState.value.lightPrimary
     val blue = SuperCartBlue
-    val lightGreen = SuperCartLightGreen
-    val lightGray = SuperCartLightGreen  // Using light green as light gray
     val gray = SuperCartGray
     val darkGray = SuperCartDarkGray
     val white = SuperCartWhite

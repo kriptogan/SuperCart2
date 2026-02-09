@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.supercart2.R
 import com.example.supercart2.data.SettingsManager
+import com.example.supercart2.ui.theme.AppPalettes
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.utils.AppLanguage
@@ -38,12 +39,15 @@ fun SettingsDialog(
     var showAlerts by remember { mutableStateOf(true) }
     var currentLanguage by remember { mutableStateOf<AppLanguage?>(null) }
     var expandedLanguage by remember { mutableStateOf(false) }
+    var currentPaletteId by remember { mutableStateOf("green") }
+    var expandedPalette by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    
+
     // Load current settings
     LaunchedEffect(Unit) {
         showAlerts = SettingsManager.getShowAlerts()
         currentLanguage = LanguageManager.getCurrentLanguage(context)
+        currentPaletteId = SettingsManager.getColorPalette()
     }
     
     AlertDialog(
@@ -161,6 +165,73 @@ fun SettingsDialog(
                                             expandedLanguage = false
                                             // Recreate activity to apply new language
                                             activity?.recreate()
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Color palette selection
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = SuperCartSpacing.sm)
+                ) {
+                    Text(
+                        text = stringResource(R.string.color_palette),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+                    )
+                    val paletteOptionNames = mapOf(
+                        "green" to R.string.palette_green,
+                        "orange" to R.string.palette_orange,
+                        "purple" to R.string.palette_purple,
+                        "blue" to R.string.palette_blue,
+                        "pink" to R.string.palette_pink
+                    )
+                    ExposedDropdownMenuBox(
+                        expanded = expandedPalette,
+                        onExpandedChange = { expandedPalette = !expandedPalette }
+                    ) {
+                        OutlinedTextField(
+                            value = stringResource(paletteOptionNames[currentPaletteId] ?: R.string.palette_green),
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPalette)
+                            },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = SuperCartColors.primaryGreen,
+                                unfocusedBorderColor = SuperCartColors.gray,
+                                focusedLabelColor = SuperCartColors.black,
+                                unfocusedLabelColor = SuperCartColors.black,
+                                focusedContainerColor = SuperCartColors.white,
+                                unfocusedContainerColor = SuperCartColors.white
+                            )
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedPalette,
+                            onDismissRequest = { expandedPalette = false }
+                        ) {
+                            paletteOptionNames.forEach { (id, nameRes) ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = stringResource(nameRes),
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                    },
+                                    onClick = {
+                                        scope.launch {
+                                            SettingsManager.setColorPalette(id)
+                                            currentPaletteId = id
+                                            expandedPalette = false
                                         }
                                     }
                                 )

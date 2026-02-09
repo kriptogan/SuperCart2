@@ -110,6 +110,14 @@
     <string name="leave_action">Leave</string>
     
     <!-- Actions -->
+    <!-- Color palette -->
+    <string name="color_palette">Color palette</string>
+    <string name="palette_green">Green</string>
+    <string name="palette_orange">Orange</string>
+    <string name="palette_purple">Purple</string>
+    <string name="palette_blue">Blue</string>
+    <string name="palette_pink">Pink</string>
+
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>

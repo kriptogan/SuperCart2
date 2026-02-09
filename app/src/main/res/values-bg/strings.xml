@@ -109,6 +109,14 @@
     <string name="copy">Копиране</string>
     <string name="leave_action">Напускане</string>
     
+    <!-- Color palette -->
+    <string name="color_palette">Цветова палитра</string>
+    <string name="palette_green">Зелен</string>
+    <string name="palette_orange">Оранжев</string>
+    <string name="palette_purple">Лилав</string>
+    <string name="palette_blue">Син</string>
+    <string name="palette_pink">Розов</string>
+
     <!-- Actions -->
     <string name="ok">Добре</string>
     <string name="cancel">Отказ</string>

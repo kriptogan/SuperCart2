@@ -5,15 +5,18 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "supercart_settings")
 
 object SettingsManager {
     private val SHOW_ALERTS_KEY = booleanPreferencesKey("show_alerts")
+    private val COLOR_PALETTE_KEY = stringPreferencesKey("color_palette")
     
     // Global context reference
     private var globalContext: Context? = null
@@ -44,5 +47,26 @@ object SettingsManager {
             preferences[SHOW_ALERTS_KEY] = value
         }
         android.util.Log.d("SettingsManager", "Show alerts setting updated: $value")
+    }
+
+    // Color palette: "green" | "orange" | "purple" | "blue" | "pink"
+    val colorPalette: Flow<String> get() {
+        val context = globalContext ?: return flowOf("green")
+        return context.settingsDataStore.data.map { preferences ->
+            preferences[COLOR_PALETTE_KEY] ?: "green"
+        }
+    }
+
+    suspend fun getColorPalette(): String {
+        val context = globalContext ?: return "green"
+        return context.settingsDataStore.data.first()[COLOR_PALETTE_KEY] ?: "green"
+    }
+
+    suspend fun setColorPalette(id: String) {
+        val context = globalContext ?: throw IllegalStateException("Global context not set")
+        context.settingsDataStore.edit { preferences ->
+            preferences[COLOR_PALETTE_KEY] = id.lowercase()
+        }
+        android.util.Log.d("SettingsManager", "Color palette set: $id")
     }
 }
