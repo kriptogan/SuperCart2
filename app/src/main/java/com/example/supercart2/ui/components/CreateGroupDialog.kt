@@ -28,7 +28,7 @@ fun CreateGroupDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.create_family_group)) },
+        title = { Text(stringResource(R.string.create_family_group), color = SuperCartColors.black) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),

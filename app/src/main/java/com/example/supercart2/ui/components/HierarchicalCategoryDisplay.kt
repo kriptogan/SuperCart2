@@ -484,7 +484,7 @@ private fun GroceryItem(
                     ) {
                         // Remove from cart option
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.remove_from_shopping_list)) },
+                            text = { Text(stringResource(R.string.remove_from_shopping_list), color = SuperCartColors.black) },
                             onClick = {
                                 DataManagerObject.updateGrocery(currentGrocery.uuid) { 
                                     it.copy(inShoppingList = false)
@@ -510,7 +510,7 @@ private fun GroceryItem(
 
                         // View Buy History option
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.view_buy_history)) },
+                            text = { Text(stringResource(R.string.view_buy_history), color = SuperCartColors.black) },
                             onClick = {
                                 showBuyHistory = true
                                 expanded = false
@@ -526,7 +526,7 @@ private fun GroceryItem(
 
                         // Edit option
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.edit_item)) },
+                            text = { Text(stringResource(R.string.edit_item), color = SuperCartColors.black) },
                             onClick = {
                                 onEdit()
                                 expanded = false
@@ -615,7 +615,7 @@ private fun GroceryItem(
                     ) {
                         // Edit option
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.edit_item)) },
+                            text = { Text(stringResource(R.string.edit_item), color = SuperCartColors.black) },
                             onClick = {
                                 onEdit()
                                 expanded = false
@@ -631,7 +631,7 @@ private fun GroceryItem(
 
                         // View Buy History option
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.view_buy_history)) },
+                            text = { Text(stringResource(R.string.view_buy_history), color = SuperCartColors.black) },
                             onClick = {
                                 showBuyHistory = true
                                 expanded = false

@@ -61,7 +61,7 @@ fun StoreSelectionDialog(
             onStoresSelected(selectedIds.toList())
             onDismiss()
         },
-        title = { Text(stringResource(R.string.select_stores)) },
+        title = { Text(stringResource(R.string.select_stores), color = SuperCartColors.black) },
         text = {
             if (allStores.isEmpty() && !showCreateStore) {
                 Text(

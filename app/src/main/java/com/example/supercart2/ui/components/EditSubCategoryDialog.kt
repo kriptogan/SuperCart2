@@ -149,6 +149,7 @@ fun EditSubCategoryDialog(
                     text = stringResource(R.string.edit_subcategory),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
+                    color = SuperCartColors.black,
                     modifier = Modifier.weight(1f)
                 )
                 
@@ -177,6 +178,8 @@ fun EditSubCategoryDialog(
                     unfocusedBorderColor = SuperCartColors.gray,
                     focusedLabelColor = SuperCartColors.black,
                     unfocusedLabelColor = SuperCartColors.black,
+                    focusedTextColor = SuperCartColors.black,
+                    unfocusedTextColor = SuperCartColors.black,
                     focusedContainerColor = SuperCartColors.white,
                     unfocusedContainerColor = SuperCartColors.white
                 ),

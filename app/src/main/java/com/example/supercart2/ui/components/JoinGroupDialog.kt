@@ -28,7 +28,7 @@ fun JoinGroupDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.join_family_group)) },
+        title = { Text(stringResource(R.string.join_family_group), color = SuperCartColors.black) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -55,7 +55,9 @@ fun JoinGroupDialog(
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = SuperCartColors.primaryGreen,
-                            focusedLabelColor = SuperCartColors.primaryGreen
+                            focusedLabelColor = SuperCartColors.primaryGreen,
+                            focusedTextColor = SuperCartColors.black,
+                            unfocusedTextColor = SuperCartColors.black
                         )
                     )
                     

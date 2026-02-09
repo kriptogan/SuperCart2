@@ -47,6 +47,7 @@ fun CreateStoreDialog(
                 text = stringResource(R.string.create_store),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
+                color = SuperCartColors.black,
                 modifier = Modifier.fillMaxWidth()
             )
         },
@@ -60,14 +61,16 @@ fun CreateStoreDialog(
                     label = { Text(stringResource(R.string.store_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SuperCartColors.primaryGreen,
-                        unfocusedBorderColor = SuperCartColors.gray,
-                        focusedLabelColor = SuperCartColors.black,
-                        unfocusedLabelColor = SuperCartColors.black,
-                        focusedContainerColor = SuperCartColors.white,
-                        unfocusedContainerColor = SuperCartColors.white
-                    ),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SuperCartColors.primaryGreen,
+                    unfocusedBorderColor = SuperCartColors.gray,
+                    focusedLabelColor = SuperCartColors.black,
+                    unfocusedLabelColor = SuperCartColors.black,
+                    focusedTextColor = SuperCartColors.black,
+                    unfocusedTextColor = SuperCartColors.black,
+                    focusedContainerColor = SuperCartColors.white,
+                    unfocusedContainerColor = SuperCartColors.white
+                ),
                     shape = SuperCartShapes.small
                 )
             }

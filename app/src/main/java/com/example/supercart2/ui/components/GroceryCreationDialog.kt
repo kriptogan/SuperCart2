@@ -229,6 +229,7 @@ fun GroceryCreationDialog(
                     text = if (groceryToEdit != null) stringResource(R.string.edit_grocery) else stringResource(R.string.create_new_grocery),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
+                    color = SuperCartColors.black,
                     modifier = Modifier.weight(1f)
                 )
                 
@@ -387,6 +388,8 @@ fun GroceryCreationDialog(
                         unfocusedBorderColor = SuperCartColors.gray,
                         focusedLabelColor = SuperCartColors.black,
                         unfocusedLabelColor = SuperCartColors.black,
+                        focusedTextColor = SuperCartColors.black,
+                        unfocusedTextColor = SuperCartColors.black,
                         focusedContainerColor = SuperCartColors.white,
                         unfocusedContainerColor = SuperCartColors.white
                     ),

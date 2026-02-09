@@ -148,6 +148,7 @@ fun EditStoreDialog(
                     text = stringResource(R.string.edit_store),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
+                    color = SuperCartColors.black,
                     modifier = Modifier.weight(0.8f)
                 )
                 
@@ -179,6 +180,8 @@ fun EditStoreDialog(
                         unfocusedBorderColor = SuperCartColors.gray,
                         focusedLabelColor = SuperCartColors.black,
                         unfocusedLabelColor = SuperCartColors.black,
+                        focusedTextColor = SuperCartColors.black,
+                        unfocusedTextColor = SuperCartColors.black,
                         focusedContainerColor = SuperCartColors.white,
                         unfocusedContainerColor = SuperCartColors.white
                     ),

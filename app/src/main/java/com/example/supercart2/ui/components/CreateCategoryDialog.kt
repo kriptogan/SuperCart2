@@ -47,6 +47,7 @@ fun CreateCategoryDialog(
             Text(
                 text = stringResource(R.string.create_category),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                color = SuperCartColors.black,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -61,14 +62,16 @@ fun CreateCategoryDialog(
                     label = { Text(stringResource(R.string.category_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SuperCartColors.primaryGreen,
-                        unfocusedBorderColor = SuperCartColors.gray,
-                        focusedLabelColor = SuperCartColors.black,
-                        unfocusedLabelColor = SuperCartColors.black,
-                        focusedContainerColor = SuperCartColors.white,
-                        unfocusedContainerColor = SuperCartColors.white
-                    ),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SuperCartColors.primaryGreen,
+                    unfocusedBorderColor = SuperCartColors.gray,
+                    focusedLabelColor = SuperCartColors.black,
+                    unfocusedLabelColor = SuperCartColors.black,
+                    focusedTextColor = SuperCartColors.black,
+                    unfocusedTextColor = SuperCartColors.black,
+                    focusedContainerColor = SuperCartColors.white,
+                    unfocusedContainerColor = SuperCartColors.white
+                ),
                     shape = SuperCartShapes.small
                 )
             }

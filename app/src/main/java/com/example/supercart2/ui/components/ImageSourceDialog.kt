@@ -60,7 +60,7 @@ fun ImageSourceDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.select_image_source)) },
+        title = { Text(stringResource(R.string.select_image_source), color = SuperCartColors.black) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),

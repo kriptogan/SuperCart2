@@ -47,6 +47,7 @@ fun BackupRestoreDialog(
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
+                color = SuperCartColors.black,
                 modifier = Modifier.fillMaxWidth()
             )
         },

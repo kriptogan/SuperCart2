@@ -222,6 +222,7 @@ fun CategoriesManagementDialog(
                 text = stringResource(R.string.categories_management),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
+                color = SuperCartColors.black,
                 modifier = Modifier.fillMaxWidth()
             )
         },

@@ -65,6 +65,7 @@ fun SettingsDialog(
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
+                color = SuperCartColors.black,
                 modifier = Modifier.fillMaxWidth()
             )
         },
@@ -86,7 +87,8 @@ fun SettingsDialog(
                         Text(
                             text = "Show Alerts",
                             style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            color = SuperCartColors.black
                         )
                         Text(
                             text = "Display alert bell icon and highlight items with expiring dates or purchase reminders",
@@ -120,6 +122,7 @@ fun SettingsDialog(
                         text = stringResource(R.string.menu_language),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
+                        color = SuperCartColors.black,
                         modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
                     )
                     ExposedDropdownMenuBox(
@@ -141,6 +144,8 @@ fun SettingsDialog(
                                 unfocusedBorderColor = SuperCartColors.gray,
                                 focusedLabelColor = SuperCartColors.black,
                                 unfocusedLabelColor = SuperCartColors.black,
+                                focusedTextColor = SuperCartColors.black,
+                                unfocusedTextColor = SuperCartColors.black,
                                 focusedContainerColor = SuperCartColors.white,
                                 unfocusedContainerColor = SuperCartColors.white
                             )
@@ -155,7 +160,8 @@ fun SettingsDialog(
                                         Column {
                                             Text(
                                                 text = language.displayName,
-                                                style = MaterialTheme.typography.bodyLarge
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = SuperCartColors.black
                                             )
                                             Text(
                                                 text = language.nativeDisplayName,
@@ -189,6 +195,7 @@ fun SettingsDialog(
                         text = stringResource(R.string.color_palette),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
+                        color = SuperCartColors.black,
                         modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
                     )
                     val paletteOptionNames = mapOf(
@@ -217,6 +224,8 @@ fun SettingsDialog(
                                 unfocusedBorderColor = SuperCartColors.gray,
                                 focusedLabelColor = SuperCartColors.black,
                                 unfocusedLabelColor = SuperCartColors.black,
+                                focusedTextColor = SuperCartColors.black,
+                                unfocusedTextColor = SuperCartColors.black,
                                 focusedContainerColor = SuperCartColors.white,
                                 unfocusedContainerColor = SuperCartColors.white
                             )
@@ -230,7 +239,8 @@ fun SettingsDialog(
                                     text = {
                                         Text(
                                             text = stringResource(nameRes),
-                                            style = MaterialTheme.typography.bodyLarge
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = SuperCartColors.black
                                         )
                                     },
                                     onClick = {
@@ -256,6 +266,7 @@ fun SettingsDialog(
                         text = "Backup & Restore",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
+                        color = SuperCartColors.black,
                         modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
                     )
                     

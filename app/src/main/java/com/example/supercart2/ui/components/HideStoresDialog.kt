@@ -49,7 +49,7 @@ fun HideStoresDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { 
-            Text(stringResource(R.string.show_hide_stores)) 
+            Text(stringResource(R.string.show_hide_stores), color = SuperCartColors.black) 
         },
         text = {
             if (allStores.isEmpty()) {

@@ -43,7 +43,7 @@ fun GroupManagementDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.family_group)) },
+        title = { Text(stringResource(R.string.family_group), color = SuperCartColors.black) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -155,7 +155,7 @@ fun GroupManagementDialog(
     if (showLeaveConfirmation) {
         AlertDialog(
             onDismissRequest = { showLeaveConfirmation = false },
-            title = { Text(stringResource(R.string.leave_group_question)) },
+            title = { Text(stringResource(R.string.leave_group_question), color = SuperCartColors.black) },
             text = { Text(stringResource(R.string.local_data_kept)) },
             confirmButton = {
                 Button(

@@ -284,6 +284,8 @@ fun ShoppingListScreen() {
                         focusedBorderColor = SuperCartColors.primaryGreen,
                         unfocusedBorderColor = SuperCartColors.gray,
                         focusedLabelColor = SuperCartColors.primaryGreen,
+                        focusedTextColor = SuperCartColors.black,
+                        unfocusedTextColor = SuperCartColors.black,
                         focusedContainerColor = SuperCartColors.white,
                         unfocusedContainerColor = SuperCartColors.white
                     ),

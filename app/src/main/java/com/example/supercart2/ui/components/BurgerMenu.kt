@@ -92,7 +92,7 @@ fun BurgerMenu(
     ) {
         // 1. Import Groceries
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_import_groceries), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.menu_import_groceries), fontWeight = FontWeight.Bold, color = SuperCartColors.black) },
             onClick = {
                 onImportGroceriesClick()
                 expanded = false
@@ -100,7 +100,7 @@ fun BurgerMenu(
         )
         // 2. Manage Categories
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_categories_management), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.menu_categories_management), fontWeight = FontWeight.Bold, color = SuperCartColors.black) },
             onClick = {
                 onCategoriesManagementClick()
                 expanded = false
@@ -108,7 +108,7 @@ fun BurgerMenu(
         )
         // 3. Manage Stores
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_manage_stores), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.menu_manage_stores), fontWeight = FontWeight.Bold, color = SuperCartColors.black) },
             onClick = {
                 onManageStoresClick()
                 expanded = false
@@ -116,7 +116,7 @@ fun BurgerMenu(
         )
         // 4. Settings
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_settings), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.menu_settings), fontWeight = FontWeight.Bold, color = SuperCartColors.black) },
             onClick = {
                 onSettingsClick()
                 expanded = false
@@ -124,7 +124,7 @@ fun BurgerMenu(
         )
         // 5. Group Sharing
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_family_group), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.menu_family_group), fontWeight = FontWeight.Bold, color = SuperCartColors.black) },
             onClick = {
                 onManageGroupClick()
                 expanded = false
@@ -134,7 +134,7 @@ fun BurgerMenu(
         DropdownMenuItem(
             text = {
                 Column {
-                    Text(stringResource(R.string.menu_sync_data), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.menu_sync_data), fontWeight = FontWeight.Bold, color = SuperCartColors.black)
                     if (!hasGroupCode) {
                         Text(
                             stringResource(R.string.requires_family_group),

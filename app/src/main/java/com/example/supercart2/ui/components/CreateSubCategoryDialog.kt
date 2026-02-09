@@ -58,6 +58,8 @@ fun CreateSubCategoryDialog(
                     unfocusedBorderColor = SuperCartColors.gray,
                     focusedLabelColor = SuperCartColors.black,
                     unfocusedLabelColor = SuperCartColors.black,
+                    focusedTextColor = SuperCartColors.black,
+                    unfocusedTextColor = SuperCartColors.black,
                     focusedContainerColor = SuperCartColors.white,
                     unfocusedContainerColor = SuperCartColors.white
                 ),
