@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -37,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.example.supercart2.R
@@ -230,50 +232,60 @@ private fun StoreCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Store name
+                // Store name - with ellipsis for long names
                 Text(
                     text = store.name,
                     style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                    color = SuperCartColors.black
+                    color = SuperCartColors.black,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 
-                // Action buttons
+                // Action buttons - fixed position on the right, very close together
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.xs),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy((-4).dp), // Negative spacing to overlap buttons slightly
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(start = SuperCartSpacing.sm)
                 ) {
-                    // Move Up Arrow
-                    IconButton(
-                        onClick = onMoveUp,
-                        enabled = canMoveUp
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = stringResource(R.string.move_up),
-                            tint = if (canMoveUp) SuperCartColors.primaryGreen else SuperCartColors.gray
-                        )
-                    }
-                    
                     // Move Down Arrow
                     IconButton(
                         onClick = onMoveDown,
-                        enabled = canMoveDown
+                        enabled = canMoveDown,
+                        modifier = Modifier.size(40.dp) // Smaller button = less padding = closer icons
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = stringResource(R.string.move_down),
-                            tint = if (canMoveDown) SuperCartColors.primaryGreen else SuperCartColors.gray
+                            tint = if (canMoveDown) SuperCartColors.primaryGreen else SuperCartColors.gray,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                     
-                    // Edit Icon
+                    // Move Up Arrow - close to down arrow
                     IconButton(
-                        onClick = onEditClick
+                        onClick = onMoveUp,
+                        enabled = canMoveUp,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowUp,
+                            contentDescription = stringResource(R.string.move_up),
+                            tint = if (canMoveUp) SuperCartColors.primaryGreen else SuperCartColors.gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    
+                    // Edit Icon - fixed position, close to up arrow
+                    IconButton(
+                        onClick = onEditClick,
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = stringResource(R.string.edit_store),
-                            tint = SuperCartColors.primaryGreen
+                            tint = SuperCartColors.primaryGreen,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

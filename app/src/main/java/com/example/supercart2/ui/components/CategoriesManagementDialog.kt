@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -393,43 +394,49 @@ private fun CategoryCard(
                     )
                 }
                 
-                // Right side: View order arrows and edit icon
+                // Right side: View order arrows and edit icon - fixed position, very close together
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.xs),
+                    horizontalArrangement = Arrangement.spacedBy((-4).dp), // Negative spacing to overlap buttons slightly
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
-                    // Move Up Arrow
-                    androidx.compose.material3.IconButton(
-                        onClick = onMoveUp,
-                        enabled = canMoveUp
-                    ) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Move Up",
-                            tint = if (canMoveUp) SuperCartColors.primaryGreen else SuperCartColors.gray
-                        )
-                    }
-                    
                     // Move Down Arrow
                     androidx.compose.material3.IconButton(
                         onClick = onMoveDown,
-                        enabled = canMoveDown
+                        enabled = canMoveDown,
+                        modifier = Modifier.size(40.dp) // Smaller button = less padding = closer icons
                     ) {
                         Icon(
                             imageVector = androidx.compose.material.icons.Icons.Default.KeyboardArrowDown,
                             contentDescription = "Move Down",
-                            tint = if (canMoveDown) SuperCartColors.primaryGreen else SuperCartColors.gray
+                            tint = if (canMoveDown) SuperCartColors.primaryGreen else SuperCartColors.gray,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                     
-                    // Edit Icon
+                    // Move Up Arrow - close to down arrow
                     androidx.compose.material3.IconButton(
-                        onClick = onEditClick
+                        onClick = onMoveUp,
+                        enabled = canMoveUp,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.KeyboardArrowUp,
+                            contentDescription = "Move Up",
+                            tint = if (canMoveUp) SuperCartColors.primaryGreen else SuperCartColors.gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    
+                    // Edit Icon - fixed position, close to up arrow
+                    androidx.compose.material3.IconButton(
+                        onClick = onEditClick,
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
                             imageVector = androidx.compose.material.icons.Icons.Default.Edit,
                             contentDescription = stringResource(R.string.edit_category),
-                            tint = SuperCartColors.primaryGreen
+                            tint = SuperCartColors.primaryGreen,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
