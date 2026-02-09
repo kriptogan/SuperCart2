@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.supercart2.R
+import com.example.supercart2.data.BackupManager
 import com.example.supercart2.data.SettingsManager
 import com.example.supercart2.ui.theme.AppPalettes
 import com.example.supercart2.ui.theme.SuperCartColors
@@ -41,6 +44,9 @@ fun SettingsDialog(
     var expandedLanguage by remember { mutableStateOf(false) }
     var currentPaletteId by remember { mutableStateOf("green") }
     var expandedPalette by remember { mutableStateOf(false) }
+    var showBackupMessage by remember { mutableStateOf<String?>(null) }
+    var showRestoreMessage by remember { mutableStateOf<String?>(null) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Load current settings
@@ -128,7 +134,7 @@ fun SettingsDialog(
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedLanguage)
                             },
                             modifier = Modifier
-                                .menuAnchor()
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                                 .fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SuperCartColors.primaryGreen,
@@ -204,7 +210,7 @@ fun SettingsDialog(
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPalette)
                             },
                             modifier = Modifier
-                                .menuAnchor()
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                                 .fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SuperCartColors.primaryGreen,
@@ -239,6 +245,98 @@ fun SettingsDialog(
                         }
                     }
                 }
+                
+                // Backup and Restore Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = SuperCartSpacing.sm)
+                ) {
+                    Text(
+                        text = "Backup & Restore",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+                    )
+                    
+                    // Backup message
+                    showBackupMessage?.let { message ->
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (message.contains("success", ignoreCase = true)) 
+                                SuperCartColors.primaryGreen 
+                            else 
+                                MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+                        )
+                    }
+                    
+                    // Restore message
+                    showRestoreMessage?.let { message ->
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (message.contains("success", ignoreCase = true)) 
+                                SuperCartColors.primaryGreen 
+                            else 
+                                MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+                        )
+                    }
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+                    ) {
+                        // Create Backup Button
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    val backupFile = BackupManager.createBackup(context)
+                                    if (backupFile != null) {
+                                        showBackupMessage = "Backup created: ${backupFile.name}"
+                                    } else {
+                                        showBackupMessage = "Failed to create backup"
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SuperCartColors.primaryGreen,
+                                contentColor = SuperCartColors.white
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Create Backup",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(SuperCartSpacing.xs))
+                            Text("Backup")
+                        }
+                        
+                        // Restore Backup Button
+                        Button(
+                            onClick = {
+                                showRestoreDialog = true
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SuperCartColors.primaryGreen,
+                                contentColor = SuperCartColors.white
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudDownload,
+                                contentDescription = "Restore Backup",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(SuperCartSpacing.xs))
+                            Text("Restore")
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -262,4 +360,15 @@ fun SettingsDialog(
             }
         }
     )
+    
+    // Show restore dialog
+    if (showRestoreDialog) {
+        BackupRestoreDialog(
+            onDismiss = { showRestoreDialog = false },
+            onRestoreComplete = { success, message ->
+                showRestoreMessage = message
+                showRestoreDialog = false
+            }
+        )
+    }
 }
