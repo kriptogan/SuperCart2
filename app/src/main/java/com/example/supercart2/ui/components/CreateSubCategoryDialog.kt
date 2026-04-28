@@ -52,7 +52,8 @@ fun CreateSubCategoryDialog(
                 onValueChange = { subCategoryName = it },
                 label = { Text(stringResource(R.string.subcategory_name)) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                singleLine = false,
+                maxLines = 4,
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = SuperCartColors.primaryGreen,
                     unfocusedBorderColor = SuperCartColors.gray,

@@ -60,7 +60,8 @@ fun CreateStoreDialog(
                     onValueChange = { storeName = it },
                     label = { Text(stringResource(R.string.store_name)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                    singleLine = false,
+                    maxLines = 4,
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = SuperCartColors.primaryGreen,
                     unfocusedBorderColor = SuperCartColors.gray,

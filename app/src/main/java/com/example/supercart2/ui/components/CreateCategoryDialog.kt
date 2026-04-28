@@ -61,7 +61,8 @@ fun CreateCategoryDialog(
                     onValueChange = { categoryName = it },
                     label = { Text(stringResource(R.string.category_name)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                    singleLine = false,
+                    maxLines = 4,
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = SuperCartColors.primaryGreen,
                     unfocusedBorderColor = SuperCartColors.gray,

@@ -172,7 +172,8 @@ fun EditSubCategoryDialog(
                 onValueChange = { subCategoryName = it },
                 label = { Text(stringResource(R.string.subcategory_name)) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                singleLine = false,
+                maxLines = 4,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = SuperCartColors.primaryGreen,
                     unfocusedBorderColor = SuperCartColors.gray,
