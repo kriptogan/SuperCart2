@@ -494,14 +494,31 @@ private fun GroceryCardHome(
                     .padding(horizontal = 6.dp, vertical = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = storeDisplayText ?: "",
-                    fontSize = 10.sp,
-                    color = SuperCartColors.gray,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                if (storeDisplayText != null) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .border(
+                                width = 0.5.dp,
+                                color = SuperCartColors.gray.copy(alpha = 0.4f),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = storeDisplayText,
+                            fontSize = 10.sp,
+                            color = SuperCartColors.black,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
     }
