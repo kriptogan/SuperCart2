@@ -218,4 +218,16 @@
     <string name="no_stores_available">No stores available.</string>
     <string name="unchecked_stores_hidden">Unchecked stores will be hidden from the store view.</string>
     <string name="no_stores_available_create">No stores available. Create your first store to get started.</string>
+
+    <!-- Export / Import -->
+    <string name="menu_export_import">Export / Import Data</string>
+    <string name="export_to_file">Export to File</string>
+    <string name="export_to_file_description">Save a backup to your Downloads folder</string>
+    <string name="import_from_file">Import from File</string>
+    <string name="import_from_file_description">Restore data from a backup file</string>
+    <string name="exporting_data">Exporting Data</string>
+    <string name="please_wait_export">Please wait while your data is being exported…</string>
+    <string name="export_successful">Export Successful</string>
+    <string name="export_success_message">Your data has been saved to the Downloads folder.</string>
+    <string name="export_failed">Export failed: %s</string>
 </resources>

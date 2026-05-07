@@ -849,12 +849,18 @@ fun GroceryCreationDialog(
                     isProcessingImage = true
                     
                     try {
-                        // Generate new UUID for image if creating new, or use existing
-                        val imageUUID = currentImageUUID ?: UUID.randomUUID().toString()
-                        
+                        // Always generate a fresh UUID so the remember(currentImageUUID)
+                        // key changes and the card/dialog recompose to show the new image.
+                        val imageUUID = UUID.randomUUID().toString()
+
+                        // Delete the old local file if one existed
+                        currentImageUUID?.let { oldUUID ->
+                            ImageManager.deleteLocalImage(oldUUID, context)
+                        }
+
                         // Compress and save locally
                         val savedFile = ImageManager.compressAndSaveImage(uri, imageUUID, context)
-                        
+
                         if (savedFile != null) {
                             currentImageUUID = imageUUID
                             imageUri = Uri.fromFile(savedFile)

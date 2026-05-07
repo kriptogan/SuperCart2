@@ -3,11 +3,14 @@ package com.example.supercart2.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.ui.theme.SuperCartColors
+import com.example.supercart2.data.BackupManager
 import com.example.supercart2.data.FirebaseManager
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
@@ -59,6 +63,14 @@ fun BurgerMenu(
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     val isSyncing = syncPhase != null
+
+    // Export / Import state
+    var showExportImportDialog by remember { mutableStateOf(false) }
+    var isExporting by remember { mutableStateOf(false) }
+    var showExportSuccess by remember { mutableStateOf(false) }
+    var showExportError by remember { mutableStateOf(false) }
+    var exportErrorMessage by remember { mutableStateOf("") }
+    var showImportDialog by remember { mutableStateOf(false) }
     
     Card(
         modifier = Modifier
@@ -172,6 +184,20 @@ fun BurgerMenu(
             },
             enabled = hasGroupCode && !isSyncing
         )
+        // 7. Export / Import Data
+        DropdownMenuItem(
+            text = {
+                Text(
+                    stringResource(R.string.menu_export_import),
+                    fontWeight = FontWeight.Bold,
+                    color = SuperCartColors.black
+                )
+            },
+            onClick = {
+                expanded = false
+                showExportImportDialog = true
+            }
+        )
     }
     
     // Progress Dialog for Sync (phase: uploading or downloading)
@@ -253,7 +279,7 @@ fun BurgerMenu(
         )
     }
     
-    // Error Dialog
+    // Error Dialog (Sync)
     if (showError) {
         AlertDialog(
             onDismissRequest = { showError = false },
@@ -294,6 +320,249 @@ fun BurgerMenu(
                     Text(stringResource(R.string.ok))
                 }
             }
+        )
+    }
+
+    // ── Export / Import picker dialog ─────────────────────────────────────────
+    if (showExportImportDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportImportDialog = false },
+            containerColor = SuperCartColors.white,
+            title = {
+                Text(
+                    text = stringResource(R.string.menu_export_import),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+                ) {
+                    // Export option
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showExportImportDialog = false
+                                scope.launch {
+                                    isExporting = true
+                                    try {
+                                        val file = BackupManager.createBackup(context)
+                                        isExporting = false
+                                        if (file != null) {
+                                            showExportSuccess = true
+                                        } else {
+                                            exportErrorMessage = "Unknown error"
+                                            showExportError = true
+                                        }
+                                    } catch (e: Exception) {
+                                        isExporting = false
+                                        exportErrorMessage = e.message ?: "Unknown error"
+                                        showExportError = true
+                                    }
+                                }
+                            },
+                        colors = CardDefaults.cardColors(
+                            containerColor = SuperCartColors.lightGreen.copy(alpha = 0.2f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(SuperCartSpacing.md),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.md)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Upload,
+                                contentDescription = null,
+                                tint = SuperCartColors.primaryGreen,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.export_to_file),
+                                    fontWeight = FontWeight.Bold,
+                                    color = SuperCartColors.black
+                                )
+                                Text(
+                                    text = stringResource(R.string.export_to_file_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = SuperCartColors.gray
+                                )
+                            }
+                        }
+                    }
+
+                    // Import option
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showExportImportDialog = false
+                                showImportDialog = true
+                            },
+                        colors = CardDefaults.cardColors(
+                            containerColor = SuperCartColors.lightGreen.copy(alpha = 0.2f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(SuperCartSpacing.md),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.md)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = null,
+                                tint = SuperCartColors.primaryGreen,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.import_from_file),
+                                    fontWeight = FontWeight.Bold,
+                                    color = SuperCartColors.black
+                                )
+                                Text(
+                                    text = stringResource(R.string.import_from_file_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = SuperCartColors.gray
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showExportImportDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen,
+                        contentColor = SuperCartColors.white
+                    )
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    // ── Export progress dialog ────────────────────────────────────────────────
+    if (isExporting) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = {
+                Text(
+                    text = stringResource(R.string.exporting_data),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = SuperCartColors.primaryGreen
+                    )
+                    Spacer(modifier = Modifier.height(SuperCartSpacing.md))
+                    Text(
+                        text = stringResource(R.string.please_wait_export),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            confirmButton = {}
+        )
+    }
+
+    // ── Export success dialog ─────────────────────────────────────────────────
+    if (showExportSuccess) {
+        AlertDialog(
+            onDismissRequest = { showExportSuccess = false },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = SuperCartColors.primaryGreen,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.export_successful),
+                        fontWeight = FontWeight.Bold,
+                        color = SuperCartColors.primaryGreen,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.export_success_message),
+                    textAlign = TextAlign.Center
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showExportSuccess = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    // ── Export error dialog ───────────────────────────────────────────────────
+    if (showExportError) {
+        AlertDialog(
+            onDismissRequest = { showExportError = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.error),
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Red,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Text(
+                    text = context.getString(R.string.export_failed, exportErrorMessage),
+                    textAlign = TextAlign.Center
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showExportError = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    // ── Import dialog (reuses existing BackupRestoreDialog) ───────────────────
+    if (showImportDialog) {
+        BackupRestoreDialog(
+            onDismiss = { showImportDialog = false },
+            onRestoreComplete = { _, _ -> showImportDialog = false }
         )
     }
 }

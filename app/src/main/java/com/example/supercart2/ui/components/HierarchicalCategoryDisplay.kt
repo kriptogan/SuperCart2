@@ -373,6 +373,13 @@ private fun GroceryCardHome(
         }
     }
 
+    // Only show the image icon when the file actually exists on disk
+    val hasImageFile = remember(currentGrocery.imageUUID, version) {
+        currentGrocery.imageUUID?.let { uuid ->
+            ImageManager.getLocalImageFile(uuid, context) != null
+        } ?: false
+    }
+
     val storeDisplayText: String? = when {
         storeNames.isEmpty() -> null
         storeNames.size == 1 -> storeNames[0]
@@ -435,8 +442,8 @@ private fun GroceryCardHome(
                     }
                 }
 
-                // Image icon — only visible when item has an image
-                if (currentGrocery.imageUUID != null) {
+                // Image icon — only visible when item has an image file on disk
+                if (hasImageFile) {
                     IconButton(
                         onClick = { showImageViewer = true },
                         modifier = Modifier.size(32.dp)
@@ -524,7 +531,7 @@ private fun GroceryCardHome(
     }
 
     // Image viewer dialog
-    if (showImageViewer && currentGrocery.imageUUID != null) {
+    if (showImageViewer && hasImageFile && currentGrocery.imageUUID != null) {
         val imageFile = remember(currentGrocery.imageUUID) {
             ImageManager.getLocalImageFile(currentGrocery.imageUUID!!, context)
         }
