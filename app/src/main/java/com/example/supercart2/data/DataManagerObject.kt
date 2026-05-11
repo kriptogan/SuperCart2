@@ -530,6 +530,53 @@ object DataManagerObject {
         android.util.Log.d("DataManagerObject", "Confirmed bought items and added buyEvents")
     }
 
+    // Confirms bought items that are linked to a specific store
+    fun confirmBoughtItemsForStore(storeId: String) {
+        val currentDate = LocalDate.now()
+
+        categories.forEachIndexed { categoryIndex, category ->
+            category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
+                val updatedGroceries = subCategory.groceries.map { grocery ->
+                    if (grocery.isBought && storeId in grocery.storeIds) {
+                        val existingEvents = grocery.buyEvents ?: emptyList()
+                        val updatedEvents = if (existingEvents.any { it == currentDate }) {
+                            existingEvents
+                        } else {
+                            existingEvents + currentDate
+                        }
+                        val newAverageBuyDays = calculateAverageBuyDays(updatedEvents)
+                        grocery.copy(
+                            isBought = false,
+                            inShoppingList = false,
+                            buyEvents = updatedEvents,
+                            averageBuyDays = newAverageBuyDays,
+                            lastUpdate = java.time.LocalDateTime.now()
+                        )
+                    } else {
+                        grocery
+                    }
+                }.toMutableList()
+
+                if (updatedGroceries != subCategory.groceries) {
+                    val updatedSubCategory = SubCategoryWithGroceries(
+                        subCategory = subCategory.subCategory,
+                        groceries = updatedGroceries
+                    )
+                    val updatedSubCategories = category.subCategories.toMutableList().apply {
+                        set(subCategoryIndex, updatedSubCategory)
+                    }
+                    categories[categoryIndex] = CategoryWithSubCategories(
+                        category = category.category,
+                        subCategories = updatedSubCategories
+                    )
+                }
+            }
+        }
+
+        updateData()
+        android.util.Log.d("DataManagerObject", "Confirmed bought items for store: $storeId")
+    }
+
     // Store Management Helpers
     fun getSortedStores(): List<Store> {
         return stores.filter { !it.deleted }.sortedBy { it.viewOrder }

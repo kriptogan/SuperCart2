@@ -3,5 +3,5 @@ V 2. support image of grocery upload.
 V 3. option in settings to disable alerts.
 V 4. handle group share.
 V 5. support multiple languages. (auto translate default values)
-6. export local file.
+V 6. export local file.
 7. stores view.

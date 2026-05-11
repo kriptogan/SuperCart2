@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.supercart2.ui.components.BottomNavigationBar
 import com.example.supercart2.ui.screens.HomeScreen
 import com.example.supercart2.ui.screens.ShoppingListScreen
+import com.example.supercart2.ui.screens.StoresScreen
 import com.example.supercart2.ui.theme.SuperCart2Theme
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.data.SettingsManager
@@ -103,6 +104,7 @@ fun MainApp() {
             when (currentRoute) {
                 "home" -> HomeScreen()
                 "shopping_list" -> ShoppingListScreen()
+                "stores" -> StoresScreen()
             }
         }
     }

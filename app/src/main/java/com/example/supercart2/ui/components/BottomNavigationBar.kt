@@ -38,6 +38,11 @@ fun BottomNavigationBar(
             route = "shopping_list",
             titleRes = R.string.nav_shopping_list,
             icon = R.drawable.ic_shopping_cart
+        ),
+        NavigationItem(
+            route = "stores",
+            titleRes = R.string.nav_stores,
+            icon = R.drawable.ic_store
         )
     )
     

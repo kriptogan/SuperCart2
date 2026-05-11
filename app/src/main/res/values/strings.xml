@@ -230,4 +230,18 @@
     <string name="export_successful">Export Successful</string>
     <string name="export_success_message">Your data has been saved to the Downloads folder.</string>
     <string name="export_failed">Export failed: %s</string>
+
+    <string name="back">Back</string>
+
+    <!-- Stores Tab -->
+    <string name="nav_stores">Stores</string>
+    <string name="view_groceries">View Groceries</string>
+    <string name="view_groceries_desc">Browse all items by category</string>
+    <string name="select_a_store">Select a Store</string>
+    <string name="select_a_store_desc">Start shopping at a specific store</string>
+    <string name="change_to_store_view">Switch to Store View</string>
+    <string name="items_count">Items: %d</string>
+    <string name="unique_items_count">Unique: %d</string>
+    <string name="no_stores_with_items">No stores currently have items in the shopping list.</string>
+    <string name="finish_shopping_store">Finish Shopping (%d bought)</string>
 </resources>
