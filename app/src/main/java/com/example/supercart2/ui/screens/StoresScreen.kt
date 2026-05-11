@@ -143,15 +143,15 @@ private fun StoresLandingView(
             Spacer(modifier = Modifier.height(SuperCartSpacing.md))
 
             LandingOptionCard(
-                titleRes = R.string.view_groceries,
-                descRes = R.string.view_groceries_desc,
-                onClick = onViewGroceries
-            )
-
-            LandingOptionCard(
                 titleRes = R.string.select_a_store,
                 descRes = R.string.select_a_store_desc,
                 onClick = onSelectStore
+            )
+
+            LandingOptionCard(
+                titleRes = R.string.view_groceries,
+                descRes = R.string.view_groceries_desc,
+                onClick = onViewGroceries
             )
         }
     }
