@@ -52,7 +52,8 @@ fun StoreBasedDisplay(
     isAllExpanded: Boolean,
     onEditGrocery: (Grocery) -> Unit,
     modifier: Modifier = Modifier,
-    useScroll: Boolean = true
+    useScroll: Boolean = true,
+    onNavigateToStore: (storeId: String) -> Unit = {}
 ) {
     val version = DataManagerObject.version
     
@@ -71,7 +72,8 @@ fun StoreBasedDisplay(
                     storeWithCategories = storeWithCats,
                     searchQuery = searchQuery,
                     isAllExpanded = isAllExpanded,
-                    onEditGrocery = onEditGrocery
+                    onEditGrocery = onEditGrocery,
+                    onNavigateToStore = onNavigateToStore
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -83,7 +85,8 @@ fun StoreBasedDisplay(
                     storeWithCategories = storeWithCats,
                     searchQuery = searchQuery,
                     isAllExpanded = isAllExpanded,
-                    onEditGrocery = onEditGrocery
+                    onEditGrocery = onEditGrocery,
+                    onNavigateToStore = onNavigateToStore
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -96,7 +99,8 @@ private fun StoreSection(
     storeWithCategories: StoreWithCategories,
     searchQuery: String,
     isAllExpanded: Boolean,
-    onEditGrocery: (Grocery) -> Unit
+    onEditGrocery: (Grocery) -> Unit,
+    onNavigateToStore: (storeId: String) -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(true) }
     
@@ -185,7 +189,8 @@ private fun StoreSection(
                     onEditGrocery = onEditGrocery,
                     useScroll = false,
                     isShoppingList = true,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier.padding(8.dp),
+                    onNavigateToStore = onNavigateToStore
                 )
             }
         }

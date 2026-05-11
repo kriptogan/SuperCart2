@@ -365,7 +365,8 @@ fun HomeScreen(onNavigateToStoreEdit: (String) -> Unit = {}) {
                 searchQuery = searchQuery,
                 isAllExpanded = isAllExpanded,
                 onEditGrocery = { grocery -> onEditGrocery(grocery) },
-                showAlerts = showAlerts
+                showAlerts = showAlerts,
+                onNavigateToStore = onNavigateToStoreEdit
             )
         }
 

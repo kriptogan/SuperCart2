@@ -73,15 +73,20 @@ Introduce **Buying** and **Edit** modes to the store detail page, extend the reo
 
 ## Phase 8 — Cleanup & Edge Cases
 
-- [x] **8.1** `EditStoreDialog` no longer opened from `StoresManagementDialog`; delete is
-      handled directly in `StoreCard`; name editing is inline in Edit mode
-- [ ] **8.2** Confirm RTL / LTR layout is correct for the inline name edit and new icons
-- [ ] **8.3** Smoke-test all entry paths (run in Android Studio):
-      - Stores tab → View Groceries → ShoppingListScreen ✓
-      - Stores tab → Select a Store → select store → Buying mode ✓
-      - Stores tab → Select a Store → select store → tap edit icon → Edit mode ✓
-      - Home burger → Manage Stores → tap store edit icon → Edit mode ✓
-- [ ] **8.4** Verify back navigation works correctly from all entry paths
+- [x] **8.1** Edit mode redesigned: title shows "Edit Mode", store info card (name + address +
+      reorder + confirm) shown as first scrollable item; `address` field added to `Store` model
+- [x] **8.2** `EditStoreDialog` no longer opened from `StoresManagementDialog`; delete is
+      handled directly in `StoreCard`
+- [x] **8.3** Edit mode layout updated: Store Info card scrolls first; search bar moved below it in
+      scrollable area (not fixed in header); header only shows back + "Edit Mode" title in edit mode
+- [x] **8.4** Confirm button now shows a snackbar ("Done") as visual feedback after saving store info
+- [x] **8.5** Back button in Edit mode returns to Buying mode when entered via the edit icon from
+      Buying mode (`returnToBuying` flag on `StoreDetail`); from external entry points (e.g.
+      StoresManagement), back still goes to SelectStore
+- [ ] **8.6** Smoke-test all entry paths (run in Android Studio):
+      - Stores tab → Select a Store → select store → Buying mode → tap ✎ → Edit mode → back → Buying mode ✓
+      - Stores tab → Select a Store → select store → Buying mode → tap ✎ → Edit mode → Confirm → snackbar ✓
+      - Home burger → Manage Stores → tap store edit icon → Edit mode → back → SelectStore ✓
 
 ---
 

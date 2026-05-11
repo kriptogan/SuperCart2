@@ -87,6 +87,9 @@
     <string name="reorder_categories">סדר מחדש קטגוריות</string>
     <string name="reorder_categories_for_store">סדר מחדש קטגוריות עבור %s</string>
     <string name="save_order">שמור סדר</string>
+    <string name="edit_mode">מצב עריכה</string>
+    <string name="store_address">כתובת חנות</string>
+    <string name="store_info">פרטי חנות</string>
     
     <!-- Group Sharing -->
     <string name="family_group">קבוצה משפחתית</string>

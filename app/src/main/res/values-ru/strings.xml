@@ -87,6 +87,9 @@
     <string name="reorder_categories">Изменить порядок категорий</string>
     <string name="reorder_categories_for_store">Изменить порядок категорий для %s</string>
     <string name="save_order">Сохранить порядок</string>
+    <string name="edit_mode">Режим редактирования</string>
+    <string name="store_address">Адрес магазина</string>
+    <string name="store_info">Информация о магазине</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Семейная группа</string>

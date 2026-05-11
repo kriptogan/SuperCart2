@@ -53,7 +53,7 @@ private sealed class StoresSubScreen {
     object Landing : StoresSubScreen()
     object ShoppingList : StoresSubScreen()
     object SelectStore : StoresSubScreen()
-    data class StoreDetail(val storeId: String, val mode: StoreMode = StoreMode.Buying) : StoresSubScreen()
+    data class StoreDetail(val storeId: String, val mode: StoreMode = StoreMode.Buying, val returnToBuying: Boolean = false) : StoresSubScreen()
 }
 
 private data class StoreCardData(
@@ -95,8 +95,14 @@ fun StoresScreen(
         is StoresSubScreen.StoreDetail -> StoresDetailView(
             storeId = screen.storeId,
             storeMode = screen.mode,
-            onExit = { subScreen = StoresSubScreen.SelectStore },
-            onEnterEditMode = { subScreen = StoresSubScreen.StoreDetail(screen.storeId, StoreMode.Edit) }
+            onExit = {
+                if (screen.mode == StoreMode.Edit && screen.returnToBuying) {
+                    subScreen = StoresSubScreen.StoreDetail(screen.storeId, StoreMode.Buying)
+                } else {
+                    subScreen = StoresSubScreen.SelectStore
+                }
+            },
+            onEnterEditMode = { subScreen = StoresSubScreen.StoreDetail(screen.storeId, StoreMode.Edit, returnToBuying = true) }
         )
     }
 }
@@ -376,15 +382,18 @@ private fun StoresDetailView(
     var groceryToEdit by remember { mutableStateOf<Grocery?>(null) }
     var isGroceryEditMode by remember { mutableStateOf(false) }
 
-    // Inline store name editing (edit mode only)
-    var isEditingName by remember { mutableStateOf(false) }
-    var editedName by remember { mutableStateOf("") }
+    // Edit mode store info fields
+    var editStoreName by remember { mutableStateOf("") }
+    var editStoreAddress by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val savedText = stringResource(R.string.done)
 
     val store = remember(version) { DataManagerObject.getSortedStores().find { it.uuid == storeId } }
     val storeName = store?.name ?: ""
 
-    LaunchedEffect(storeName) {
-        if (!isEditingName) editedName = storeName
+    LaunchedEffect(store) {
+        editStoreName = store?.name ?: ""
+        editStoreAddress = store?.address ?: ""
     }
 
     // Use store-specific ordering
@@ -427,9 +436,9 @@ private fun StoresDetailView(
     val boughtCount = remember(boughtCategories) { boughtCategories.sumOf { c -> c.subCategories.sumOf { s -> s.groceries.size } } }
 
     val headerTopPadding = when {
-        storeMode == StoreMode.Edit -> 210.dp
-        boughtCount > 0 -> 302.dp
-        else -> 250.dp
+        storeMode == StoreMode.Edit -> 100.dp
+        boughtCount > 0 -> 248.dp
+        else -> 196.dp
     }
 
     fun onEditGrocery(grocery: Grocery) {
@@ -450,7 +459,7 @@ private fun StoresDetailView(
                 .background(SuperCartColors.lightGreen)
                 .padding(start = SuperCartSpacing.md, end = SuperCartSpacing.md, top = SuperCartSpacing.xl)
         ) {
-            // Title row: back arrow + store name + (edit icon or pencil/confirm)
+            // Title row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -464,64 +473,23 @@ private fun StoresDetailView(
                         tint = SuperCartColors.black
                     )
                 }
-
-                if (storeMode == StoreMode.Edit && isEditingName) {
-                    OutlinedTextField(
-                        value = editedName,
-                        onValueChange = { editedName = it },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SuperCartColors.primaryGreen,
-                            unfocusedBorderColor = SuperCartColors.gray,
-                            focusedTextColor = SuperCartColors.black,
-                            unfocusedTextColor = SuperCartColors.black,
-                            focusedContainerColor = SuperCartColors.white,
-                            unfocusedContainerColor = SuperCartColors.white
-                        )
-                    )
-                    IconButton(onClick = {
-                        val trimmed = editedName.trim()
-                        if (trimmed.isNotBlank() && trimmed != storeName) {
-                            DataManagerObject.updateStore(storeId) { it.copy(name = trimmed) }
-                            scope.launch { DataStoreManager.saveDataGlobally() }
-                        }
-                        isEditingName = false
-                    }) {
+                Text(
+                    text = if (storeMode == StoreMode.Edit) stringResource(R.string.edit_mode) else storeName,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SuperCartColors.primaryGreen,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
+                )
+                // Edit mode entry icon (buying mode only)
+                if (storeMode == StoreMode.Buying) {
+                    IconButton(onClick = onEnterEditMode) {
                         Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = stringResource(R.string.save),
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.edit_store),
                             tint = SuperCartColors.primaryGreen
                         )
-                    }
-                } else {
-                    Text(
-                        text = storeName,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SuperCartColors.primaryGreen,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 8.dp)
-                    )
-                    if (storeMode == StoreMode.Edit) {
-                        // Pencil icon to start inline name editing
-                        IconButton(onClick = { editedName = storeName; isEditingName = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = stringResource(R.string.edit_store),
-                                tint = SuperCartColors.primaryGreen
-                            )
-                        }
-                    } else {
-                        // Edit mode icon (buying mode — top right)
-                        IconButton(onClick = onEnterEditMode) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = stringResource(R.string.edit_store),
-                                tint = SuperCartColors.primaryGreen
-                            )
-                        }
                     }
                 }
             }
@@ -543,57 +511,59 @@ private fun StoresDetailView(
                 }
             }
 
-            // Search + collapse row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = SuperCartSpacing.md),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text(stringResource(R.string.search_hint)) },
-                    modifier = Modifier.fillMaxWidth(0.78f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SuperCartColors.primaryGreen,
-                        unfocusedBorderColor = SuperCartColors.gray,
-                        focusedLabelColor = SuperCartColors.primaryGreen,
-                        focusedTextColor = SuperCartColors.black,
-                        unfocusedTextColor = SuperCartColors.black,
-                        focusedContainerColor = SuperCartColors.white,
-                        unfocusedContainerColor = SuperCartColors.white
-                    ),
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SuperCartColors.gray, modifier = Modifier.size(24.dp))
-                    },
-                    trailingIcon = if (searchQuery.isNotEmpty()) {
-                        {
-                            IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(40.dp)) {
-                                Icon(Icons.Default.Clear, contentDescription = null, tint = SuperCartColors.darkGray, modifier = Modifier.size(20.dp))
-                            }
-                        }
-                    } else null
-                )
-                Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
-                Card(
+            // Search + collapse row (buying mode only — in edit mode it lives in the scroll area)
+            if (storeMode == StoreMode.Buying) {
+                Row(
                     modifier = Modifier
-                        .height(56.dp)
-                        .width(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = SuperCartColors.white),
-                    border = CardDefaults.outlinedCardBorder(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        .fillMaxWidth()
+                        .padding(bottom = SuperCartSpacing.md),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { isAllExpanded = !isAllExpanded }, modifier = Modifier.fillMaxSize()) {
-                        Icon(
-                            imageVector = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            tint = SuperCartColors.primaryGreen,
-                            modifier = Modifier.size(28.dp)
-                        )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text(stringResource(R.string.search_hint)) },
+                        modifier = Modifier.fillMaxWidth(0.78f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SuperCartColors.primaryGreen,
+                            unfocusedBorderColor = SuperCartColors.gray,
+                            focusedLabelColor = SuperCartColors.primaryGreen,
+                            focusedTextColor = SuperCartColors.black,
+                            unfocusedTextColor = SuperCartColors.black,
+                            focusedContainerColor = SuperCartColors.white,
+                            unfocusedContainerColor = SuperCartColors.white
+                        ),
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SuperCartColors.gray, modifier = Modifier.size(24.dp))
+                        },
+                        trailingIcon = if (searchQuery.isNotEmpty()) {
+                            {
+                                IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(40.dp)) {
+                                    Icon(Icons.Default.Clear, contentDescription = null, tint = SuperCartColors.darkGray, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        } else null
+                    )
+                    Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                    Card(
+                        modifier = Modifier
+                            .height(56.dp)
+                            .width(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = SuperCartColors.white),
+                        border = CardDefaults.outlinedCardBorder(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        IconButton(onClick = { isAllExpanded = !isAllExpanded }, modifier = Modifier.fillMaxSize()) {
+                            Icon(
+                                imageVector = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = SuperCartColors.primaryGreen,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -622,27 +592,86 @@ private fun StoresDetailView(
                 .padding(top = headerTopPadding, bottom = SuperCartSpacing.md, start = SuperCartSpacing.md, end = SuperCartSpacing.md)
         ) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                item {
-                    // Edit mode: Reorder Categories button
-                    if (storeMode == StoreMode.Edit) {
-                        Button(
-                            onClick = { showReorderCategories = true },
+                // Edit mode: Store Info card (first), then search row below it
+                if (storeMode == StoreMode.Edit) {
+                    item {
+                        StoreInfoCard(
+                            storeName = editStoreName,
+                            storeAddress = editStoreAddress,
+                            onStoreNameChange = { editStoreName = it },
+                            onStoreAddressChange = { editStoreAddress = it },
+                            onReorderCategories = { showReorderCategories = true },
+                            onConfirm = {
+                                val trimmedName = editStoreName.trim()
+                                if (trimmedName.isNotBlank()) {
+                                    DataManagerObject.updateStore(storeId) { s ->
+                                        s.copy(name = trimmedName, address = editStoreAddress.trim())
+                                    }
+                                    scope.launch {
+                                        DataStoreManager.saveDataGlobally()
+                                        snackbarHostState.showSnackbar(savedText)
+                                    }
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(SuperCartSpacing.sm))
+                    }
+                    // Search + expand row below the store info card
+                    item {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = SuperCartSpacing.md),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = SuperCartColors.primaryGreen.copy(alpha = 0.1f),
-                                contentColor = SuperCartColors.primaryGreen
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(imageVector = Icons.Default.Sort, contentDescription = null, modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = stringResource(R.string.reorder_categories))
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                placeholder = { Text(stringResource(R.string.search_hint)) },
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = SuperCartColors.primaryGreen,
+                                    unfocusedBorderColor = SuperCartColors.gray,
+                                    focusedLabelColor = SuperCartColors.primaryGreen,
+                                    focusedTextColor = SuperCartColors.black,
+                                    unfocusedTextColor = SuperCartColors.black,
+                                    focusedContainerColor = SuperCartColors.white,
+                                    unfocusedContainerColor = SuperCartColors.white
+                                ),
+                                singleLine = true,
+                                leadingIcon = {
+                                    Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SuperCartColors.gray, modifier = Modifier.size(24.dp))
+                                },
+                                trailingIcon = if (searchQuery.isNotEmpty()) {
+                                    {
+                                        IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(40.dp)) {
+                                            Icon(Icons.Default.Clear, contentDescription = null, tint = SuperCartColors.darkGray, modifier = Modifier.size(20.dp))
+                                        }
+                                    }
+                                } else null
+                            )
+                            Spacer(modifier = Modifier.width(SuperCartSpacing.sm))
+                            Card(
+                                modifier = Modifier.height(56.dp).width(56.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = SuperCartColors.white),
+                                border = CardDefaults.outlinedCardBorder(),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                IconButton(onClick = { isAllExpanded = !isAllExpanded }, modifier = Modifier.fillMaxSize()) {
+                                    Icon(
+                                        imageVector = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        tint = SuperCartColors.primaryGreen,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
                         }
                     }
+                }
 
+                item {
                     // Items list
                     if (toBuyCategories.isNotEmpty()) {
                         // "Things to Buy" label (buying mode only)
@@ -722,6 +751,14 @@ private fun StoresDetailView(
                 item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
+
+        // Snackbar host (appears above the FAB)
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp)
+        )
 
         // Floating Add Grocery button (both modes)
         Box(
@@ -835,6 +872,116 @@ private fun StoresDetailView(
                     groceryToEdit = null
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun StoreInfoCard(
+    storeName: String,
+    storeAddress: String,
+    onStoreNameChange: (String) -> Unit,
+    onStoreAddressChange: (String) -> Unit,
+    onReorderCategories: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SuperCartColors.white),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(SuperCartSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+        ) {
+            Text(
+                text = stringResource(R.string.store_info),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = SuperCartColors.primaryGreen
+            )
+
+            OutlinedTextField(
+                value = storeName,
+                onValueChange = onStoreNameChange,
+                label = { Text(stringResource(R.string.store_name)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SuperCartColors.primaryGreen,
+                    unfocusedBorderColor = SuperCartColors.gray,
+                    focusedLabelColor = SuperCartColors.primaryGreen,
+                    unfocusedLabelColor = SuperCartColors.gray,
+                    focusedTextColor = SuperCartColors.black,
+                    unfocusedTextColor = SuperCartColors.black,
+                    focusedContainerColor = SuperCartColors.white,
+                    unfocusedContainerColor = SuperCartColors.white
+                )
+            )
+
+            OutlinedTextField(
+                value = storeAddress,
+                onValueChange = onStoreAddressChange,
+                label = { Text(stringResource(R.string.store_address)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SuperCartColors.primaryGreen,
+                    unfocusedBorderColor = SuperCartColors.gray,
+                    focusedLabelColor = SuperCartColors.primaryGreen,
+                    unfocusedLabelColor = SuperCartColors.gray,
+                    focusedTextColor = SuperCartColors.black,
+                    unfocusedTextColor = SuperCartColors.black,
+                    focusedContainerColor = SuperCartColors.white,
+                    unfocusedContainerColor = SuperCartColors.white
+                )
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+            ) {
+                Button(
+                    onClick = onReorderCategories,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen.copy(alpha = 0.1f),
+                        contentColor = SuperCartColors.primaryGreen
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Sort,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = stringResource(R.string.reorder_categories), fontSize = 13.sp)
+                }
+
+                Button(
+                    onClick = onConfirm,
+                    enabled = storeName.isNotBlank(),
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuperCartColors.primaryGreen,
+                        contentColor = SuperCartColors.white
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = stringResource(R.string.confirm), fontSize = 13.sp)
+                }
+            }
         }
     }
 }

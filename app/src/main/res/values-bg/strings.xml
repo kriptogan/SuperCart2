@@ -87,6 +87,9 @@
     <string name="reorder_categories">Пренареждане на категории</string>
     <string name="reorder_categories_for_store">Пренареждане на категории за %s</string>
     <string name="save_order">Запази ред</string>
+    <string name="edit_mode">Режим на редактиране</string>
+    <string name="store_address">Адрес на магазина</string>
+    <string name="store_info">Информация за магазина</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Семейна група</string>

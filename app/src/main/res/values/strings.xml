@@ -87,6 +87,9 @@
     <string name="reorder_categories">Reorder Categories</string>
     <string name="reorder_categories_for_store">Reorder Categories for %s</string>
     <string name="save_order">Save Order</string>
+    <string name="edit_mode">Edit Mode</string>
+    <string name="store_address">Store Address</string>
+    <string name="store_info">Store Info</string>
     
     <!-- Group Sharing -->
     <string name="family_group">Family Group</string>

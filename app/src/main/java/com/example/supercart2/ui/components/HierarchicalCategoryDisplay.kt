@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -53,19 +51,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
-import com.example.supercart2.data.ImageManager
 import com.example.supercart2.data.CategoryWithSubCategories
 import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.models.Grocery
@@ -76,7 +70,6 @@ import com.example.supercart2.utils.localizedSubCategoryDisplayName
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-private val GROCERY_CARD_HEIGHT = 150.dp
 
 @Composable
 fun HierarchicalCategoryDisplay(
@@ -87,7 +80,8 @@ fun HierarchicalCategoryDisplay(
     modifier: Modifier = Modifier,
     useScroll: Boolean = true,
     isShoppingList: Boolean = false,
-    showAlerts: Boolean = true
+    showAlerts: Boolean = true,
+    onNavigateToStore: (storeId: String) -> Unit = {}
 ) {
     if (useScroll) {
         LazyColumn(
@@ -104,7 +98,8 @@ fun HierarchicalCategoryDisplay(
                     isAllExpanded = isAllExpanded,
                     onEditGrocery = onEditGrocery,
                     isShoppingList = isShoppingList,
-                    showAlerts = showAlerts
+                    showAlerts = showAlerts,
+                    onNavigateToStore = onNavigateToStore
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -121,7 +116,8 @@ fun HierarchicalCategoryDisplay(
                     isAllExpanded = isAllExpanded,
                     onEditGrocery = onEditGrocery,
                     isShoppingList = isShoppingList,
-                    showAlerts = showAlerts
+                    showAlerts = showAlerts,
+                    onNavigateToStore = onNavigateToStore
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -137,7 +133,8 @@ private fun CategorySection(
     isAllExpanded: Boolean,
     onEditGrocery: (Grocery) -> Unit,
     isShoppingList: Boolean = false,
-    showAlerts: Boolean = true
+    showAlerts: Boolean = true,
+    onNavigateToStore: (storeId: String) -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(isAllExpanded) }
     var subCategoriesExpanded by remember { mutableStateOf(isAllExpanded) }
@@ -201,7 +198,8 @@ private fun CategorySection(
                         onEditGrocery = onEditGrocery,
                         isShoppingList = isShoppingList,
                         isAllExpanded = subCategoriesExpanded,
-                        showAlerts = showAlerts
+                        showAlerts = showAlerts,
+                        onNavigateToStore = onNavigateToStore
                     )
                 }
             }
@@ -215,7 +213,8 @@ private fun SubCategorySection(
     onEditGrocery: (Grocery) -> Unit,
     isAllExpanded: Boolean,
     isShoppingList: Boolean,
-    showAlerts: Boolean = true
+    showAlerts: Boolean = true,
+    onNavigateToStore: (storeId: String) -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(isAllExpanded) }
 
@@ -258,46 +257,19 @@ private fun SubCategorySection(
         if (isExpanded) {
             Divider(color = SuperCartColors.lightGray)
             if (subCategoryWithGroceries.groceries.isNotEmpty()) {
-                if (!isShoppingList) {
-                    // Home screen: 3-column grid of vertical cards
-                    Column(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
-                    ) {
-                        val chunkedGroceries = subCategoryWithGroceries.groceries.chunked(3)
-                        chunkedGroceries.forEach { rowItems ->
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                rowItems.forEach { grocery ->
-                                    key(grocery.uuid) {
-                                        GroceryCardHome(
-                                            grocery = grocery,
-                                            onEdit = { onEditGrocery(grocery) },
-                                            showAlerts = showAlerts,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                }
-                                // Fill remaining empty slots so cards stay the same width
-                                repeat(3 - rowItems.size) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // Shopping list: existing horizontal item layout
-                    Column(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        subCategoryWithGroceries.groceries.forEach { grocery ->
-                            key(grocery.uuid) {
-                                GroceryItem(
-                                    grocery = grocery,
-                                    onEdit = { onEditGrocery(grocery) },
-                                    isShoppingList = true,
-                                    showAlerts = showAlerts
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                            }
+                Column(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    subCategoryWithGroceries.groceries.forEach { grocery ->
+                        key(grocery.uuid) {
+                            GroceryItem(
+                                grocery = grocery,
+                                onEdit = { onEditGrocery(grocery) },
+                                isShoppingList = isShoppingList,
+                                showAlerts = showAlerts,
+                                onNavigateToStore = onNavigateToStore
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
                 }
@@ -327,318 +299,6 @@ private fun SubCategorySection(
     }
 }
 
-// ─── Home Screen Card Layout ─────────────────────────────────────────────────
-
-@Composable
-private fun GroceryCardHome(
-    grocery: Grocery,
-    onEdit: () -> Unit,
-    showAlerts: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    val version = DataManagerObject.version
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-
-    var showBuyHistory by remember { mutableStateOf(false) }
-    var showImageViewer by remember { mutableStateOf(false) }
-    var menuExpanded by remember { mutableStateOf(false) }
-
-    val currentGrocery = remember(grocery.uuid, version) {
-        DataManagerObject.categories
-            .asSequence()
-            .flatMap { it.subCategories }
-            .flatMap { it.groceries }
-            .find { it.uuid == grocery.uuid } ?: grocery
-    }
-
-    val hasAlert = remember(currentGrocery, showAlerts) {
-        if (!showAlerts) false
-        else {
-            val today = LocalDate.now()
-            val tomorrow = today.plusDays(1)
-            val isExpiringSoon = currentGrocery.expirationDate?.let { it <= tomorrow } ?: false
-            val needsToBuy = currentGrocery.averageBuyDays?.let { avgDays ->
-                currentGrocery.buyEvents.maxOrNull()?.let { lastBuyDate ->
-                    (today.toEpochDay() - lastBuyDate.toEpochDay()) >= avgDays
-                }
-            } ?: false
-            isExpiringSoon || needsToBuy
-        }
-    }
-
-    val storeNames = remember(currentGrocery.storeIds, version) {
-        currentGrocery.storeIds.mapNotNull { storeId ->
-            DataManagerObject.stores.find { it.uuid == storeId }?.name
-        }
-    }
-
-    // Only show the image icon when the file actually exists on disk
-    val hasImageFile = remember(currentGrocery.imageUUID, version) {
-        currentGrocery.imageUUID?.let { uuid ->
-            ImageManager.getLocalImageFile(uuid, context) != null
-        } ?: false
-    }
-
-    val storeDisplayText: String? = when {
-        storeNames.isEmpty() -> null
-        storeNames.size == 1 -> storeNames[0]
-        else -> "${storeNames[0]} +${storeNames.size - 1}"
-    }
-
-    Card(
-        modifier = modifier
-            .padding(4.dp)
-            .height(GROCERY_CARD_HEIGHT)
-            .then(
-                if (hasAlert) Modifier.border(2.dp, Color(0xFFE53935), RoundedCornerShape(12.dp))
-                else Modifier
-            ),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-
-            // ── Header: 3-dots | image icon | cart ─────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 3-dots options menu
-                Box {
-                    IconButton(
-                        onClick = { menuExpanded = true },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More options",
-                            tint = SuperCartColors.primaryGreen,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.edit_item), color = SuperCartColors.black) },
-                            onClick = { onEdit(); menuExpanded = false },
-                            leadingIcon = {
-                                Icon(Icons.Default.Edit, null, tint = SuperCartColors.primaryGreen)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.view_buy_history), color = SuperCartColors.black) },
-                            onClick = { showBuyHistory = true; menuExpanded = false },
-                            leadingIcon = {
-                                Icon(Icons.Outlined.DateRange, null, tint = SuperCartColors.primaryGreen)
-                            }
-                        )
-                    }
-                }
-
-                // Image icon — only visible when item has an image file on disk
-                if (hasImageFile) {
-                    IconButton(
-                        onClick = { showImageViewer = true },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Image,
-                            contentDescription = stringResource(R.string.grocery_image),
-                            tint = SuperCartColors.primaryGreen,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                } else {
-                    Spacer(modifier = Modifier.size(32.dp))
-                }
-
-                // Cart icon — toggles shopping list membership
-                IconButton(
-                    onClick = {
-                        DataManagerObject.toggleShoppingListStatus(currentGrocery.uuid)
-                        scope.launch { DataStoreManager.saveDataGlobally() }
-                    },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = if (currentGrocery.inShoppingList)
-                            "Remove from shopping list" else "Add to shopping list",
-                        tint = if (currentGrocery.inShoppingList) SuperCartColors.primaryGreen else Color.Black,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-
-            // ── Body: scrollable item name ──────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Text(
-                    text = currentGrocery.name,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // ── Footer: store tags ──────────────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (storeDisplayText != null) {
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = Color.White,
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .border(
-                                width = 0.5.dp,
-                                color = SuperCartColors.gray.copy(alpha = 0.4f),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = storeDisplayText,
-                            fontSize = 10.sp,
-                            color = SuperCartColors.black,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    // Image viewer dialog
-    if (showImageViewer && hasImageFile && currentGrocery.imageUUID != null) {
-        val imageFile = remember(currentGrocery.imageUUID) {
-            ImageManager.getLocalImageFile(currentGrocery.imageUUID!!, context)
-        }
-        AlertDialog(
-            onDismissRequest = { showImageViewer = false },
-            title = {
-                Text(
-                    text = currentGrocery.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            text = {
-                if (imageFile != null && imageFile.exists()) {
-                    AsyncImage(
-                        model = imageFile,
-                        contentDescription = stringResource(R.string.grocery_image),
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.Fit
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.grocery_image),
-                        color = SuperCartColors.gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showImageViewer = false },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.primaryGreen,
-                        contentColor = SuperCartColors.white
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.close))
-                }
-            }
-        )
-    }
-
-    // Buy history dialog
-    if (showBuyHistory) {
-        AlertDialog(
-            onDismissRequest = { showBuyHistory = false },
-            title = {
-                Text(
-                    text = "Buy History - ${currentGrocery.name}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            text = {
-                if (currentGrocery.buyEvents.isEmpty()) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = null,
-                            tint = SuperCartColors.gray,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "No purchase history yet",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = SuperCartColors.gray,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                } else {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        currentGrocery.buyEvents.sortedDescending().forEach { date ->
-                            Text(
-                                text = date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy")),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showBuyHistory = false },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.primaryGreen,
-                        contentColor = SuperCartColors.white
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.close))
-                }
-            }
-        )
-    }
-}
-
 // ─── Shopping List Item Layout (unchanged) ────────────────────────────────────
 
 @Composable
@@ -646,7 +306,8 @@ private fun GroceryItem(
     grocery: Grocery,
     onEdit: () -> Unit,
     isShoppingList: Boolean = false,
-    showAlerts: Boolean = true
+    showAlerts: Boolean = true,
+    onNavigateToStore: (storeId: String) -> Unit = {}
 ) {
     val version = DataManagerObject.version
     val scope = rememberCoroutineScope()
@@ -689,7 +350,6 @@ private fun GroceryItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(102.dp)
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .background(
                 when {
@@ -752,29 +412,23 @@ private fun GroceryItem(
 
                 if (currentGrocery.storeIds.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row(
+                    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                    androidx.compose.foundation.layout.FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Start
                     ) {
-                        currentGrocery.storeIds.take(3).forEach { storeId ->
+                        currentGrocery.storeIds.forEach { storeId ->
                             val storeName = remember(storeId, version) {
                                 DataManagerObject.stores.find { it.uuid == storeId }?.name ?: "Unknown"
                             }
+                            val storeAlias = remember(storeName) { storeAlias(storeName) }
                             androidx.compose.material3.AssistChip(
-                                onClick = { },
-                                label = { Text(text = storeName, fontSize = 10.sp) },
+                                onClick = { onNavigateToStore(storeId) },
+                                label = { Text(text = storeAlias, fontSize = 10.sp) },
                                 modifier = Modifier.padding(end = 4.dp),
                                 colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
                                     containerColor = SuperCartColors.lightGray.copy(alpha = 0.3f)
                                 )
-                            )
-                        }
-                        if (currentGrocery.storeIds.size > 3) {
-                            Text(
-                                text = "+${currentGrocery.storeIds.size - 3} ${stringResource(R.string.more)}",
-                                fontSize = 10.sp,
-                                color = SuperCartColors.gray,
-                                modifier = Modifier.align(Alignment.CenterVertically)
                             )
                         }
                     }
@@ -966,5 +620,16 @@ private fun GroceryItem(
                 }
             }
         )
+    }
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+private fun storeAlias(name: String): String {
+    val words = name.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }
+    return if (words.size == 1) {
+        words[0].take(3)
+    } else {
+        words.take(3).joinToString("") { it.first().uppercaseChar().toString() }
     }
 }

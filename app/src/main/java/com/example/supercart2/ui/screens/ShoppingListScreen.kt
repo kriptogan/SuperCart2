@@ -491,7 +491,8 @@ fun ShoppingListScreen(
                                     isAllExpanded = isAllExpanded,
                                     onEditGrocery = { onEditGrocery(it) },
                                     useScroll = false,
-                                    isShoppingList = true
+                                    isShoppingList = true,
+                                    onNavigateToStore = onNavigateToStoreEdit
                                 )
                             }
                             ShoppingListViewMode.STORE -> {
@@ -500,7 +501,8 @@ fun ShoppingListScreen(
                                     searchQuery = searchQuery,
                                     isAllExpanded = isAllExpanded,
                                     onEditGrocery = { onEditGrocery(it) },
-                                    useScroll = false
+                                    useScroll = false,
+                                    onNavigateToStore = onNavigateToStoreEdit
                                 )
                             }
                         }
