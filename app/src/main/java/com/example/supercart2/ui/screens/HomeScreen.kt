@@ -63,7 +63,7 @@ import android.util.Log
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onNavigateToStoreEdit: (String) -> Unit = {}) {
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showStoresManagement by remember { mutableStateOf(false) }
     var showGroupManagement by remember { mutableStateOf(false) }
@@ -380,7 +380,11 @@ fun HomeScreen() {
     // Stores Management Dialog
     if (showStoresManagement) {
         StoresManagementDialog(
-            onDismiss = { showStoresManagement = false }
+            onDismiss = { showStoresManagement = false },
+            onEnterStoreEditMode = { storeId ->
+                showStoresManagement = false
+                onNavigateToStoreEdit(storeId)
+            }
         )
     }
     

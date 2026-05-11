@@ -18,6 +18,9 @@ object DataManagerObject {
     
     // Store-specific category ordering: Map<StoreUUID, List<CategoryUUID>>
     var storeCategoryOrders: MutableMap<String, List<String>> = mutableMapOf()
+
+    // Store-specific sub-category ordering: Map<StoreUUID, Map<CategoryUUID, List<SubCategoryUUID>>>
+    var storeSubCategoryOrders: MutableMap<String, Map<String, List<String>>> = mutableMapOf()
     
     // Version counter to force recomposition
     private var _version by mutableStateOf(0)
@@ -646,6 +649,9 @@ object DataManagerObject {
         
         // Remove store's custom category order
         storeCategoryOrders.remove(storeUuid)
+
+        // Remove store's custom sub-category orders
+        storeSubCategoryOrders.remove(storeUuid)
         
         android.util.Log.d("DataManagerObject", "Deleted store")
     }
@@ -709,6 +715,64 @@ object DataManagerObject {
             storeCategoryOrders[storeId] = currentOrder
             notifyUpdate()
             android.util.Log.d("DataManagerObject", "Swapped category order for store $storeId")
+        }
+    }
+
+    // ========== Store Sub-Category Order Management ==========
+
+    fun getStoreSubCategoryOrder(storeId: String, categoryId: String): List<String>? {
+        return storeSubCategoryOrders[storeId]?.get(categoryId)
+    }
+
+    fun setStoreSubCategoryOrders(storeId: String, orders: Map<String, List<String>>) {
+        storeSubCategoryOrders[storeId] = orders.toMap()
+        notifyUpdate()
+        android.util.Log.d("DataManagerObject", "Set sub-category orders for store $storeId")
+    }
+
+    /**
+     * Returns categories sorted by store-specific category order,
+     * with sub-categories sorted by store-specific sub-category order.
+     */
+    fun getSortedCategoriesForStore(storeId: String): List<CategoryWithSubCategories> {
+        val baseCategories = getSortedCategories()
+
+        // Apply per-store sub-category ordering within each category
+        val withSubOrder = baseCategories.map { catWithSubs ->
+            val customSubOrder = getStoreSubCategoryOrder(storeId, catWithSubs.category.uuid)
+            if (customSubOrder != null) {
+                val ordered = mutableListOf<SubCategoryWithGroceries>()
+                val unordered = catWithSubs.subCategories.toMutableList()
+                customSubOrder.forEach { subId ->
+                    val found = unordered.find { it.subCategory.uuid == subId }
+                    if (found != null) {
+                        ordered.add(found)
+                        unordered.remove(found)
+                    }
+                }
+                ordered.addAll(unordered)
+                CategoryWithSubCategories(catWithSubs.category, ordered)
+            } else {
+                catWithSubs
+            }
+        }
+
+        // Apply per-store category ordering
+        val customCatOrder = getStoreCategoryOrder(storeId)
+        return if (customCatOrder != null) {
+            val ordered = mutableListOf<CategoryWithSubCategories>()
+            val unordered = withSubOrder.toMutableList()
+            customCatOrder.forEach { catId ->
+                val found = unordered.find { it.category.uuid == catId }
+                if (found != null) {
+                    ordered.add(found)
+                    unordered.remove(found)
+                }
+            }
+            ordered.addAll(unordered.sortedBy { it.category.viewOrder })
+            ordered
+        } else {
+            withSubOrder
         }
     }
 

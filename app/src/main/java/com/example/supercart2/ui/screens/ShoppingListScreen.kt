@@ -49,6 +49,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.example.supercart2.ui.components.StoreBasedDisplay
 import com.example.supercart2.ui.components.HideStoresDialog
 import com.example.supercart2.utils.localizedCategoryDisplayName
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -59,7 +60,10 @@ enum class ShoppingListViewMode {
 }
 
 @Composable
-fun ShoppingListScreen() {
+fun ShoppingListScreen(
+    onBack: (() -> Unit)? = null,
+    onNavigateToStoreEdit: (String) -> Unit = {}
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var showCategoriesManagement by remember { mutableStateOf(false) }
     var showStoresManagement by remember { mutableStateOf(false) }
@@ -199,9 +203,20 @@ fun ShoppingListScreen() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Back button (when shown as sub-screen inside Stores)
+                if (onBack != null) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = SuperCartColors.black
+                        )
+                    }
+                }
+
                 // Burger menu with right padding
                 Box(
-                    modifier = Modifier.padding(start = 5.dp)
+                    modifier = Modifier.padding(start = if (onBack != null) 0.dp else 5.dp)
                 ) {
                     BurgerMenu(
                         onCategoriesManagementClick = {
@@ -705,7 +720,11 @@ fun ShoppingListScreen() {
         // Stores Management Dialog
         if (showStoresManagement) {
             StoresManagementDialog(
-                onDismiss = { showStoresManagement = false }
+                onDismiss = { showStoresManagement = false },
+                onEnterStoreEditMode = { storeId ->
+                    showStoresManagement = false
+                    onNavigateToStoreEdit(storeId)
+                }
             )
         }
         

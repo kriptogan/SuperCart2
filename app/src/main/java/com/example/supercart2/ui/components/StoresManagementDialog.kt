@@ -51,10 +51,10 @@ import com.example.supercart2.models.Store
 
 @Composable
 fun StoresManagementDialog(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onEnterStoreEditMode: (storeId: String) -> Unit = {}
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
-    var storeToEdit by remember { mutableStateOf<Store?>(null) }
     val scope = rememberCoroutineScope()
     
     // Observe version to trigger recomposition
@@ -63,21 +63,7 @@ fun StoresManagementDialog(
     if (showCreateDialog) {
         CreateStoreDialog(
             onDismiss = { showCreateDialog = false },
-            onStoreCreated = {
-                // Store is already added in CreateStoreDialog
-                showCreateDialog = false
-            }
-        )
-    }
-    
-    if (storeToEdit != null) {
-        EditStoreDialog(
-            store = storeToEdit!!,
-            onDismiss = { storeToEdit = null },
-            onStoreUpdated = {
-                // Store is already updated in EditStoreDialog
-                storeToEdit = null
-            }
+            onStoreCreated = { showCreateDialog = false }
         )
     }
     
@@ -131,7 +117,10 @@ fun StoresManagementDialog(
                             val index = sortedStores.indexOf(store)
                             StoreCard(
                                 store = store,
-                                onEditClick = { storeToEdit = store },
+                                onEnterEditMode = {
+                                    onDismiss()
+                                    onEnterStoreEditMode(store.uuid)
+                                },
                                 onMoveUp = {
                                     if (index > 0) {
                                         val prevStore = sortedStores[index - 1]
@@ -206,12 +195,67 @@ fun StoresManagementDialog(
 @Composable
 private fun StoreCard(
     store: Store,
-    onEditClick: () -> Unit,
+    onEnterEditMode: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     canMoveUp: Boolean,
     canMoveDown: Boolean
 ) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    if (showDeleteConfirmation) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            containerColor = SuperCartColors.lightGreen,
+            title = {
+                androidx.compose.material3.Text(
+                    text = stringResource(R.string.delete_store),
+                    style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                androidx.compose.material3.Text(
+                    text = stringResource(R.string.delete_store_confirmation, store.name),
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
+                ) {
+                    Button(
+                        onClick = { showDeleteConfirmation = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SuperCartColors.white,
+                            contentColor = SuperCartColors.primaryGreen
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
+                    }
+                    Button(
+                        onClick = {
+                            DataManagerObject.deleteStore(store.uuid)
+                            scope.launch { DataStoreManager.saveDataGlobally() }
+                            showDeleteConfirmation = false
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red,
+                            contentColor = androidx.compose.ui.graphics.Color.White
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
+                    }
+                }
+            }
+        )
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -242,18 +286,13 @@ private fun StoreCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 
-                // Action buttons - fixed position on the right, very close together
+                // Action buttons
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy((-4).dp), // Negative spacing to overlap buttons slightly
+                    horizontalArrangement = Arrangement.spacedBy((-4).dp),
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = SuperCartSpacing.sm)
                 ) {
-                    // Move Down Arrow
-                    IconButton(
-                        onClick = onMoveDown,
-                        enabled = canMoveDown,
-                        modifier = Modifier.size(40.dp) // Smaller button = less padding = closer icons
-                    ) {
+                    IconButton(onClick = onMoveDown, enabled = canMoveDown, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = stringResource(R.string.move_down),
@@ -261,13 +300,7 @@ private fun StoreCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    
-                    // Move Up Arrow - close to down arrow
-                    IconButton(
-                        onClick = onMoveUp,
-                        enabled = canMoveUp,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+                    IconButton(onClick = onMoveUp, enabled = canMoveUp, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowUp,
                             contentDescription = stringResource(R.string.move_up),
@@ -275,12 +308,15 @@ private fun StoreCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    
-                    // Edit Icon - fixed position, close to up arrow
-                    IconButton(
-                        onClick = onEditClick,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+                    IconButton(onClick = { showDeleteConfirmation = true }, modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.delete_store),
+                            tint = Color.Red,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(onClick = onEnterEditMode, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = stringResource(R.string.edit_store),

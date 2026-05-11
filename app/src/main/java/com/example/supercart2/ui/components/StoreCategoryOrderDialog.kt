@@ -8,9 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -25,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,8 +34,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
@@ -53,27 +57,18 @@ fun StoreCategoryOrderDialog(
 ) {
     val scope = rememberCoroutineScope()
     val version = DataManagerObject.version
-    
-    // Get categories that have items in this store
-    val categoriesWithItems = remember(version) {
-        DataManagerObject.categories.mapNotNull { categoryWithSubs ->
-            val hasItemsInStore = categoryWithSubs.subCategories.any { subCategoryWithGroceries ->
-                subCategoryWithGroceries.groceries.any { grocery ->
-                    grocery.storeIds.contains(store.uuid)
-                }
-            }
-            if (hasItemsInStore) categoryWithSubs else null
-        }
+
+    // All categories that have items in this store (for reordering purposes we show all non-deleted)
+    val allCategories = remember(version) {
+        DataManagerObject.getSortedCategories()
     }
-    
-    // Get current order (custom or default)
-    val currentOrder = remember(version, categoriesWithItems) {
+
+    // Get current category order for this store
+    val currentCategoryOrder = remember(version, allCategories) {
         val customOrder = DataManagerObject.getStoreCategoryOrder(store.uuid)
         if (customOrder != null) {
-            // Use custom order, filter to only categories that have items
             val ordered = mutableListOf<com.example.supercart2.data.CategoryWithSubCategories>()
-            val unordered = categoriesWithItems.toMutableList()
-            
+            val unordered = allCategories.toMutableList()
             customOrder.forEach { categoryId ->
                 val category = unordered.find { it.category.uuid == categoryId }
                 if (category != null) {
@@ -81,24 +76,45 @@ fun StoreCategoryOrderDialog(
                     unordered.remove(category)
                 }
             }
-            
-            // Add any remaining categories sorted by viewOrder
             ordered.addAll(unordered.sortedBy { it.category.viewOrder })
             ordered
         } else {
-            // Use default order (viewOrder)
-            categoriesWithItems.sortedBy { it.category.viewOrder }
+            allCategories.sortedBy { it.category.viewOrder }
         }
     }
-    
-    // Local state for reordering (starts with current order)
-    var displayOrder by remember { mutableStateOf(currentOrder.map { it.category.uuid }) }
-    
-    // Update displayOrder when currentOrder changes externally
-    androidx.compose.runtime.LaunchedEffect(currentOrder) {
-        displayOrder = currentOrder.map { it.category.uuid }
+
+    // Local state: ordered list of category UUIDs
+    var displayCategoryOrder by remember { mutableStateOf(currentCategoryOrder.map { it.category.uuid }) }
+
+    // Local state: per-category sub-category order (Map<CategoryUUID, List<SubCategoryUUID>>)
+    var displaySubCategoryOrders by remember {
+        mutableStateOf(
+            buildMap {
+                currentCategoryOrder.forEach { catWithSubs ->
+                    val customSubOrder = DataManagerObject.getStoreSubCategoryOrder(store.uuid, catWithSubs.category.uuid)
+                    put(
+                        catWithSubs.category.uuid,
+                        customSubOrder ?: catWithSubs.subCategories.map { it.subCategory.uuid }
+                    )
+                }
+            }
+        )
     }
-    
+
+    LaunchedEffect(currentCategoryOrder) {
+        displayCategoryOrder = currentCategoryOrder.map { it.category.uuid }
+        val newSubOrders = buildMap {
+            currentCategoryOrder.forEach { catWithSubs ->
+                val customSubOrder = DataManagerObject.getStoreSubCategoryOrder(store.uuid, catWithSubs.category.uuid)
+                put(
+                    catWithSubs.category.uuid,
+                    customSubOrder ?: catWithSubs.subCategories.map { it.subCategory.uuid }
+                )
+            }
+        }
+        displaySubCategoryOrders = newSubOrders
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxSize(),
@@ -112,7 +128,7 @@ fun StoreCategoryOrderDialog(
             )
         },
         text = {
-            if (categoriesWithItems.isEmpty()) {
+            if (allCategories.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -125,39 +141,74 @@ fun StoreCategoryOrderDialog(
                     )
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(
-                        items = displayOrder,
-                        key = { it }
-                    ) { categoryId ->
-                        val category = categoriesWithItems.find { it.category.uuid == categoryId }
-                        if (category != null) {
-                            val index = displayOrder.indexOf(categoryId)
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    itemsIndexed(
+                        items = displayCategoryOrder,
+                        key = { _, id -> id }
+                    ) { catIndex, categoryId ->
+                        val catWithSubs = allCategories.find { it.category.uuid == categoryId }
+                        if (catWithSubs != null) {
+                            // Category row
                             CategoryOrderCard(
-                                category = category.category,
-                                canMoveUp = index > 0,
-                                canMoveDown = index < displayOrder.size - 1,
+                                category = catWithSubs.category,
+                                canMoveUp = catIndex > 0,
+                                canMoveDown = catIndex < displayCategoryOrder.size - 1,
                                 onMoveUp = {
-                                    if (index > 0) {
-                                        val newOrder = displayOrder.toMutableList()
-                                        val temp = newOrder[index]
-                                        newOrder[index] = newOrder[index - 1]
-                                        newOrder[index - 1] = temp
-                                        displayOrder = newOrder
+                                    if (catIndex > 0) {
+                                        val newOrder = displayCategoryOrder.toMutableList()
+                                        val temp = newOrder[catIndex]
+                                        newOrder[catIndex] = newOrder[catIndex - 1]
+                                        newOrder[catIndex - 1] = temp
+                                        displayCategoryOrder = newOrder
                                     }
                                 },
                                 onMoveDown = {
-                                    if (index < displayOrder.size - 1) {
-                                        val newOrder = displayOrder.toMutableList()
-                                        val temp = newOrder[index]
-                                        newOrder[index] = newOrder[index + 1]
-                                        newOrder[index + 1] = temp
-                                        displayOrder = newOrder
+                                    if (catIndex < displayCategoryOrder.size - 1) {
+                                        val newOrder = displayCategoryOrder.toMutableList()
+                                        val temp = newOrder[catIndex]
+                                        newOrder[catIndex] = newOrder[catIndex + 1]
+                                        newOrder[catIndex + 1] = temp
+                                        displayCategoryOrder = newOrder
                                     }
                                 }
                             )
+
+                            // Sub-category rows (if any)
+                            val subOrder = displaySubCategoryOrders[categoryId] ?: catWithSubs.subCategories.map { it.subCategory.uuid }
+                            subOrder.forEachIndexed { subIndex, subCategoryId ->
+                                val subCatWithGroceries = catWithSubs.subCategories.find { it.subCategory.uuid == subCategoryId }
+                                if (subCatWithGroceries != null) {
+                                    SubCategoryOrderCard(
+                                        name = subCatWithGroceries.subCategory.name,
+                                        canMoveUp = subIndex > 0,
+                                        canMoveDown = subIndex < subOrder.size - 1,
+                                        onMoveUp = {
+                                            if (subIndex > 0) {
+                                                val newSubOrder = subOrder.toMutableList()
+                                                val temp = newSubOrder[subIndex]
+                                                newSubOrder[subIndex] = newSubOrder[subIndex - 1]
+                                                newSubOrder[subIndex - 1] = temp
+                                                displaySubCategoryOrders = displaySubCategoryOrders.toMutableMap().apply {
+                                                    put(categoryId, newSubOrder)
+                                                }
+                                            }
+                                        },
+                                        onMoveDown = {
+                                            if (subIndex < subOrder.size - 1) {
+                                                val newSubOrder = subOrder.toMutableList()
+                                                val temp = newSubOrder[subIndex]
+                                                newSubOrder[subIndex] = newSubOrder[subIndex + 1]
+                                                newSubOrder[subIndex + 1] = temp
+                                                displaySubCategoryOrders = displaySubCategoryOrders.toMutableMap().apply {
+                                                    put(categoryId, newSubOrder)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(SuperCartSpacing.sm))
                         }
                     }
                 }
@@ -168,7 +219,6 @@ fun StoreCategoryOrderDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
             ) {
-                // Cancel Button (left) - secondary styled
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(
@@ -177,38 +227,27 @@ fun StoreCategoryOrderDialog(
                     ),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.cancel)
-                    )
+                    Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
                 }
-                
-                // Save Button (right) - primary styled
+
                 Button(
                     onClick = {
-                        // Save the order
-                        DataManagerObject.setStoreCategoryOrder(store.uuid, displayOrder)
-                        
-                        // Save to DataStore
+                        DataManagerObject.setStoreCategoryOrder(store.uuid, displayCategoryOrder)
+                        DataManagerObject.setStoreSubCategoryOrders(store.uuid, displaySubCategoryOrders)
                         scope.launch {
                             DataStoreManager.saveDataGlobally()
-                            android.util.Log.d("StoreCategoryOrderDialog", "Saved category order for store ${store.name}")
                         }
-                        
                         onOrderUpdated()
                         onDismiss()
                     },
-                    enabled = categoriesWithItems.isNotEmpty(),
+                    enabled = allCategories.isNotEmpty(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SuperCartColors.primaryGreen,
                         contentColor = SuperCartColors.white
                     ),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = stringResource(R.string.save_order)
-                    )
+                    Icon(imageVector = Icons.Default.Check, contentDescription = stringResource(R.string.save_order))
                 }
             }
         }
@@ -226,56 +265,95 @@ private fun CategoryOrderCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = SuperCartSpacing.sm),
-        colors = CardDefaults.cardColors(
-            containerColor = SuperCartColors.white
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        ),
+            .padding(bottom = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = SuperCartColors.white),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = SuperCartShapes.medium
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SuperCartSpacing.md),
+                .padding(horizontal = SuperCartSpacing.md, vertical = SuperCartSpacing.sm),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Category name
             Text(
                 text = localizedCategoryDisplayName(category.name),
                 style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
-                color = SuperCartColors.black,
+                fontWeight = FontWeight.Bold,
+                color = SuperCartColors.primaryGreen,
                 modifier = Modifier.weight(1f)
             )
-            
-            // Action buttons
             Row(
                 horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.xs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Move Up Arrow
-                IconButton(
-                    onClick = onMoveUp,
-                    enabled = canMoveUp
-                ) {
+                IconButton(onClick = onMoveUp, enabled = canMoveUp) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowUp,
                         contentDescription = stringResource(R.string.move_up),
                         tint = if (canMoveUp) SuperCartColors.primaryGreen else SuperCartColors.gray
                     )
                 }
-                
-                // Move Down Arrow
-                IconButton(
-                    onClick = onMoveDown,
-                    enabled = canMoveDown
-                ) {
+                IconButton(onClick = onMoveDown, enabled = canMoveDown) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
                         contentDescription = stringResource(R.string.move_down),
                         tint = if (canMoveDown) SuperCartColors.primaryGreen else SuperCartColors.gray
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SubCategoryOrderCard(
+    name: String,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp, bottom = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = SuperCartColors.lightGreen.copy(alpha = 0.3f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = SuperCartShapes.medium
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = SuperCartSpacing.md, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = name,
+                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                color = SuperCartColors.black,
+                modifier = Modifier.weight(1f)
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.xs),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onMoveUp, enabled = canMoveUp, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = stringResource(R.string.move_up),
+                        tint = if (canMoveUp) SuperCartColors.primaryGreen else SuperCartColors.gray,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                IconButton(onClick = onMoveDown, enabled = canMoveDown, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = stringResource(R.string.move_down),
+                        tint = if (canMoveDown) SuperCartColors.primaryGreen else SuperCartColors.gray,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }

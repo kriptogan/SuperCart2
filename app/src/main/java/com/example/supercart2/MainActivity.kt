@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.supercart2.ui.components.BottomNavigationBar
 import com.example.supercart2.ui.screens.HomeScreen
-import com.example.supercart2.ui.screens.ShoppingListScreen
 import com.example.supercart2.ui.screens.StoresScreen
 import com.example.supercart2.ui.theme.SuperCart2Theme
 import com.example.supercart2.data.DataStoreManager
@@ -71,9 +70,15 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp() {
     var currentRoute by remember { mutableStateOf("home") }
+    var pendingEditStoreId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
+    val onNavigateToStoreEdit: (String) -> Unit = { storeId ->
+        currentRoute = "stores"
+        pendingEditStoreId = storeId
+    }
+
     // Initialize data on app startup
     DisposableEffect(Unit) {
         // Set global context for DataStoreManager and SettingsManager
@@ -102,9 +107,11 @@ fun MainApp() {
                 .padding(innerPadding)
         ) {
             when (currentRoute) {
-                "home" -> HomeScreen()
-                "shopping_list" -> ShoppingListScreen()
-                "stores" -> StoresScreen()
+                "home" -> HomeScreen(onNavigateToStoreEdit = onNavigateToStoreEdit)
+                "stores" -> StoresScreen(
+                    editModeStoreId = pendingEditStoreId,
+                    onEditModeStoreConsumed = { pendingEditStoreId = null }
+                )
             }
         }
     }

@@ -86,7 +86,8 @@ fun GroceryCreationDialog(
     onGroceryCreated: (Grocery) -> Unit,
     groceryToEdit: Grocery? = null,
     initialGroceryName: String = "",
-    addToShoppingList: Boolean = false
+    addToShoppingList: Boolean = false,
+    initialStoreId: String? = null
 ) {
     var groceryName by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
@@ -119,6 +120,10 @@ fun GroceryCreationDialog(
         } else {
             // Create mode - use initialGroceryName if provided, otherwise empty string
             groceryName = initialGroceryName
+            // Pre-select store if provided
+            if (initialStoreId != null) {
+                selectedStoreIds = listOf(initialStoreId)
+            }
             // Auto-select first category and sub-category
             val sortedCategories = DataManagerObject.getSortedCategories()
             if (sortedCategories.isNotEmpty()) {
