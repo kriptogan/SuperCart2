@@ -89,9 +89,15 @@ class CategoriesManagementDialogEditHandlersTest {
     }
 
     @Test
-    fun `subCategoryDeleted removes it from the list (hard delete) and saves`() {
+    fun `subCategoryDeleted soft-deletes it, keeping it in the list, and saves`() {
+        val versionBefore = DataManagerObject.version
         handlers.subCategoryDeleted(sub("s1", "c1"))
-        assertEquals(listOf("s2"), subIds())
+        assertEquals(listOf("s1", "s2"), subIds())
+        assertTrue(node().subCategories[0].subCategory.deleted)
+        assertTrue(node().subCategories[0].subCategory.lastUpdate.isAfter(TestData.OLD))
+        assertEquals(listOf("g1"), node().subCategories[0].groceries.map { it.uuid })
+        assertFalse(node().subCategories[1].subCategory.deleted)
+        assertEquals(versionBefore + 1, DataManagerObject.version)
         assertEquals(listOf("save"), events)
     }
 
