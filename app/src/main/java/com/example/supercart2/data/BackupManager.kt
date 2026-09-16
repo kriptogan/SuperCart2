@@ -10,17 +10,14 @@ import com.example.supercart2.models.Grocery
 import com.example.supercart2.models.Store
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
 
 /**
  * Manages backup and restore operations for SuperCart data.
  * Backup files are stored in the Downloads folder as ZIP archives
- * containing data.json + an images/ directory.
+ * containing data.json + an images/ directory (see BackupManagerZip.kt).
  * Legacy .json backups (no images) are still supported for import.
  */
 object BackupManager {
@@ -28,10 +25,8 @@ object BackupManager {
     private const val BACKUP_FILENAME_PREFIX = "supercart_backup_"
     private const val BACKUP_FILE_EXTENSION = ".zip"
     private const val LEGACY_EXTENSION = ".json"
-    private const val ZIP_DATA_ENTRY = "data.json"
-    private const val ZIP_IMAGES_DIR = "images/"
 
-    private val gson: Gson by lazy { gsonBuilder().setPrettyPrinting().create() }
+    internal val gson: Gson by lazy { gsonBuilder().setPrettyPrinting().create() }
 
     /**
      * Data structure written to data.json inside the ZIP.
@@ -57,61 +52,27 @@ object BackupManager {
      *
      * @return The created File, or null on failure.
      */
-    suspend fun createBackup(context: Context): File? {
-        return try {
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            if (!downloadsDir.exists()) downloadsDir.mkdirs()
+    suspend fun createBackup(context: Context): File? = logErrors("❌ Error creating backup", fallback = null) {
+        val backupFile = newBackupFile()
+        writeBackupZip(backupFile, currentBackupData(), context)
+        Log.d("BackupManager", "✅ ZIP backup created: ${backupFile.absolutePath}")
+        backupFile
+    }
 
-            val timestamp = System.currentTimeMillis()
-            val backupFile = File(downloadsDir, "$BACKUP_FILENAME_PREFIX${timestamp}$BACKUP_FILE_EXTENSION")
+    private fun newBackupFile(): File {
+        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        if (!downloadsDir.exists()) downloadsDir.mkdirs()
+        return File(downloadsDir, "$BACKUP_FILENAME_PREFIX${System.currentTimeMillis()}$BACKUP_FILE_EXTENSION")
+    }
 
-            // Collect flat data
-            val (categories, subCategories, groceries) = DataConverter.flattenCategories(
-                DataManagerObject.categories,
-                includeDeleted = true
-            )
-            val stores = DataManagerObject.stores.toList()
-            val hiddenStoreIds = DataManagerObject.hiddenStoreIds.toList()
-            val storeCategoryOrders = DataManagerObject.storeCategoryOrders.toMap()
-
-            val backupData = BackupData(
-                categories = categories,
-                subCategories = subCategories,
-                groceries = groceries,
-                stores = stores,
-                hiddenStoreIds = hiddenStoreIds,
-                storeCategoryOrders = storeCategoryOrders
-            )
-            val jsonContent = gson.toJson(backupData)
-
-            ZipOutputStream(FileOutputStream(backupFile)).use { zip ->
-
-                // 1. data.json
-                zip.putNextEntry(ZipEntry(ZIP_DATA_ENTRY))
-                zip.write(jsonContent.toByteArray(Charsets.UTF_8))
-                zip.closeEntry()
-
-                // 2. images/
-                groceries
-                    .filter { !it.deleted && it.imageUUID != null }
-                    .forEach { grocery ->
-                        val uuid = grocery.imageUUID!!
-                        val imageFile = ImageManager.getLocalImageFile(uuid, context)
-                        if (imageFile != null && imageFile.exists()) {
-                            zip.putNextEntry(ZipEntry("$ZIP_IMAGES_DIR$uuid.jpg"))
-                            imageFile.inputStream().use { it.copyTo(zip) }
-                            zip.closeEntry()
-                            Log.d("BackupManager", "  ↳ packed image $uuid")
-                        }
-                    }
-            }
-
-            Log.d("BackupManager", "✅ ZIP backup created: ${backupFile.absolutePath}")
-            backupFile
-        } catch (e: Exception) {
-            Log.e("BackupManager", "❌ Error creating backup", e)
-            null
-        }
+    // All in-memory data, including deleted items (sub-category orders are not part of backups)
+    private fun currentBackupData(): BackupData {
+        val (categories, subCategories, groceries) =
+            DataConverter.flattenCategories(DataManagerObject.categories, includeDeleted = true)
+        return BackupData(
+            categories, subCategories, groceries, DataManagerObject.stores.toList(),
+            DataManagerObject.hiddenStoreIds.toList(), DataManagerObject.storeCategoryOrders.toMap(),
+        )
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -129,132 +90,109 @@ object BackupManager {
             Log.e("BackupManager", "❌ File not accessible: ${backupFile.absolutePath}")
             return false
         }
-        return if (backupFile.name.endsWith(BACKUP_FILE_EXTENSION)) {
-            restoreFromZip(context, backupFile)
-        } else {
-            restoreFromJson(context, backupFile)
-        }
+        val isZip = backupFile.name.endsWith(BACKUP_FILE_EXTENSION)
+        return if (isZip) restoreFromZip(context, backupFile) else restoreFromJson(context, backupFile)
     }
 
     /** Restore from new ZIP format (data.json + images/). */
-    private suspend fun restoreFromZip(context: Context, backupFile: File): Boolean {
-        return try {
-            var backupData: BackupData? = null
-            val imageMap = mutableMapOf<String, ByteArray>() // uuid → bytes
+    private suspend fun restoreFromZip(context: Context, backupFile: File): Boolean =
+        logErrors("❌ Error restoring ZIP", fallback = false) {
+            val contents = ZipInputStream(FileInputStream(backupFile)).use { readBackupZip(it) }
+            applyZipContents(context, contents)
+        }
 
-            ZipInputStream(FileInputStream(backupFile)).use { zip ->
-                var entry = zip.nextEntry
-                while (entry != null) {
-                    when {
-                        entry.name == ZIP_DATA_ENTRY -> {
-                            val json = zip.readBytes().toString(Charsets.UTF_8)
-                            backupData = gson.fromJson(json, BackupData::class.java)
-                        }
-                        entry.name.startsWith(ZIP_IMAGES_DIR) && !entry.isDirectory -> {
-                            val uuid = File(entry.name).nameWithoutExtension
-                            imageMap[uuid] = zip.readBytes()
-                        }
-                    }
-                    zip.closeEntry()
-                    entry = zip.nextEntry
-                }
-            }
+    private suspend fun applyZipContents(context: Context, contents: BackupZipContents): Boolean {
+        val data = contents.data ?: return logMissingData()
+        applyBackupData(context, data)
+        restoreImages(contents.images, context)
+        Log.d("BackupManager", "✅ ZIP restored: ${data.groceries.size} groceries, ${contents.images.size} images")
+        return true
+    }
 
-            val data = backupData ?: run {
-                Log.e("BackupManager", "❌ data.json not found in ZIP")
-                return false
-            }
+    private fun logMissingData(): Boolean {
+        Log.e("BackupManager", "❌ data.json not found in ZIP")
+        return false
+    }
 
-            applyBackupData(context, data)
-
-            // Write extracted images to local cache
-            imageMap.forEach { (uuid, bytes) ->
-                val dest = ImageManager.getImageFile(uuid, context)
-                dest.writeBytes(bytes)
-                Log.d("BackupManager", "  ↳ restored image $uuid")
-            }
-
-            Log.d("BackupManager", "✅ ZIP restored: ${data.groceries.size} groceries, ${imageMap.size} images")
-            true
-        } catch (e: Exception) {
-            Log.e("BackupManager", "❌ Error restoring ZIP", e)
-            false
+    // Write extracted images to local cache
+    private fun restoreImages(images: Map<String, ByteArray>, context: Context) {
+        images.forEach { (uuid, bytes) ->
+            ImageManager.getImageFile(uuid, context).writeBytes(bytes)
+            Log.d("BackupManager", "  ↳ restored image $uuid")
         }
     }
 
     /** Restore from legacy JSON format (no images). */
-    private suspend fun restoreFromJson(context: Context, backupFile: File): Boolean {
-        return try {
-            val json = backupFile.readText()
-            val data = gson.fromJson(json, BackupData::class.java)
+    private suspend fun restoreFromJson(context: Context, backupFile: File): Boolean =
+        logErrors("❌ Error restoring JSON", fallback = false) {
+            val data = gson.fromJson(backupFile.readText(), BackupData::class.java)
             applyBackupData(context, data)
             Log.d("BackupManager", "✅ Legacy JSON restored: ${data.groceries.size} groceries")
             true
-        } catch (e: Exception) {
-            Log.e("BackupManager", "❌ Error restoring JSON", e)
-            false
         }
-    }
 
     /**
      * Validates and applies a BackupData snapshot to DataManagerObject + DataStore.
-     * Shared by both restore paths.
+     * Shared by both restore paths. Every lastUpdate is re-stamped so the restore wins the next upload.
      */
+    @Suppress("UNUSED_PARAMETER")
     private suspend fun applyBackupData(context: Context, backupData: BackupData) {
-        val now = LocalDateTime.now()
-
-        val updatedCategories    = backupData.categories.map    { it.copy(lastUpdate = now) }
-        val updatedSubCategories = backupData.subCategories.map { it.copy(lastUpdate = now) }
-        val updatedGroceries     = backupData.groceries.map     { it.copy(lastUpdate = now) }
-        val updatedStores        = backupData.stores.map        { it.copy(lastUpdate = now) }
-
-        if (!DataConverter.validateRelationships(updatedCategories, updatedSubCategories, updatedGroceries)) {
-            throw IllegalArgumentException("Invalid data relationships in backup file")
-        }
-
-        val nested = DataConverter.buildNestedStructure(updatedCategories, updatedSubCategories, updatedGroceries)
-
-        DataManagerObject.categories.clear()
-        DataManagerObject.categories.addAll(nested)
-
-        DataManagerObject.stores.clear()
-        DataManagerObject.stores.addAll(updatedStores.filter { !it.deleted })
-
-        DataManagerObject.hiddenStoreIds.clear()
-        DataManagerObject.hiddenStoreIds.addAll(backupData.hiddenStoreIds)
-
-        DataManagerObject.storeCategoryOrders.clear()
-        DataManagerObject.storeCategoryOrders.putAll(backupData.storeCategoryOrders)
-
+        val data = RestampedData(backupData, LocalDateTime.now())
+        requireValidRelationships(data)
+        DataManagerObject.replaceCategoriesAndStores(data.categories, data.subCategories, data.groceries, data.stores)
+        replaceHiddenStoresAndOrders(backupData)
         DataStoreManager.saveDataGlobally()
         DataManagerObject.updateData()
+    }
+
+    private fun requireValidRelationships(data: RestampedData) =
+        require(DataConverter.validateRelationships(data.categories, data.subCategories, data.groceries)) {
+            "Invalid data relationships in backup file"
+        }
+
+    // Sub-category orders are not part of backups and stay untouched. Values are not null-checked up front:
+    // Gson may leave them null, which fails half-way (as before), after the lists were cleared.
+    private fun replaceHiddenStoresAndOrders(backupData: BackupData) {
+        DataManagerObject.hiddenStoreIds.clear()
+        DataManagerObject.hiddenStoreIds.addAll(backupData.hiddenStoreIds)
+        DataManagerObject.storeCategoryOrders.clear()
+        DataManagerObject.storeCategoryOrders.putAll(backupData.storeCategoryOrders)
+    }
+
+    /** The backup lists with every lastUpdate set to [now] (BackupData.copy is avoided: Gson may leave fields null). */
+    private class RestampedData(backupData: BackupData, now: LocalDateTime) {
+        val categories = backupData.categories.map { it.copy(lastUpdate = now) }
+        val subCategories = backupData.subCategories.map { it.copy(lastUpdate = now) }
+        val groceries = backupData.groceries.map { it.copy(lastUpdate = now) }
+        val stores = backupData.stores.map { it.copy(lastUpdate = now) }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
 
-    fun getBackupDirectory(): File? = try {
+    fun getBackupDirectory(): File? = logErrors("Error accessing Downloads directory", fallback = null) {
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         if (dir.exists() || dir.mkdirs()) dir else null
-    } catch (e: Exception) {
-        Log.e("BackupManager", "Error accessing Downloads directory", e)
-        null
     }
 
     /**
      * Lists all backup files (both .zip and legacy .json) in Downloads,
      * sorted newest first.
      */
-    fun listBackupFiles(): List<File> = try {
+    fun listBackupFiles(): List<File> = logErrors("Error listing backup files", fallback = emptyList()) {
         val dir = getBackupDirectory() ?: return emptyList()
-        dir.listFiles()
-            ?.filter { it.name.startsWith(BACKUP_FILENAME_PREFIX) &&
-                       (it.name.endsWith(BACKUP_FILE_EXTENSION) || it.name.endsWith(LEGACY_EXTENSION)) }
-            ?.sortedByDescending { it.lastModified() }
-            ?: emptyList()
+        dir.listFiles()?.filter { it.isBackupFile() }?.sortedByDescending { it.lastModified() } ?: emptyList()
+    }
+
+    private fun File.isBackupFile() = name.startsWith(BACKUP_FILENAME_PREFIX) &&
+        (name.endsWith(BACKUP_FILE_EXTENSION) || name.endsWith(LEGACY_EXTENSION))
+
+    /** Runs [block]; any Exception is logged with [message] and [fallback] is returned instead. */
+    private inline fun <T> logErrors(message: String, fallback: T, block: () -> T): T = try {
+        block()
     } catch (e: Exception) {
-        Log.e("BackupManager", "Error listing backup files", e)
-        emptyList()
+        Log.e("BackupManager", message, e)
+        fallback
     }
 }
