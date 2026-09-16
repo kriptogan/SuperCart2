@@ -221,4 +221,76 @@
     <string name="no_stores_available">Магазины недоступны.</string>
     <string name="unchecked_stores_hidden">Неотмеченные магазины будут скрыты из вида магазина.</string>
     <string name="no_stores_available_create">Магазины недоступны. Создайте первый магазин для начала.</string>
+    <string name="left_group_success">Вы покинули семейную группу</string>
+
+    <!-- Export / Import -->
+    <string name="menu_export_import">Экспорт / импорт данных</string>
+    <string name="export_to_file">Экспорт в файл</string>
+    <string name="export_to_file_description">Сохранить резервную копию в папку «Загрузки»</string>
+    <string name="import_from_file">Импорт из файла</string>
+    <string name="import_from_file_description">Восстановить данные из резервной копии</string>
+    <string name="exporting_data">Экспорт данных</string>
+    <string name="please_wait_export">Пожалуйста, подождите, пока экспортируются ваши данные…</string>
+    <string name="export_successful">Экспорт выполнен</string>
+    <string name="export_success_message">Ваши данные сохранены в папку «Загрузки».</string>
+    <string name="export_failed">Экспорт не удался: %s</string>
+
+    <string name="back">Назад</string>
+
+    <!-- Stores Tab -->
+    <string name="nav_stores">Магазины</string>
+    <string name="view_groceries">Просмотр продуктов</string>
+    <string name="view_groceries_desc">Все товары по категориям</string>
+    <string name="select_a_store">Выбрать магазин</string>
+    <string name="select_a_store_desc">Начать покупки в определённом магазине</string>
+    <string name="change_to_store_view">Переключить на вид по магазинам</string>
+    <string name="items_count">Товаров: %d</string>
+    <string name="unique_items_count">Уникальных: %d</string>
+    <string name="no_stores_with_items">Сейчас ни в одном магазине нет товаров из списка покупок.</string>
+    <string name="finish_shopping_store">Завершить покупки (куплено: %d)</string>
+
+    <!-- Settings: alerts and backup / restore -->
+    <string name="settings_show_alerts">Показывать уведомления</string>
+    <string name="settings_show_alerts_description">Показывать значок колокольчика и выделять товары с истекающим сроком годности или напоминанием о покупке</string>
+    <string name="backup_and_restore">Резервное копирование и восстановление</string>
+    <string name="backup">Создать</string>
+    <string name="restore">Восстановить</string>
+    <string name="create_backup">Создать резервную копию</string>
+    <string name="restore_backup">Восстановить из резервной копии</string>
+    <string name="backup_created">Резервная копия создана: %s</string>
+    <string name="backup_failed">Не удалось создать резервную копию</string>
+    <string name="backup_restored">Резервная копия успешно восстановлена!</string>
+    <string name="restore_failed">Не удалось восстановить резервную копию. Проверьте формат файла.</string>
+    <string name="select_backup_file">Выберите файл резервной копии</string>
+    <string name="no_backup_files">В папке «Загрузки» не найдено резервных копий.</string>
+    <string name="file_size_mb">%.2f МБ</string>
+    <string name="file_size_kb">%.2f КБ</string>
+    <string name="file_size_bytes">%d байт</string>
+    <string name="unknown_error">Неизвестная ошибка</string>
+
+    <!-- Selection dialogs and grocery form -->
+    <string name="new_category">Новая категория</string>
+    <string name="new_sub_category">Новая подкатегория</string>
+    <string name="create_grocery">Создать продукт</string>
+    <string name="select_date">Выбрать дату</string>
+    <string name="no_date_selected">Дата не выбрана</string>
+    <string name="invalid_date">Неверная дата</string>
+    <string name="no_categories_yet">Пока нет категорий</string>
+
+    <!-- Catalogue and shopping list -->
+    <string name="alerts">Уведомления</string>
+    <string name="collapse">Свернуть</string>
+    <string name="expand">Развернуть</string>
+    <string name="clear_search_for">Очистить поиск «%s»</string>
+    <string name="unknown_store">Неизвестно</string>
+    <string name="more_options">Другие действия</string>
+    <string name="mark_bought">Отметить как купленное</string>
+    <string name="mark_not_bought">Отметить как не купленное</string>
+    <string name="add_to_shopping_list_description">Добавить в список покупок</string>
+    <string name="buy_history_title">История покупок — %s</string>
+    <string name="no_purchase_history">История покупок пока пуста</string>
+    <string name="store_items_count">Товаров: %d</string>
+
+    <!-- Group sharing -->
+    <string name="group_code_copied">Код группы скопирован!</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.example.supercart2.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -30,9 +31,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.supercart2.R
 import com.example.supercart2.ui.components.common.DialogIconButton
 import com.example.supercart2.ui.components.common.primaryButtonColors
 import com.example.supercart2.ui.theme.SuperCartColors
@@ -63,8 +66,9 @@ private fun SettingsDialogAlert(state: SettingsDialogState, onDismiss: () -> Uni
 @Composable
 private fun SettingsDialogTitle() {
     Text(
-        text = "Settings", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center,
-        fontWeight = FontWeight.Bold, color = SuperCartColors.black, modifier = Modifier.fillMaxWidth(),
+        text = stringResource(R.string.menu_settings), style = MaterialTheme.typography.headlineMedium,
+        textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = SuperCartColors.black,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
@@ -82,7 +86,8 @@ private fun SettingsDialogSections(state: SettingsDialogState) {
 @Composable
 private fun SettingsDialogCloseRow(onDismiss: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)) {
-        DialogIconButton(Icons.Default.Check, "Close", primaryButtonColors(), Modifier.weight(1f), onClick = onDismiss)
+        val close = stringResource(R.string.close)
+        DialogIconButton(Icons.Default.Check, close, primaryButtonColors(), Modifier.weight(1f), onClick = onDismiss)
     }
 }
 
@@ -116,7 +121,7 @@ private fun SettingsDialogAlertsRow(checked: Boolean, onCheckedChange: (Boolean)
 @Composable
 private fun SettingsDialogAlertsTexts(modifier: Modifier) {
     Column(modifier = modifier) {
-        SettingsDialogLabel("Show Alerts")
+        SettingsDialogLabel(stringResource(R.string.settings_show_alerts))
         SettingsDialogAlertsDescription()
     }
 }
@@ -124,7 +129,7 @@ private fun SettingsDialogAlertsTexts(modifier: Modifier) {
 @Composable
 private fun SettingsDialogAlertsDescription() {
     Text(
-        text = "Display alert bell icon and highlight items with expiring dates or purchase reminders",
+        text = stringResource(R.string.settings_show_alerts_description),
         style = MaterialTheme.typography.bodySmall, color = SuperCartColors.gray,
         modifier = Modifier.padding(top = SuperCartSpacing.xs),
     )
@@ -141,7 +146,7 @@ private fun SettingsDialogAlertsSwitch(checked: Boolean, onCheckedChange: (Boole
 
 @Composable
 private fun SettingsDialogBackupSection(state: SettingsDialogState) {
-    SettingsDialogSection("Backup & Restore") {
+    SettingsDialogSection(stringResource(R.string.backup_and_restore)) {
         state.backupStatus?.let { SettingsDialogStatusMessage(it) }
         state.restoreStatus?.let { SettingsDialogStatusMessage(it) }
         SettingsDialogBackupButtons(onBackup = state::createBackup, onRestore = { state.showRestoreDialog = true })
@@ -159,20 +164,20 @@ private fun SettingsDialogStatusMessage(status: SettingsDialogStatus) {
 @Composable
 private fun SettingsDialogBackupButtons(onBackup: () -> Unit, onRestore: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)) {
-        SettingsDialogHalfButton(Icons.Default.CloudUpload, "Create Backup", "Backup", onBackup)
-        SettingsDialogHalfButton(Icons.Default.CloudDownload, "Restore Backup", "Restore", onRestore)
+        SettingsDialogHalfButton(Icons.Default.CloudUpload, R.string.create_backup, R.string.backup, onBackup)
+        SettingsDialogHalfButton(Icons.Default.CloudDownload, R.string.restore_backup, R.string.restore, onRestore)
     }
 }
 
 /** Icon + label button taking an equal share of the row. */
 @Composable
 private fun RowScope.SettingsDialogHalfButton(
-    icon: ImageVector, description: String, label: String, onClick: () -> Unit,
+    icon: ImageVector, @StringRes description: Int, @StringRes label: Int, onClick: () -> Unit,
 ) {
     Button(onClick = onClick, colors = primaryButtonColors(), modifier = Modifier.weight(1f)) {
-        Icon(imageVector = icon, contentDescription = description, modifier = Modifier.size(18.dp))
+        Icon(imageVector = icon, contentDescription = stringResource(description), modifier = Modifier.size(18.dp))
         Spacer(modifier = Modifier.width(SuperCartSpacing.xs))
-        Text(label)
+        Text(stringResource(label))
     }
 }
 

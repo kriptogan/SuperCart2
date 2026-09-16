@@ -56,7 +56,7 @@ private fun HomeScreenSearchField(query: String, onQueryChange: (String) -> Unit
 
 @Composable
 private fun HomeScreenSearchIcon() {
-    Icon(Icons.Default.Search, "Search", Modifier.size(24.dp), tint = SuperCartColors.gray)
+    Icon(Icons.Default.Search, stringResource(R.string.search), Modifier.size(24.dp), tint = SuperCartColors.gray)
 }
 
 @Composable
@@ -70,7 +70,8 @@ private fun homeScreenSearchFieldColors() = OutlinedTextFieldDefaults.colors(
 @Composable
 private fun HomeScreenClearSearchButton(query: String, onClear: () -> Unit) {
     IconButton(onClick = onClear, modifier = Modifier.size(40.dp)) {
-        Icon(Icons.Default.Clear, "Clear search for '$query'", Modifier.size(20.dp), tint = SuperCartColors.darkGray)
+        val description = stringResource(R.string.clear_search_for, query)
+        Icon(Icons.Default.Clear, description, Modifier.size(20.dp), tint = SuperCartColors.darkGray)
     }
 }
 
@@ -86,6 +87,6 @@ private fun HomeScreenExpandToggle(isAllExpanded: Boolean, onToggle: () -> Unit)
 @Composable
 private fun HomeScreenExpandIcon(isAllExpanded: Boolean) {
     val icon = if (isAllExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
-    val description = if (isAllExpanded) "Collapse All" else "Expand All"
+    val description = stringResource(if (isAllExpanded) R.string.collapse_all else R.string.expand_all)
     Icon(icon, description, Modifier.size(28.dp), tint = SuperCartColors.primaryGreen)
 }

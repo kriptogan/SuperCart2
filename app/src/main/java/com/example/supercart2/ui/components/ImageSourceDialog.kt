@@ -113,7 +113,7 @@ private fun ImageSourceButton(icon: ImageVector, @StringRes label: Int, onClick:
 @Composable
 private fun CameraPermissionHint() {
     Text(
-        text = "Camera permission required to take photos",
+        text = stringResource(R.string.camera_permission_required),
         style = MaterialTheme.typography.bodySmall, color = SuperCartColors.gray,
     )
 }

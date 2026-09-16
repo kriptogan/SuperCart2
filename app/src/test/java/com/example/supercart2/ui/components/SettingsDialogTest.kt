@@ -70,7 +70,7 @@ class SettingsDialogTest {
     private fun top(text: String) = compose.onNodeWithText(text).getUnclippedBoundsInRoot().top
 
     @Test
-    fun `shows all sections in order with hard-coded English texts`() {
+    fun `shows all sections in order with English texts`() {
         show()
         listOf(
             "Settings", "Show Alerts", "Language", "Color palette", "Backup & Restore", "Backup", "Restore",

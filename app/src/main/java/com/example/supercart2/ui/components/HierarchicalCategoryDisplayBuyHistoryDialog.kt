@@ -40,7 +40,7 @@ internal fun HierarchicalCategoryDisplayBuyHistoryDialog(grocery: Grocery, onClo
 @Composable
 private fun BuyHistoryTitle(groceryName: String) {
     Text(
-        text = "Buy History - $groceryName", style = MaterialTheme.typography.headlineMedium,
+        text = stringResource(R.string.buy_history_title, groceryName), style = MaterialTheme.typography.headlineMedium,
         textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
     )
 }
@@ -57,7 +57,7 @@ private fun NoBuyHistory() {
 @Composable
 private fun NoBuyHistoryText() {
     Text(
-        text = "No purchase history yet", style = MaterialTheme.typography.bodyMedium,
+        text = stringResource(R.string.no_purchase_history), style = MaterialTheme.typography.bodyMedium,
         color = SuperCartColors.gray, textAlign = TextAlign.Center,
     )
 }

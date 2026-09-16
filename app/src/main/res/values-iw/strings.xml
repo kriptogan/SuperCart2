@@ -221,4 +221,76 @@
     <string name="no_stores_available">אין חנויות זמינות.</string>
     <string name="unchecked_stores_hidden">חנויות לא מסומנות יוסתרו מתצוגת החנויות.</string>
     <string name="no_stores_available_create">אין חנויות זמינות. צור את החנות הראשונה שלך כדי להתחיל.</string>
+    <string name="left_group_success">עזבת את הקבוצה המשפחתית</string>
+
+    <!-- Export / Import -->
+    <string name="menu_export_import">ייצוא / ייבוא נתונים</string>
+    <string name="export_to_file">ייצוא לקובץ</string>
+    <string name="export_to_file_description">שמור גיבוי בתיקיית ההורדות</string>
+    <string name="import_from_file">ייבוא מקובץ</string>
+    <string name="import_from_file_description">שחזר נתונים מקובץ גיבוי</string>
+    <string name="exporting_data">מייצא נתונים</string>
+    <string name="please_wait_export">אנא המתן בזמן שהנתונים שלך מיוצאים…</string>
+    <string name="export_successful">הייצוא הצליח</string>
+    <string name="export_success_message">הנתונים שלך נשמרו בתיקיית ההורדות.</string>
+    <string name="export_failed">הייצוא נכשל: %s</string>
+
+    <string name="back">חזור</string>
+
+    <!-- Stores Tab -->
+    <string name="nav_stores">חנויות</string>
+    <string name="view_groceries">הצג מוצרים</string>
+    <string name="view_groceries_desc">עיין בכל הפריטים לפי קטגוריה</string>
+    <string name="select_a_store">בחר חנות</string>
+    <string name="select_a_store_desc">התחל לקנות בחנות מסוימת</string>
+    <string name="change_to_store_view">עבור לתצוגת חנויות</string>
+    <string name="items_count">פריטים: %d</string>
+    <string name="unique_items_count">ייחודיים: %d</string>
+    <string name="no_stores_with_items">אין כרגע חנויות עם פריטים ברשימת הקניות.</string>
+    <string name="finish_shopping_store">סיים קניות (%d נקנו)</string>
+
+    <!-- Settings: alerts and backup / restore -->
+    <string name="settings_show_alerts">הצג התראות</string>
+    <string name="settings_show_alerts_description">הצג אייקון פעמון התראה והדגש פריטים שתוקפם עומד לפוג או שהגיע הזמן לקנות אותם שוב</string>
+    <string name="backup_and_restore">גיבוי ושחזור</string>
+    <string name="backup">גיבוי</string>
+    <string name="restore">שחזור</string>
+    <string name="create_backup">צור גיבוי</string>
+    <string name="restore_backup">שחזר גיבוי</string>
+    <string name="backup_created">הגיבוי נוצר: %s</string>
+    <string name="backup_failed">יצירת הגיבוי נכשלה</string>
+    <string name="backup_restored">הגיבוי שוחזר בהצלחה!</string>
+    <string name="restore_failed">שחזור הגיבוי נכשל. אנא בדוק את תבנית הקובץ.</string>
+    <string name="select_backup_file">בחר קובץ גיבוי</string>
+    <string name="no_backup_files">לא נמצאו קובצי גיבוי בתיקיית ההורדות.</string>
+    <string name="file_size_mb">%.2f MB</string>
+    <string name="file_size_kb">%.2f KB</string>
+    <string name="file_size_bytes">%d בייטים</string>
+    <string name="unknown_error">שגיאה לא ידועה</string>
+
+    <!-- Selection dialogs and grocery form -->
+    <string name="new_category">קטגוריה חדשה</string>
+    <string name="new_sub_category">תת-קטגוריה חדשה</string>
+    <string name="create_grocery">צור מוצר</string>
+    <string name="select_date">בחר תאריך</string>
+    <string name="no_date_selected">לא נבחר תאריך</string>
+    <string name="invalid_date">תאריך לא תקין</string>
+    <string name="no_categories_yet">אין קטגוריות עדיין</string>
+
+    <!-- Catalogue and shopping list -->
+    <string name="alerts">התראות</string>
+    <string name="collapse">כווץ</string>
+    <string name="expand">הרחב</string>
+    <string name="clear_search_for">נקה חיפוש עבור \'%s\'</string>
+    <string name="unknown_store">לא ידוע</string>
+    <string name="more_options">אפשרויות נוספות</string>
+    <string name="mark_bought">סמן כנקנה</string>
+    <string name="mark_not_bought">סמן כלא נקנה</string>
+    <string name="add_to_shopping_list_description">הוסף לרשימת הקניות</string>
+    <string name="buy_history_title">היסטוריית רכישות - %s</string>
+    <string name="no_purchase_history">אין עדיין היסטוריית רכישות</string>
+    <string name="store_items_count">%d פריטים</string>
+
+    <!-- Group sharing -->
+    <string name="group_code_copied">קוד הקבוצה הועתק!</string>
 </resources>

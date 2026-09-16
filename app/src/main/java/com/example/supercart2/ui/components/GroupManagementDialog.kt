@@ -175,5 +175,5 @@ private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clip = ClipData.newPlainText(context.getString(R.string.group_code), text)
     clipboard.setPrimaryClip(clip)
-    Toast.makeText(context, "Group code copied!", Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, context.getString(R.string.group_code_copied), Toast.LENGTH_SHORT).show()
 }

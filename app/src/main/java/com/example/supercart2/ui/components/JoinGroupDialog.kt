@@ -44,8 +44,6 @@ fun JoinGroupDialog(
     JoinGroupAlert(state, onDismiss, onJoin = { scope.launch { state.join(context, onGroupJoined) } })
 }
 
-private const val GROUP_NOT_FOUND = "Group not found or invalid code"
-
 /** Code/progress/error state of the dialog. On success it stays "joining" (the caller is expected to close it). */
 private class JoinGroupState {
     var groupCode by mutableStateOf("")
@@ -60,9 +58,9 @@ private class JoinGroupState {
     suspend fun join(context: Context, onGroupJoined: (String) -> Unit) {
         update(joining = true, error = null)
         try {
-            if (!joinAndNotify(context, onGroupJoined)) update(joining = false, error = GROUP_NOT_FOUND)
+            if (!joinAndNotify(context, onGroupJoined)) update(false, context.getString(R.string.group_not_found))
         } catch (e: Exception) {
-            update(joining = false, error = "Failed to join: ${e.message}")
+            update(joining = false, error = context.getString(R.string.failed_to_join, e.message))
         }
     }
 
@@ -113,7 +111,7 @@ private fun JoinGroupForm(state: JoinGroupState) {
     Spacer(modifier = Modifier.height(8.dp))
     GroupCodeField(state.groupCode, state::onCodeChange)
     state.errorMessage?.let { JoinGroupSmallRedText(it) }
-    JoinGroupSmallRedText("⚠️ Warning: Your local data will be replaced with the group's data.")
+    JoinGroupSmallRedText(stringResource(R.string.local_data_will_be_replaced))
 }
 
 /** 8dp gap followed by a small red message (errors and the data-replacement warning). */

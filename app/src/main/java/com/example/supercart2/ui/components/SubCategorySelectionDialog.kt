@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.models.Category
@@ -39,7 +41,8 @@ private fun SubCategoryPicker(
 ) {
     val subCategories = DataManagerObject.categories.find { it.category.uuid == category.uuid }
         ?.subCategories?.map { it.subCategory }?.filterNot { it.deleted } ?: emptyList()
-    CategorySelectionListAlert("Select Sub-Category", "New Sub-Category", onDismiss, onNewSubCategory) {
+    val title = stringResource(R.string.select_sub_category)
+    CategorySelectionListAlert(title, stringResource(R.string.new_sub_category), onDismiss, onNewSubCategory) {
         items(subCategories) { SubCategoryRow(it, selectedSubCategoryId, onSubCategorySelected) }
     }
 }

@@ -24,17 +24,19 @@ import java.time.format.DateTimeFormatter
 /** Expiration dates outside 1900..2100 are treated as invalid. */
 internal fun groceryCreationDialogIsValidDate(date: LocalDate?): Boolean = date != null && date.year in 1900..2100
 
-/** Button label for the expiration date (not localized). */
+/** Button label for the expiration date. */
+@Composable
 internal fun groceryCreationDialogDateLabel(date: LocalDate?): String = when {
-    date == null -> "No date selected"
-    groceryCreationDialogIsValidDate(date) -> formatDate(date)
-    else -> "Invalid date"
+    date == null -> stringResource(R.string.no_date_selected)
+    groceryCreationDialogIsValidDate(date) -> formatDate(date) ?: stringResource(R.string.invalid_date)
+    else -> stringResource(R.string.invalid_date)
 }
 
-private fun formatDate(date: LocalDate): String = try {
+/** The date as "MMM dd, yyyy", or null when it cannot be formatted. */
+private fun formatDate(date: LocalDate): String? = try {
     date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
 } catch (e: Exception) {
-    "Invalid date"
+    null
 }
 
 /** Picker start: the selected date when valid, today otherwise. The Material3 picker works in UTC millis. */

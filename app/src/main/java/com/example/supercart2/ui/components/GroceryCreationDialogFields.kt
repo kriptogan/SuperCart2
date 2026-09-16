@@ -114,7 +114,7 @@ private fun storesLabel(storeNames: List<String>): String = when {
 private fun DateRow(date: LocalDate?, onPick: () -> Unit, onClear: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)) {
         SelectorButton(groceryCreationDialogDateLabel(date), selectedColor(groceryCreationDialogIsValidDate(date)),
-            "Select Date", Modifier.weight(1f), onClick = onPick)
+            stringResource(R.string.select_date), Modifier.weight(1f), onClick = onPick)
         if (date != null) ClearDateButton(onClear)
     }
 }

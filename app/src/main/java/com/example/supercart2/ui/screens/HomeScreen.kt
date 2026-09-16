@@ -27,7 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.supercart2.R
 import com.example.supercart2.data.SettingsManager
 import com.example.supercart2.ui.components.BurgerMenu
 import com.example.supercart2.ui.components.CategoriesManagementDialog
@@ -100,7 +102,8 @@ private fun HomeScreenBurgerMenu(state: HomeScreenState) {
 @Composable
 private fun HomeScreenAlertButton(visible: Boolean, onClick: () -> Unit) {
     if (visible) {
-        HomeScreenCircleButton(Icons.Default.Notifications, "Alerts", SuperCartColors.orange, onClick)
+        val description = stringResource(R.string.alerts)
+        HomeScreenCircleButton(Icons.Default.Notifications, description, SuperCartColors.orange, onClick)
     } else {
         Spacer(modifier = Modifier.size(56.dp)) // keeps the layout spacing
     }
@@ -108,7 +111,8 @@ private fun HomeScreenAlertButton(visible: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun HomeScreenAddButton(state: HomeScreenState) {
-    HomeScreenCircleButton(Icons.Default.Add, "Add New Grocery", SuperCartColors.primaryGreen, state::startCreate)
+    val description = stringResource(R.string.add_new_grocery)
+    HomeScreenCircleButton(Icons.Default.Add, description, SuperCartColors.primaryGreen, state::startCreate)
 }
 
 @Composable

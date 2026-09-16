@@ -71,10 +71,12 @@ internal class SettingsDialogState(private val scope: CoroutineScope, private va
     fun createBackup() {
         scope.launch {
             val backupFile = try { BackupManager.createBackup(context) } catch (e: Exception) { null }
-            backupStatus = backupFile?.let { SettingsDialogStatus("Backup created: ${it.name}", success = true) }
-                ?: SettingsDialogStatus("Failed to create backup", success = false)
+            backupStatus = backupFile?.let { SettingsDialogStatus(backupCreatedText(it.name), success = true) }
+                ?: SettingsDialogStatus(context.getString(R.string.backup_failed), success = false)
         }
     }
+
+    private fun backupCreatedText(fileName: String): String = context.getString(R.string.backup_created, fileName)
 
     fun onRestoreComplete(success: Boolean, message: String) {
         restoreStatus = SettingsDialogStatus(message, success)

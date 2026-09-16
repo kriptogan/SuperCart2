@@ -93,7 +93,7 @@ private fun StoreCategoryOrderDialogBody(
 @Composable
 private fun StoreCategoryOrderDialogEmpty() {
     Column(Modifier.fillMaxSize(), Arrangement.Center, Alignment.CenterHorizontally) {
-        val text = "No categories yet"
+        val text = stringResource(R.string.no_categories_yet)
         Text(text = text, style = MaterialTheme.typography.bodyMedium, color = SuperCartColors.gray)
     }
 }
