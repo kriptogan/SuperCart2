@@ -102,6 +102,11 @@ dependencies {
 // Count classes loaded by Robolectric's sandbox classloader in the JaCoCo report.
 // AGP attaches the JaCoCo extension after configuration, so set it at execution time.
 tasks.withType<Test>().configureEach {
+    // Each test class gets a fresh JVM: the app state lives in process-wide singletons (DataManagerObject,
+    // DataStore, Firebase objects, the Compose main looper) that otherwise leak between Robolectric/Compose
+    // test classes and make later Compose tests hang with AppNotIdleException.
+    forkEvery = 1
+    maxParallelForks = 2
     doFirst {
         extensions.findByType(JacocoTaskExtension::class.java)?.apply {
             isIncludeNoLocationClasses = true
