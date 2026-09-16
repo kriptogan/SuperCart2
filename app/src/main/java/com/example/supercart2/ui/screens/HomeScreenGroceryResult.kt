@@ -1,146 +1,80 @@
 package com.example.supercart2.ui.screens
 
-import android.util.Log
+import com.example.supercart2.data.CategoryWithSubCategories
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.models.Grocery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// VERBATIM EXTRACTION (temporary): HomeScreen's onGroceryCreated body, to be pinned before refactoring.
+/**
+ * Applies a grocery reported by GroceryCreationDialog's onGroceryCreated: adds it when [groceryToEdit] is null,
+ * otherwise replaces it in place or moves it to its new sub-category. Saves afterwards.
+ * Quirks kept on purpose: edits don't stamp lastUpdate, a move doesn't call updateData(), a move to an unknown
+ * sub-category loses the grocery and a move from an unknown one duplicates it.
+ */
 internal fun homeScreenApplyGroceryResult(groceryToEdit: Grocery?, newGrocery: Grocery, scope: CoroutineScope) {
-                if (groceryToEdit != null) {
-                    // Edit mode - update existing grocery
-                    // Store reference to avoid smart cast issues with delegated property
-                    val originalGrocery = groceryToEdit
-
-                    // Check if the grocery is moving to a different sub-category
-                    val isMovingToDifferentSubCategory = originalGrocery.subCategoryId != newGrocery.subCategoryId
-
-                    if (isMovingToDifferentSubCategory) {
-                        // Grocery is moving to a different sub-category - remove from old, add to new
-                        val originalCategoryIndex = DataManagerObject.categories.indexOfFirst {
-                            it.category.uuid == originalGrocery.categoryId
-                        }
-
-                        if (originalCategoryIndex != -1) {
-                            val originalCategoryWithSubs = DataManagerObject.categories[originalCategoryIndex]
-                            val originalSubCategoryIndex = originalCategoryWithSubs.subCategories.indexOfFirst {
-                                it.subCategory.uuid == originalGrocery.subCategoryId
-                            }
-
-                            if (originalSubCategoryIndex != -1) {
-                                // Remove from original sub-category
-                                val updatedOriginalSubCategory = originalCategoryWithSubs.subCategories[originalSubCategoryIndex].copy(
-                                    groceries = originalCategoryWithSubs.subCategories[originalSubCategoryIndex].groceries.toMutableList().apply {
-                                        removeAll { it.uuid == originalGrocery.uuid }
-                                    }
-                                )
-
-                                val updatedOriginalCategory = originalCategoryWithSubs.copy(
-                                    subCategories = originalCategoryWithSubs.subCategories.toMutableList().apply {
-                                        set(originalSubCategoryIndex, updatedOriginalSubCategory)
-                                    }
-                                )
-
-                                DataManagerObject.categories[originalCategoryIndex] = updatedOriginalCategory
-                            }
-                        }
-
-                        // Add to new sub-category at the end
-                        val newCategoryIndex = DataManagerObject.categories.indexOfFirst {
-                            it.category.uuid == newGrocery.categoryId
-                        }
-
-                        if (newCategoryIndex != -1) {
-                            val newCategoryWithSubs = DataManagerObject.categories[newCategoryIndex]
-                            val newSubCategoryIndex = newCategoryWithSubs.subCategories.indexOfFirst {
-                                it.subCategory.uuid == newGrocery.subCategoryId
-                            }
-
-                            if (newSubCategoryIndex != -1) {
-                                val updatedNewSubCategory = newCategoryWithSubs.subCategories[newSubCategoryIndex].copy(
-                                    groceries = newCategoryWithSubs.subCategories[newSubCategoryIndex].groceries.toMutableList().apply {
-                                        add(newGrocery)
-                                    }
-                                )
-
-                                val updatedNewCategory = newCategoryWithSubs.copy(
-                                    subCategories = newCategoryWithSubs.subCategories.toMutableList().apply {
-                                        set(newSubCategoryIndex, updatedNewSubCategory)
-                                    }
-                                )
-
-                                DataManagerObject.categories[newCategoryIndex] = updatedNewCategory
-                            }
-                        }
-
-                        Log.d("HomeScreen", "Grocery moved: ${newGrocery.name} - from ${originalGrocery.subCategoryId} to ${newGrocery.subCategoryId}")
-                    } else {
-                        // Grocery is staying in the same sub-category - just update in place
-                        val categoryIndex = DataManagerObject.categories.indexOfFirst {
-                            it.category.uuid == newGrocery.categoryId
-                        }
-
-                        if (categoryIndex != -1) {
-                            val categoryWithSubs = DataManagerObject.categories[categoryIndex]
-                            val subCategoryIndex = categoryWithSubs.subCategories.indexOfFirst {
-                                it.subCategory.uuid == newGrocery.subCategoryId
-                            }
-
-                            if (subCategoryIndex != -1) {
-                                val subCategory = categoryWithSubs.subCategories[subCategoryIndex]
-                                val groceryIndex = subCategory.groceries.indexOfFirst { it.uuid == originalGrocery.uuid }
-
-                                if (groceryIndex != -1) {
-                                    // Update the grocery in its original position
-                                    val updatedGroceries = subCategory.groceries.toMutableList().apply {
-                                        set(groceryIndex, newGrocery)
-                                    }
-
-                                    val updatedSubCategory = subCategory.copy(groceries = updatedGroceries)
-                                    val updatedCategory = categoryWithSubs.copy(
-                                        subCategories = categoryWithSubs.subCategories.toMutableList().apply {
-                                            set(subCategoryIndex, updatedSubCategory)
-                                        }
-                                    )
-
-                                DataManagerObject.categories[categoryIndex] = updatedCategory
-                                DataManagerObject.updateData()
-                                Log.d("HomeScreen", "Grocery updated in place: ${newGrocery.name} at position $groceryIndex")
-                                }
-                            }
-                        }
-                    }
-
-                    // Save the updated data to local storage
-                    scope.launch {
-                        DataStoreManager.saveDataGlobally()
-                    }
-                } else {
-                    // Create mode - add new grocery
-                    val categoryIndex = DataManagerObject.categories.indexOfFirst {
-                        it.category.uuid == newGrocery.categoryId
-                    }
-
-                    if (categoryIndex != -1) {
-                        val categoryWithSubs = DataManagerObject.categories[categoryIndex]
-                        val subCategoryIndex = categoryWithSubs.subCategories.indexOfFirst {
-                            it.subCategory.uuid == newGrocery.subCategoryId
-                        }
-
-                        if (subCategoryIndex != -1) {
-                            // Add the grocery using DataManagerObject helper
-                            DataManagerObject.addGrocery(newGrocery)
-
-                            // Save to DataStore
-                            scope.launch {
-                                DataStoreManager.saveDataGlobally()
-                                android.util.Log.d("HomeScreen", "Saved new grocery to DataStore")
-                            }
-
-                            Log.d("HomeScreen", "New grocery added: ${newGrocery.name}")
-                        }
-                    }
-                }
+    when {
+        groceryToEdit == null -> homeScreenAddGrocery(newGrocery, scope)
+        groceryToEdit.subCategoryId != newGrocery.subCategoryId -> homeScreenMoveGrocery(groceryToEdit, newGrocery)
+        else -> homeScreenReplaceGrocery(groceryToEdit, newGrocery)
+    }
+    if (groceryToEdit != null) homeScreenSave(scope)
 }
+
+private fun homeScreenAddGrocery(grocery: Grocery, scope: CoroutineScope) {
+    if (homeScreenLocate(grocery.categoryId, grocery.subCategoryId) == null) return
+    DataManagerObject.addGrocery(grocery)
+    homeScreenSave(scope)
+}
+
+private fun homeScreenMoveGrocery(original: Grocery, moved: Grocery) {
+    homeScreenEditGroceries(original.categoryId, original.subCategoryId) { groceries ->
+        groceries.removeAll { it.uuid == original.uuid }
+        true
+    }
+    homeScreenEditGroceries(moved.categoryId, moved.subCategoryId) { it.add(moved) }
+}
+
+/** Replaces [original] inside the sub-category named by [updated] (looked up under updated's category id). */
+private fun homeScreenReplaceGrocery(original: Grocery, updated: Grocery) {
+    val replaced = homeScreenEditGroceries(updated.categoryId, updated.subCategoryId) { groceries ->
+        val index = groceries.indexOfFirst { it.uuid == original.uuid }
+        if (index != -1) groceries[index] = updated
+        index != -1
+    }
+    if (replaced) DataManagerObject.updateData()
+}
+
+private fun homeScreenSave(scope: CoroutineScope) {
+    scope.launch { DataStoreManager.saveDataGlobally() }
+}
+
+/** (category index, sub-category index) in [DataManagerObject.categories], or null when either is missing. */
+private fun homeScreenLocate(categoryId: String, subCategoryId: String): Pair<Int, Int>? {
+    val categoryIndex = DataManagerObject.categories.indexOfFirst { it.category.uuid == categoryId }
+    if (categoryIndex == -1) return null
+    val subCategories = DataManagerObject.categories[categoryIndex].subCategories
+    val subCategoryIndex = subCategories.indexOfFirst { it.subCategory.uuid == subCategoryId }
+    return if (subCategoryIndex == -1) null else categoryIndex to subCategoryIndex
+}
+
+/**
+ * Runs [edit] on a copy of one sub-category's groceries and, when it returns true, writes the rebuilt
+ * category back. Returns whether anything was written.
+ */
+private fun homeScreenEditGroceries(
+    categoryId: String,
+    subCategoryId: String,
+    edit: (MutableList<Grocery>) -> Boolean,
+): Boolean {
+    val (categoryIndex, subCategoryIndex) = homeScreenLocate(categoryId, subCategoryId) ?: return false
+    val category = DataManagerObject.categories[categoryIndex]
+    val groceries = category.subCategories[subCategoryIndex].groceries.toMutableList()
+    if (!edit(groceries)) return false
+    DataManagerObject.categories[categoryIndex] = category.homeScreenWithGroceries(subCategoryIndex, groceries)
+    return true
+}
+
+private fun CategoryWithSubCategories.homeScreenWithGroceries(index: Int, groceries: MutableList<Grocery>) =
+    copy(subCategories = subCategories.toMutableList().apply { set(index, this[index].copy(groceries = groceries)) })

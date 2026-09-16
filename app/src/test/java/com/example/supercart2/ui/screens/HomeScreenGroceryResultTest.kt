@@ -18,7 +18,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-/** HomeScreen's handling of GroceryCreationDialog's onGroceryCreated (standard tree: c1{s1[g1,g2], s2[]}, c2{s3[g3]}). */
+/** HomeScreen's onGroceryCreated handling (standard tree: c1{s1[g1,g2], s2[]}, c2{s3[g3]}). */
 class HomeScreenGroceryResultTest {
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
