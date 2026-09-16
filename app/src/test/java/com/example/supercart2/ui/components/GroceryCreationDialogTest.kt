@@ -1,9 +1,11 @@
 package com.example.supercart2.ui.components
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -157,14 +159,64 @@ class GroceryCreationDialogTest {
     }
 
     @Test
-    fun `choosing a category takes its first sub-category even when that one is deleted (pinned)`() {
+    fun `choosing a category selects its first non-deleted sub-category`() {
         DataManagerObject.categories.add(
             node(category("c3", viewOrder = 3), subNode(sub("dead", "c3", deleted = true)), subNode(sub("s4", "c3")))
         )
         show(name = "Milk")
         desc("Select Category").performClick()
         compose.onNodeWithText("c3").performClick()
-        text("dead").assertIsDisplayed()
+        compose.onNodeWithText("dead").assertDoesNotExist()
+        text("s4").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Create Grocery").performClick()
+        assertEquals("c3" to "s4", TestData.locationOf(newGroceries().single().uuid))
+    }
+
+    @Test
+    fun `choosing a category whose sub-categories are all deleted selects no sub-category`() {
+        DataManagerObject.categories.add(node(category("c3", viewOrder = 3), subNode(sub("dead", "c3", deleted = true))))
+        show(name = "Milk")
+        desc("Select Category").performClick()
+        compose.onNodeWithText("c3").performClick()
+        text("Select Sub-Category").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Create Grocery").assertIsNotEnabled()
+    }
+
+    @Test
+    fun `category picker does not offer deleted categories`() {
+        DataManagerObject.categories.add(node(category("gone", viewOrder = 3, deleted = true), subNode(sub("s9", "gone"))))
+        show(name = "Milk")
+        desc("Select Category").performClick()
+        compose.onNodeWithText("c1").assertIsDisplayed()
+        compose.onNodeWithText("gone").assertDoesNotExist()
+    }
+
+    @Test
+    fun `sub-category picker does not offer deleted sub-categories`() {
+        DataManagerObject.categories.add(
+            node(category("c3", viewOrder = 3), subNode(sub("s4", "c3")), subNode(sub("dead", "c3", deleted = true)))
+        )
+        show(name = "Milk")
+        desc("Select Category").performClick()
+        compose.onNodeWithText("c3").performClick()
+        desc("Select Sub-Category").performClick()
+        compose.onAllNodesWithText("s4").assertCountEquals(2) // selector button + picker row
+        compose.onNodeWithText("dead").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a sub-category created from the picker is added, selected and used for the new grocery`() {
+        show(name = "Milk")
+        desc("Select Sub-Category").performClick()
+        compose.onNodeWithContentDescription("New Sub-Category").performClick()
+        compose.onNodeWithText("Sub-Category Name").performTextInput("Dairy")
+        compose.onNodeWithContentDescription("Create Sub-Category").performClick()
+        compose.onNodeWithText("Sub-Category Name").assertDoesNotExist()
+        text("Dairy").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Create Grocery").performClick()
+        val dairy = DataManagerObject.categories.first { it.category.uuid == "c2" }.subCategories.last().subCategory
+        assertEquals("Dairy", dairy.name)
+        assertEquals("c2" to dairy.uuid, TestData.locationOf(newGroceries().single().uuid))
     }
 
     @Test

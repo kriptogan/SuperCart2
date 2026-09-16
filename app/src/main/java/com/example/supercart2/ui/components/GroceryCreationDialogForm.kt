@@ -73,12 +73,16 @@ private fun GroceryCreationDialogForm.loadDefaults(initialName: String, initialS
     first.subCategories.firstOrNull()?.subCategory?.let { subCategory = it }
 }
 
-/** Selects a category and its first sub-category (read from the raw tree, so possibly a deleted one). */
+/** Selects a category and its first non-deleted sub-category (none when all are deleted). */
 internal fun GroceryCreationDialogForm.selectCategory(selected: Category) {
     category = selected
-    subCategory = DataManagerObject.categories.find { it.category.uuid == selected.uuid }
-        ?.subCategories?.firstOrNull()?.subCategory
+    subCategory = groceryCreationDialogActiveSubCategories(selected.uuid).firstOrNull()
 }
+
+/** Non-deleted sub-categories of the category [categoryId], in data order. */
+internal fun groceryCreationDialogActiveSubCategories(categoryId: String): List<SubCategory> =
+    DataManagerObject.categories.find { it.category.uuid == categoryId }
+        ?.subCategories?.map { it.subCategory }?.filterNot { it.deleted } ?: emptyList()
 
 internal fun GroceryCreationDialogForm.selectNewLocation(newCategory: Category, newSubCategory: SubCategory) {
     category = newCategory

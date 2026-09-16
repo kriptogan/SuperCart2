@@ -151,7 +151,7 @@ private fun SecondaryDialogs(
 ) {
     if (popups.datePicker) GroceryCreationDialogDatePicker(form.date, { form.date = it }) { popups.datePicker = false }
     if (popups.category) CategoryPicker(form, popups)
-    form.category?.let { if (popups.subCategory) SubCategoryPicker(form, it, popups) }
+    form.category?.let { if (popups.subCategory) SubCategoryPicker(form, it, popups, scope) }
     if (popups.stores) StoreSelectionDialog(form.storeIds, { popups.stores = false }, { form.storeIds = it })
     if (popups.imageSource) ImagePicker(form, popups, scope)
 }
@@ -175,14 +175,9 @@ private fun selectCreatedLocation(
 
 @Composable
 private fun SubCategoryPicker(
-    form: GroceryCreationDialogForm, category: Category, popups: GroceryCreationDialogPopups,
+    form: GroceryCreationDialogForm, category: Category, popups: GroceryCreationDialogPopups, scope: CoroutineScope,
 ) {
-    SubCategorySelectionDialog(
-        onDismiss = { popups.subCategory = false },
-        onSubCategorySelected = { form.subCategory = it; popups.subCategory = false },
-        onNewSubCategoryCreated = { form.subCategory = it; popups.subCategory = false },
-        selectedCategory = category, selectedSubCategoryId = form.subCategory?.uuid,
-    )
+    GroceryCreationDialogSubCategoryPicker(form, category, scope, onClose = { popups.subCategory = false })
 }
 
 @Composable
