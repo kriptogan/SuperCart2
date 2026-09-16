@@ -38,14 +38,22 @@ internal class FirebaseManagerUpload<T>(
     }
 }
 
-/** Everything fetched from a group, ready to replace the local data. */
+/**
+ * Everything fetched from a group, ready to replace the local data. Sub-categories and groceries whose parents
+ * are missing (e.g. skipped as malformed) are logged and dropped, so the remaining data has valid relationships.
+ */
 internal class FirebaseManagerDownload(
     private val categories: List<Category>,
-    private val subCategories: List<SubCategory>,
-    private val groceries: List<Grocery>,
+    subCategories: List<SubCategory>,
+    groceries: List<Grocery>,
     private val stores: List<Store>,
     ordersDocument: DocumentSnapshot?,
 ) {
+    private val categoryIds = categories.map { it.uuid }.toSet()
+    private val subCategories = subCategories.keepLinked("subcategory") { it.categoryId in categoryIds }
+    private val subCategoryIds = this.subCategories.map { it.uuid }.toSet()
+    private val groceries =
+        groceries.keepLinked("grocery") { it.categoryId in categoryIds && it.subCategoryId in subCategoryIds }
     private val storeCategoryOrders = FirebaseManagerMappers.documentToStoreCategoryOrders(ordersDocument)
     private val storeSubCategoryOrders = FirebaseManagerMappers.documentToStoreSubCategoryOrders(ordersDocument)
 
@@ -53,7 +61,11 @@ internal class FirebaseManagerDownload(
         "${groceries.size} groceries, ${stores.size} stores, ${storeCategoryOrders.size} store category orders, " +
         "${storeSubCategoryOrders.size} store sub-category orders"
 
-    fun hasValidRelationships(): Boolean = DataConverter.validateRelationships(categories, subCategories, groceries)
+    private fun <T> List<T>.keepLinked(label: String, isLinked: (T) -> Boolean): List<T> {
+        val (linked, orphans) = partition(isLinked)
+        orphans.forEach { Log.w(TAG, "⚠️ Dropped downloaded $label with a missing parent: $it") }
+        return linked
+    }
 
     /**
      * Replaces categories, stores and the per-store orders. Like DataStoreManager.loadData, deleted stores
@@ -75,5 +87,9 @@ internal class FirebaseManagerDownload(
     private fun <K, V> MutableMap<K, V>.replaceWith(newEntries: Map<K, V>) {
         clear()
         putAll(newEntries)
+    }
+
+    private companion object {
+        const val TAG = "FirebaseManager"
     }
 }

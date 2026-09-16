@@ -214,13 +214,22 @@ class FirebaseManagerUploadTest : FirebaseManagerTestBase() {
     }
 
     @Test
-    fun `uploadData throws and commits nothing when an existing Firebase document is invalid`() {
-        DataManagerObject.stores.add(store("A"))
-        fake.setDocs("groceries", snapshot("g1", mapOf("name" to "x")))
-        val e = assertThrows(IllegalStateException::class.java) { runTest { FirebaseManager.uploadData() } }
-        assertEquals("Grocery g1 missing categoryId", e.message)
-        assertEquals(0, fake.commits)
-        assertTrue(fake.writes.isEmpty())
+    fun `uploadData skips invalid Firebase documents and uploads the rest`() = runTest {
+        DataManagerObject.stores.add(store("A").copy(lastUpdate = t))
+        DataManagerObject.categories.add(
+            node(category("c1").copy(lastUpdate = t), subNode(sub("s1", "c1").copy(lastUpdate = t), grocery("g1", "c1", "s1").copy(lastUpdate = t))),
+        )
+        fake.setDocs("groceries", snapshot("g1", mapOf("name" to "x")), snapshot("g2", null))
+        fake.setDocs("stores", snapshot("B", mapOf("viewOrder" to 1L)), remote("A", "2024-03-01T10:30:16"))
+
+        FirebaseManager.uploadData()
+
+        // The malformed g1 counts as missing in Firebase, so the local g1 overwrites it; A is newer in Firebase.
+        assertEquals(
+            setOf("categories/c1", "subcategories/s1", "groceries/g1", "storeCategoryOrders/orders"),
+            fake.writes.map { it.path }.toSet(),
+        )
+        assertEquals(1, fake.commits)
     }
 
     @Test
