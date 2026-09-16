@@ -140,6 +140,7 @@
     <!-- Confirmations -->
     <string name="are_you_sure">Are you sure?</string>
     <string name="delete_confirmation">Are you sure you want to delete this item?</string>
+    <string name="left_group_success">You left the family group</string>
     <string name="leave_group_confirmation">Are you sure you want to leave the group?</string>
     
     <!-- Messages -->

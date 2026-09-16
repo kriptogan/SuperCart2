@@ -69,7 +69,7 @@ private class GroupManagementDialogState(private val context: Context, private v
             GroupManager.leaveGroup(context)
             groupCode = null
             showLeaveConfirmation = false
-            Toast.makeText(context, context.getString(R.string.group_code), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.left_group_success), Toast.LENGTH_SHORT).show()
         }
     }
 }

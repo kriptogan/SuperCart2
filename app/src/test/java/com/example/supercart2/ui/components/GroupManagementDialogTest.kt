@@ -107,7 +107,7 @@ class GroupManagementDialogTest {
     }
 
     @Test
-    fun `pinned - confirming leave clears the group and toasts the group code label`() {
+    fun `confirming leave clears the group and toasts a left-group message`() {
         coEvery { GroupManager.leaveGroup(any()) } just runs
         show(code)
         compose.onNodeWithText("Leave Group").performClick()
@@ -116,7 +116,7 @@ class GroupManagementDialogTest {
         coVerify(exactly = 1) { GroupManager.leaveGroup(any()) }
         compose.onNodeWithText("Leave Group?").assertDoesNotExist()
         compose.onNodeWithText("Share groceries with family members!").assertIsDisplayed()
-        assertEquals("Group Code", ShadowToast.getTextOfLatestToast())
+        assertEquals("You left the family group", ShadowToast.getTextOfLatestToast())
     }
 
     @Test
