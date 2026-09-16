@@ -16,7 +16,7 @@ object ImageManager {
 
     /**
      * Compress image from URI to target size (200KB max)
-     * Returns the compressed file or null on error
+     * Returns the compressed file or null on error; an existing image of [uuid] is only replaced on success.
      */
     suspend fun compressAndSaveImage(
         uri: Uri,
@@ -35,10 +35,32 @@ object ImageManager {
     private fun saveCompressed(bitmap: Bitmap, uuid: String, context: Context): File {
         val compressedBytes = compressToTarget(bitmap, MAX_IMAGE_SIZE_BYTES)
         val imageFile = getImageFile(uuid, context)
-        FileOutputStream(imageFile).use { it.write(compressedBytes) }
+        writeReplacing(imageFile, compressedBytes)
         val sizeInfo = "size: ${compressedBytes.size} bytes"
         android.util.Log.d("ImageManager", "Image saved: ${imageFile.absolutePath}, $sizeInfo")
         return imageFile
+    }
+
+    // Writes to a temp file first and moves it over [target] only when the write succeeded
+    private fun writeReplacing(target: File, bytes: ByteArray) {
+        val temp = File(target.parentFile, "${target.name}.tmp")
+        try {
+            writeThenMove(temp, target, bytes)
+        } finally {
+            temp.delete()
+        }
+    }
+
+    private fun writeThenMove(temp: File, target: File, bytes: ByteArray) {
+        FileOutputStream(temp).use { it.write(bytes) }
+        moveReplacing(temp, target)
+    }
+
+    // renameTo replaces the target on Android; where it can't (e.g. Windows JVM tests) the target is removed first
+    private fun moveReplacing(source: File, target: File) {
+        if (source.renameTo(target)) return
+        target.delete()
+        check(source.renameTo(target)) { "Could not move ${source.name} to ${target.name}" }
     }
 
     /**

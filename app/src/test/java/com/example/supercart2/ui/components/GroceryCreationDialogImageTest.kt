@@ -19,6 +19,7 @@ import com.example.supercart2.TestData
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.ImageManager
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -136,8 +137,8 @@ class GroceryCreationDialogImageTest {
         compose.onNodeWithText("Select Image Source").assertDoesNotExist()
         compose.onNodeWithContentDescription("Grocery Image").performScrollTo().assertIsDisplayed()
         coVerifyOrder {
-            ImageManager.deleteLocalImage("old", any())
             ImageManager.compressAndSaveImage(picked, any(), any())
+            ImageManager.deleteLocalImage("old", any())
         }
         save()
         val saved = savedImage()!!
@@ -147,17 +148,34 @@ class GroceryCreationDialogImageTest {
     }
 
     @Test
-    fun `failed compression deletes the old file but keeps the old uuid (pinned)`() {
+    fun `failed compression keeps the old file and the old uuid`() {
         imageFile("img2").writeText("jpeg")
         coEvery { ImageManager.compressAndSaveImage(any(), any(), any()) } returns null
         showEditing("img2")
         compose.onNodeWithContentDescription("Grocery Image").performScrollTo().performClick()
         compose.onNodeWithText("Choose from Gallery").performClick()
 
-        assertFalse(imageFile("img2").exists())
-        compose.onNodeWithText("Add Image").performScrollTo().assertIsDisplayed()
+        compose.waitForIdle()
+        coVerify(exactly = 0) { ImageManager.deleteLocalImage(any(), any()) }
+        assertTrue(imageFile("img2").exists())
+        compose.onNodeWithContentDescription("Grocery Image").performScrollTo().assertIsDisplayed()
         save()
         assertEquals("img2", savedImage())
+    }
+
+    @Test
+    fun `compression error keeps the old file and the old uuid`() {
+        imageFile("img3").writeText("jpeg")
+        coEvery { ImageManager.compressAndSaveImage(any(), any(), any()) } throws IllegalStateException("boom")
+        showEditing("img3")
+        compose.onNodeWithContentDescription("Grocery Image").performScrollTo().performClick()
+        compose.onNodeWithText("Choose from Gallery").performClick()
+
+        compose.waitForIdle()
+        coVerify(exactly = 0) { ImageManager.deleteLocalImage(any(), any()) }
+        assertTrue(imageFile("img3").exists())
+        save()
+        assertEquals("img3", savedImage())
     }
 
     @Test
