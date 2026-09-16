@@ -174,7 +174,7 @@ private fun editCategoryDialogDeleteSubCategory(categoryUuid: String, subCategor
     editCategoryDialogSave(scope, "Saved sub-category deletion to DataStore")
 }
 
-private fun editCategoryDialogSave(scope: CoroutineScope, logMessage: String) {
+internal fun editCategoryDialogSave(scope: CoroutineScope, logMessage: String) {
     scope.launch {
         DataStoreManager.saveDataGlobally()
         android.util.Log.d("EditCategoryDialog", logMessage)

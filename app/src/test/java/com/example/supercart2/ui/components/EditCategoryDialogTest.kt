@@ -114,7 +114,7 @@ class EditCategoryDialogTest {
     }
 
     @Test
-    fun `save renames the category and dismisses without saving or calling onCategoryUpdated (pinned)`() {
+    fun `save renames the category, saves and dismisses without calling onCategoryUpdated`() {
         show()
         compose.onNodeWithText("Dairy").performTextClearance()
         compose.onNodeWithContentDescription("Save Changes").assertIsNotEnabled()
@@ -124,7 +124,34 @@ class EditCategoryDialogTest {
 
         assertEquals("Milk", node().category.name)
         assertTrue(node().category.lastUpdate.isAfter(TestData.OLD))
-        assertEquals(listOf("dismiss"), events)
+        assertEquals(listOf("dismiss", "save"), events.sorted())
+    }
+
+    @Test
+    fun `deleted sub-categories are not listed and counts exclude deleted groceries`() {
+        DataManagerObject.categories[0] = node(
+            category("c1", name = "Dairy"),
+            subNode(sub("s1", "c1", name = "General"), grocery("g1", "c1", "s1"), grocery("g4", "c1", "s1", deleted = true)),
+            subNode(sub("s2", "c1", name = "Cheese", deleted = true), grocery("g2", "c1", "s2")),
+        )
+        show()
+        compose.onNodeWithText("General").assertIsDisplayed()
+        compose.onNodeWithText("Groceries: 1").assertIsDisplayed()
+        compose.onNodeWithText("Cheese").assertDoesNotExist()
+        compose.onAllNodesWithContentDescription("Edit Sub-Category").assertCountEquals(1)
+    }
+
+    @Test
+    fun `fallback sub-categories are also shown without deleted items`() {
+        val orphan = category("x", name = "Orphan")
+        val subs = listOf(
+            subNode(sub("sx", "x", name = "Loose"), grocery("gx", "x", "sx", deleted = true)),
+            subNode(sub("sy", "x", name = "Gone", deleted = true)),
+        )
+        show(orphan, subs)
+        compose.onNodeWithText("Loose").assertIsDisplayed()
+        compose.onNodeWithText("Groceries: 0").assertIsDisplayed()
+        compose.onNodeWithText("Gone").assertDoesNotExist()
     }
 
     @Test
@@ -206,13 +233,13 @@ class EditCategoryDialogTest {
     }
 
     @Test
-    fun `deleting a sub-category soft-deletes and saves but keeps its card listed (pinned)`() {
+    fun `deleting a sub-category soft-deletes, saves and removes its card`() {
         show()
         compose.onNodeWithContentDescription("Delete Sub-Category").performClick()
         compose.waitForIdle()
         assertTrue(node().subCategories[1].subCategory.deleted)
         assertEquals(listOf("save"), events)
-        compose.onNodeWithText("Cheese").assertExists()
+        compose.onNodeWithText("Cheese").assertDoesNotExist()
     }
 
     @Test

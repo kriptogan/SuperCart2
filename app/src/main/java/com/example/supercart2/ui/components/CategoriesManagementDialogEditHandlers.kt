@@ -43,14 +43,13 @@ internal class CategoriesManagementDialogEditHandlers(
         index != -1
     }
 
-    /** Removes (hard delete) a non-protected sub-category from the list and saves. */
+    /** Soft-deletes a known, non-protected sub-category (via DataManagerObject.deleteSubCategory) and saves. */
     fun subCategoryDeleted(subCategory: SubCategory) {
         if (subCategory.protected) return warnProtected("sub-category", subCategory.name)
-        editSubCategories { subs ->
-            val index = subs.indexOfFirst { it.subCategory.uuid == subCategory.uuid }
-            if (index != -1) subs.removeAt(index)
-            index != -1
-        }
+        val category = DataManagerObject.categories.find { it.category.uuid == categoryUuid } ?: return
+        if (category.subCategories.none { it.subCategory.uuid == subCategory.uuid }) return
+        DataManagerObject.deleteSubCategory(categoryUuid, subCategory.uuid)
+        save()
     }
 
     /** Replaces the category by a copy with the edited sub-category list and saves, unless [edit] returns false. */

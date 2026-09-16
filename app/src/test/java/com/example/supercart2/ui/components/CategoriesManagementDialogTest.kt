@@ -121,14 +121,16 @@ class CategoriesManagementDialogTest {
     }
 
     @Test
-    fun `moving between equal viewOrders changes nothing but still saves (pinned)`() {
+    fun `moving between equal viewOrders swaps the rows and saves once`() {
         DataManagerObject.updateCategory("fruit") { it.copy(viewOrder = 2) }
         compose.waitForIdle()
+        assertListedInOrder("Other", "Fruits", "Veg")
         compose.onAllNodesWithContentDescription("Move Down")[1].performClick()
         compose.waitForIdle()
-        assertEquals(2, viewOrder("fruit"))
+        assertEquals(3, viewOrder("fruit"))
         assertEquals(2, viewOrder("veg"))
         assertEquals(listOf("save"), events)
+        assertListedInOrder("Other", "Veg", "Fruits")
     }
 
     @Test
@@ -167,14 +169,14 @@ class CategoriesManagementDialogTest {
     }
 
     @Test
-    fun `renaming in the edit dialog updates the list without saving (pinned)`() {
+    fun `renaming in the edit dialog updates the list and saves`() {
         compose.onAllNodesWithContentDescription("Edit Category")[1].performClick()
         compose.onNodeWithText("Category Name").performTextClearance()
         compose.onNodeWithText("Category Name").performTextInput("Greens")
         compose.onNodeWithContentDescription("Save Changes").performClick()
         compose.waitForIdle()
         assertEquals("Greens", categoryOf("veg").name)
-        assertTrue(events.isEmpty())
+        assertEquals(listOf("save"), events)
         compose.onNodeWithText("Edit Category").assertDoesNotExist()
         compose.onNodeWithText("Greens").assertIsDisplayed()
     }

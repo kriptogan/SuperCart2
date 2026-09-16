@@ -31,14 +31,14 @@ fun SubCategorySelectionDialog(
     }
 }
 
-/** Lists the category's sub-categories in data order; deleted ones are not filtered out. */
+/** Lists the category's non-deleted sub-categories in data order. */
 @Composable
 private fun SubCategoryPicker(
     category: Category, selectedSubCategoryId: String?, onDismiss: () -> Unit,
     onSubCategorySelected: (SubCategory) -> Unit, onNewSubCategory: () -> Unit,
 ) {
     val subCategories = DataManagerObject.categories.find { it.category.uuid == category.uuid }
-        ?.subCategories?.map { it.subCategory } ?: emptyList()
+        ?.subCategories?.map { it.subCategory }?.filterNot { it.deleted } ?: emptyList()
     CategorySelectionListAlert("Select Sub-Category", "New Sub-Category", onDismiss, onNewSubCategory) {
         items(subCategories) { SubCategoryRow(it, selectedSubCategoryId, onSubCategorySelected) }
     }

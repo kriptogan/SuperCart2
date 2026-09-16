@@ -150,30 +150,43 @@ class StoreCategoryOrderDialogTest {
     }
 
     @Test
-    fun `without categories shows the no-stores text and save is disabled`() {
+    fun `without categories shows the no-categories text and save is disabled`() {
         show()
-        compose.onNodeWithText("No stores yet").assertIsDisplayed()
+        compose.onNodeWithText("No categories yet").assertIsDisplayed()
+        compose.onNodeWithText("No stores yet").assertDoesNotExist()
         compose.onNodeWithContentDescription("Save Order").assertIsNotEnabled()
     }
 
     @Test
-    fun `quirk - sub-categories missing from a custom sub order are hidden`() {
+    fun `sub-categories missing from a custom sub order are shown after the ordered ones and can move`() {
         installTree()
         DataManagerObject.storeSubCategoryOrders["S1"] = mapOf("cA" to listOf("sA2"))
         show()
-        assertEquals(listOf("Bakery", "Bread", "Dairy", "Cheese"), rows())
+        assertEquals(listOf("Bakery", "Bread", "Dairy", "Cheese", "Milk"), rows())
+        up(4).assertIsEnabled().performClick()
+        compose.waitForIdle()
+        assertEquals(listOf("Bakery", "Bread", "Dairy", "Milk", "Cheese"), rows())
+        compose.onNodeWithContentDescription("Save Order").performClick()
+        assertEquals(listOf("sA1", "sA2"), DataManagerObject.storeSubCategoryOrders["S1"]!!["cA"])
     }
 
     @Test
-    fun `quirk - stale ids in a custom sub order count for arrows and are kept on save`() {
+    fun `stale and deleted ids in custom orders are dropped for arrows and on save`() {
         installTree()
-        DataManagerObject.storeSubCategoryOrders["S1"] = mapOf("cA" to listOf("sA1", "sA2", "ghost"))
+        DataManagerObject.storeCategoryOrders["S1"] = listOf("ghostCat", "cGone", "cA", "cB")
+        DataManagerObject.storeSubCategoryOrders["S1"] = mapOf(
+            "cA" to listOf("sA1", "sA2", "ghost", "sOld"), "ghostCat" to listOf("x"), "cGone" to listOf("y"),
+        )
         show()
-        // rows: Bakery, Bread, Dairy, Milk, Cheese - Cheese can still move down (past the invisible ghost)
-        down(4).assertIsEnabled().performClick()
-        compose.waitForIdle()
+        // rows: Dairy, Milk, Cheese, Bakery, Bread - Cheese is last in its group
+        assertEquals(listOf("Dairy", "Milk", "Cheese", "Bakery", "Bread"), rows())
+        down(2).assertIsNotEnabled()
         compose.onNodeWithContentDescription("Save Order").performClick()
-        assertEquals(listOf("sA1", "ghost", "sA2"), DataManagerObject.storeSubCategoryOrders["S1"]!!["cA"])
+        assertEquals(listOf("cA", "cB"), DataManagerObject.storeCategoryOrders["S1"])
+        assertEquals(
+            mapOf("cA" to listOf("sA1", "sA2"), "cB" to listOf("sB1")),
+            DataManagerObject.storeSubCategoryOrders["S1"],
+        )
     }
 
     @Test

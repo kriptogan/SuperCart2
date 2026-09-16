@@ -55,13 +55,17 @@ internal class EditCategoryDialogState(name: String) {
     var editingSubCategory by mutableStateOf<SubCategory?>(null)
 }
 
-/** Fresh sub-categories of the category (deleted ones included); [fallback] when it is not in the data. */
+/** Fresh non-deleted sub-categories (without deleted groceries); [fallback] when the category is not in the data. */
 private fun editCategoryDialogSubCategoriesOf(
     categoryUuid: String, fallback: List<SubCategoryWithGroceries>,
 ): List<SubCategoryWithGroceries> {
     DataManagerObject.version // read so the derived state is recomputed on every data change
-    return DataManagerObject.categories.find { it.category.uuid == categoryUuid }?.subCategories ?: fallback
+    val found = DataManagerObject.categories.find { it.category.uuid == categoryUuid }?.subCategories
+    return (found ?: fallback).editCategoryDialogWithoutDeleted()
 }
+
+private fun List<SubCategoryWithGroceries>.editCategoryDialogWithoutDeleted() = filterNot { it.subCategory.deleted }
+    .map { sub -> sub.copy(groceries = sub.groceries.filterNot { it.deleted }.toMutableList()) }
 
 @Composable
 private fun EditCategoryDialogConfirmDelete(
@@ -89,7 +93,7 @@ private fun EditCategoryDialogAlert(
         onDismissRequest = onDismiss, containerColor = SuperCartColors.lightGreen,
         title = { EditCategoryDialogTitle(category.protected) { state.showDeleteConfirmation = true } },
         text = { EditCategoryDialogBody(category.uuid, subCategories, state, scope) },
-        confirmButton = { EditCategoryDialogButtons(category.uuid, state, onDismiss) },
+        confirmButton = { EditCategoryDialogButtons(category.uuid, state, scope, onDismiss) },
     )
 }
 
@@ -116,15 +120,18 @@ private fun EditCategoryDialogBody(
 }
 
 @Composable
-private fun EditCategoryDialogButtons(categoryUuid: String, state: EditCategoryDialogState, onDismiss: () -> Unit) {
+private fun EditCategoryDialogButtons(
+    categoryUuid: String, state: EditCategoryDialogState, scope: CoroutineScope, onDismiss: () -> Unit,
+) {
     CancelConfirmButtons(onDismiss, stringResource(R.string.save_changes), state.categoryName.isNotBlank()) {
-        editCategoryDialogRename(categoryUuid, state.categoryName, onDismiss)
+        editCategoryDialogRename(categoryUuid, state.categoryName, scope, onDismiss)
     }
 }
 
-/** Renames the category and dismisses (without saving to DataStore); ignored when the name is blank. */
-private fun editCategoryDialogRename(categoryUuid: String, name: String, onDismiss: () -> Unit) {
+/** Renames the category, saves to DataStore and dismisses; ignored when the name is blank. */
+private fun editCategoryDialogRename(categoryUuid: String, name: String, scope: CoroutineScope, onDismiss: () -> Unit) {
     if (name.isBlank()) return
     DataManagerObject.updateCategory(categoryUuid) { it.copy(name = name.trim(), lastUpdate = LocalDateTime.now()) }
+    editCategoryDialogSave(scope, "Saved category rename to DataStore")
     onDismiss()
 }

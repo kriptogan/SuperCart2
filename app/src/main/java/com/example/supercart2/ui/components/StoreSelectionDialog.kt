@@ -49,7 +49,7 @@ fun StoreSelectionDialog(
     }
 }
 
-/** Selected store ids (kept in insertion order) and whether the nested create-store dialog is open. */
+/** Selected store ids and whether the nested create-store dialog is open. */
 private class StoreSelectionState(initialIds: List<String>) {
     var selectedIds by mutableStateOf(initialIds.toMutableSet())
     var showCreateStore by mutableStateOf(false)
@@ -62,9 +62,12 @@ private class StoreSelectionState(initialIds: List<String>) {
         selectedIds = selectedIds.toMutableSet().apply { if (selected) add(storeId) else remove(storeId) }
     }
 
-    /** Closing (button or outside tap) always reports the current selection first. */
+    /**
+     * Closing (button or outside tap) always reports the current selection first: only existing non-deleted
+     * stores, in display order.
+     */
     fun close(onStoresSelected: (List<String>) -> Unit, onDismiss: () -> Unit) {
-        onStoresSelected(selectedIds.toList())
+        onStoresSelected(DataManagerObject.getSortedStores().map { it.uuid }.filter { it in selectedIds })
         onDismiss()
     }
 
