@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.COSTCO
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.dairy
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.install
@@ -93,6 +94,21 @@ class StoresScreenNavigationTest {
 
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithText("Items: 1").assertIsDisplayed()
+    }
+
+    @Test
+    fun `search text is kept when switching between buying and edit mode, and reset after leaving the store`() {
+        openCostco()
+        compose.onNodeWithText("Search groceries...").performTextInput("mil")
+        compose.onNodeWithContentDescription("Edit Store").performClick()
+        compose.onNodeWithText("mil").assertIsDisplayed()
+
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithText("mil").assertIsDisplayed()
+
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithText("Costco").performClick()
+        compose.onNodeWithText("mil").assertDoesNotExist()
     }
 
     @Test
