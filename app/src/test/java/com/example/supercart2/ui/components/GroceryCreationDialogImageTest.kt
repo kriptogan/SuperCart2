@@ -19,6 +19,7 @@ import com.example.supercart2.TestData
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.ImageManager
 import io.mockk.coEvery
+import io.mockk.coVerifyOrder
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import kotlinx.coroutines.CompletableDeferred
@@ -124,18 +125,20 @@ class GroceryCreationDialogImageTest {
 
     @Test
     fun `picking an image compresses it under a fresh uuid, deletes the old file and saves the new uuid`() {
-        imageFile("img1").delete()
-        imageFile("old").writeText("jpeg")
+        // The old file is not created: on Windows Coil may still hold it open, making File.delete() racy.
+        imageFile("old").delete()
         coEvery { ImageManager.compressAndSaveImage(picked, any(), any()) } answers {
             imageFile(secondArg<String>()).apply { writeText("new") }
         }
         showEditing("old")
-        compose.onNodeWithContentDescription("Grocery Image").performScrollTo().performClick()
-        compose.onNodeWithText("Choose from Gallery").performClick()
+        pickFromGallery()
 
         compose.onNodeWithText("Select Image Source").assertDoesNotExist()
         compose.onNodeWithContentDescription("Grocery Image").performScrollTo().assertIsDisplayed()
-        assertFalse(imageFile("old").exists())
+        coVerifyOrder {
+            ImageManager.deleteLocalImage("old", any())
+            ImageManager.compressAndSaveImage(picked, any(), any())
+        }
         save()
         val saved = savedImage()!!
         assertNotEquals("old", saved)
