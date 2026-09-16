@@ -29,9 +29,10 @@ internal fun CategoryWithSubCategories.inStoreSubCategoryOrder(storeId: String):
     return CategoryWithSubCategories(category, ordered.toMutableList())
 }
 
-/** The groceries linked to [store], in the store's category order, or null when there are none. */
+/** The groceries linked to [store], in the store's category and sub-category order, or null when there are none. */
 internal fun List<CategoryWithSubCategories>.groupForStore(store: Store): StoreWithCategories? =
     filterGroceries { store.uuid in it.storeIds }
+        .map { it.inStoreSubCategoryOrder(store.uuid) }
         .inStoreCategoryOrder(store.uuid)
         .takeIf { it.isNotEmpty() }
         ?.let { StoreWithCategories(store = store, categories = it) }

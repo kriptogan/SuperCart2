@@ -70,12 +70,12 @@ object DataManagerObject {
         updateData()
     }
 
-    // Moves a grocery to another category/sub-category. Note: does not stamp lastUpdate.
+    // Moves a grocery to another category/sub-category, stamping lastUpdate
     fun updateGroceryLocation(groceryUuid: String, newCategoryId: String, newSubCategoryId: String) {
         val source = categories.lastSubCategoryPathContaining(groceryUuid) ?: return
         val target = categories.lastSubCategoryPath(newCategoryId, newSubCategoryId) ?: return
         categories.moveGrocery(groceryUuid, source, target) { grocery ->
-            grocery.copy(categoryId = newCategoryId, subCategoryId = newSubCategoryId)
+            grocery.copy(categoryId = newCategoryId, subCategoryId = newSubCategoryId, lastUpdate = LocalDateTime.now())
         }
         updateData()
     }
@@ -98,11 +98,11 @@ object DataManagerObject {
         updateData()
     }
 
+    // Swaps two non-deleted categories in display order, renumbering them 1..n (see changedViewOrders)
     fun swapCategoryOrder(category1Uuid: String, category2Uuid: String) {
-        val cat1 = categories.find { it.category.uuid == category1Uuid }?.category ?: return
-        val cat2 = categories.find { it.category.uuid == category2Uuid }?.category ?: return
-        updateCategory(cat1.uuid) { it.copy(viewOrder = cat2.viewOrder) }
-        updateCategory(cat2.uuid) { it.copy(viewOrder = cat1.viewOrder) }
+        val sorted = categories.map { it.category }.filterNot { it.deleted }.sortedBy { it.viewOrder }
+        changedViewOrders(sorted.map { it.uuid to it.viewOrder }, category1Uuid, category2Uuid)
+            .forEach { (uuid, order) -> updateCategory(uuid) { it.copy(viewOrder = order) } }
     }
 
     fun addCategory(category: Category, subCategories: List<SubCategoryWithGroceries> = emptyList()) {
@@ -169,14 +169,13 @@ object DataManagerObject {
         updateData()
     }
 
+    // Swaps two non-deleted stores in display order, renumbering them 1..n (see changedViewOrders)
     fun swapStoreOrder(store1Uuid: String, store2Uuid: String) {
-        val store1 = stores.find { it.uuid == store1Uuid } ?: return
-        val store2 = stores.find { it.uuid == store2Uuid } ?: return
-        updateStore(store1.uuid) { it.copy(viewOrder = store2.viewOrder) }
-        updateStore(store2.uuid) { it.copy(viewOrder = store1.viewOrder) }
+        changedViewOrders(getSortedStores().map { it.uuid to it.viewOrder }, store1Uuid, store2Uuid)
+            .forEach { (uuid, order) -> updateStore(uuid) { it.copy(viewOrder = order) } }
     }
 
-    // Note: edits grocery lists in place and does not stamp lastUpdate
+    // Edits grocery lists in place, stamping lastUpdate on the groceries that were linked
     fun unlinkStoreFromAllGroceries(storeUuid: String) {
         categories.forEach { category -> category.subCategories.forEach { it.groceries.unlinkStore(storeUuid) } }
         updateData()
