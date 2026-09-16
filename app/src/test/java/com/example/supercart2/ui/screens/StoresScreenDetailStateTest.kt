@@ -88,6 +88,25 @@ class StoresScreenDetailStateTest {
     }
 
     @Test
+    fun `confirming store info for an unknown or deleted store saves nothing and shows no message`() {
+        install(stores = listOf(costco.copy(deleted = true)))
+        state.editStoreName = "Ghost"
+        state.confirmStoreInfo("missing", "Done")
+        state.confirmStoreInfo(COSTCO, "Done")
+        assertNull(state.snackbarHostState.currentSnackbarData)
+        assertEquals("Costco", DataManagerObject.stores.first().name)
+        assertFalse(state.storeExists)
+    }
+
+    @Test
+    fun `loading an existing store marks it as existing`() {
+        state.loadStore(costco)
+        assertTrue(state.storeExists)
+        state.loadStore(null)
+        assertFalse(state.storeExists)
+    }
+
+    @Test
     fun `unmarking a bought grocery clears isBought`() {
         install(dairy("Milk", COSTCO, bought = true))
         state.unmarkBought(findGrocery("Milk")!!)

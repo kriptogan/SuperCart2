@@ -34,7 +34,10 @@ import com.example.supercart2.ui.components.common.primaryButtonColors
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 
-/** Edit mode: editable store name/address, "Reorder Categories" and "Confirm" (disabled while the name is blank). */
+/**
+ * Edit mode: editable store name/address, "Reorder Categories" and "Confirm" (disabled while the name is blank or
+ * the store is unknown or deleted).
+ */
 @Composable
 internal fun StoreInfoCard(state: StoresScreenDetailState, onConfirm: () -> Unit) {
     Card(
@@ -82,7 +85,7 @@ private fun storesScreenStoreInfoFieldColors(): TextFieldColors = OutlinedTextFi
 private fun StoresScreenStoreInfoButtons(state: StoresScreenDetailState, onConfirm: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)) {
         StoresScreenReorderButton(onClick = { state.showReorderCategories = true })
-        StoresScreenConfirmStoreButton(enabled = state.editStoreName.isNotBlank(), onClick = onConfirm)
+        StoresScreenConfirmStoreButton(enabled = state.storeExists && state.editStoreName.isNotBlank(), onConfirm)
     }
 }
 

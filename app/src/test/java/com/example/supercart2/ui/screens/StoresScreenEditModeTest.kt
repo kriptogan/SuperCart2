@@ -1,6 +1,7 @@
 package com.example.supercart2.ui.screens
 
 import android.os.Looper
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -140,15 +141,17 @@ class StoresScreenEditModeTest {
     }
 
     @Test
-    fun `Pinned - unknown store id shows empty fields and confirm still reports done without saving`() {
+    fun `unknown store id shows empty fields and confirm stays disabled, nothing saved and no done`() {
         install(dairy("Milk", COSTCO))
         openEditMode("missing")
         compose.onNodeWithText("Edit Mode").assertIsDisplayed()
         compose.onNodeWithText("Confirm").assertIsNotEnabled()
         compose.onNodeWithText("Store Name").performTextInput("Ghost")
+        compose.onNodeWithText("Confirm").assertIsNotEnabled()
         compose.onNodeWithText("Confirm").performClick()
+        compose.waitForIdle()
         assertEquals(2, DataManagerObject.stores.size)
-        compose.waitUntil(5_000) { compose.onAllNodesWithText("Done").fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodesWithText("Done").assertCountEquals(0)
         compose.onNodeWithText("Reorder Categories").performClick()
         compose.onNodeWithText("Reorder Categories for", substring = true).assertDoesNotExist()
     }
