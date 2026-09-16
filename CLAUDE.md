@@ -38,7 +38,7 @@ export JAVA_HOME="/d/Android/Android Studio/jbr"
 bash tools/check-size-rules.sh               # size rules from .claude/coding-rules.md (must print OK)
 ```
 
-- ~490 unit tests, full run ≈ 4 min. Every test class runs in its own JVM (`forkEvery = 1` in
+- ~570 unit tests, full run ≈ 5–10 min. Every test class runs in its own JVM (`forkEvery = 1` in
   `app/build.gradle.kts`): the app state lives in process-wide singletons that otherwise leak between classes and
   make Compose tests hang with `AppNotIdleException`. Don't remove it.
 - `testOptions.unitTests.isReturnDefaultValues = true`, so `android.util.Log` is a no-op in plain JVM tests.
