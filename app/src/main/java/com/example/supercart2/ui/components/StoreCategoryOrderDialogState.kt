@@ -56,13 +56,17 @@ internal fun storeCategoryOrderDialogCurrentOrder(
     return ordered + unordered.sortedBy { it.category.viewOrder }
 }
 
-/** The store's custom sub-category order per category, defaulting to the category's own order. */
+/**
+ * The store's custom sub-category order per category: known ids in the custom order (unknown ones dropped),
+ * then the category's remaining sub-categories in their own order.
+ */
 private fun storeCategoryOrderDialogSubOrders(
     storeId: String, categories: List<CategoryWithSubCategories>,
 ): Map<String, List<String>> = categories.associate { group ->
     val categoryId = group.category.uuid
-    val customOrder = DataManagerObject.getStoreSubCategoryOrder(storeId, categoryId)
-    categoryId to (customOrder ?: group.subCategories.map { it.subCategory.uuid })
+    val ownOrder = group.subCategories.map { it.subCategory.uuid }
+    val customOrder = DataManagerObject.getStoreSubCategoryOrder(storeId, categoryId).orEmpty().filter { it in ownOrder }
+    categoryId to (customOrder.distinct() + ownOrder.filterNot { it in customOrder })
 }
 
 private fun List<String>.storeCategoryOrderDialogSwapped(index: Int, delta: Int): List<String> =

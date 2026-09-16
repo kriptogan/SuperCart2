@@ -80,12 +80,12 @@ class StoreSelectionDialogTest {
     }
 
     @Test
-    fun `close reports selection in insertion order then dismisses`() {
+    fun `close reports only existing non-deleted selected stores in display order then dismisses`() {
         installStores()
-        show(listOf("unknown", "Beta"))
+        show(listOf("unknown", "Beta", "Gone"))
         compose.onNodeWithText("Alpha").performClick()
         close()
-        assertEquals(listOf("selected:[unknown, Beta, Alpha]", "dismiss"), events)
+        assertEquals(listOf("selected:[Alpha, Beta]", "dismiss"), events)
     }
 
     @Test
@@ -131,6 +131,6 @@ class StoreSelectionDialogTest {
         checkbox(0).assertIsOn()
         val created = DataManagerObject.stores.single()
         close()
-        assertEquals(listOf("selected:[Beta, ${created.uuid}]", "dismiss"), events)
+        assertEquals(listOf("selected:[${created.uuid}]", "dismiss"), events)
     }
 }
