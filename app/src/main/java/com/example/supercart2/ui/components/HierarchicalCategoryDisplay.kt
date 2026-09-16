@@ -178,7 +178,7 @@ internal fun HierarchicalCategoryDisplayHeaderRow(modifier: Modifier, content: @
 internal fun HierarchicalCategoryDisplayExpandIcon(isExpanded: Boolean) {
     Icon(
         imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-        contentDescription = if (isExpanded) "Collapse" else "Expand",
+        contentDescription = stringResource(if (isExpanded) R.string.collapse else R.string.expand),
         tint = SuperCartColors.darkGray, modifier = Modifier.size(24.dp),
     )
 }

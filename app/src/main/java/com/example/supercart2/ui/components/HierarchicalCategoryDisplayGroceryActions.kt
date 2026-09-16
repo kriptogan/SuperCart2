@@ -44,7 +44,8 @@ internal fun HierarchicalCategoryDisplayShoppingActions(row: HierarchicalCategor
 @Composable
 private fun BoughtToggleButton(row: HierarchicalCategoryDisplayRowContext) {
     val bought = row.grocery.isBought
-    SmallIconButton(Icons.Default.CheckCircle, if (bought) "Mark as not bought" else "Mark as bought",
+    val description = stringResource(if (bought) R.string.mark_not_bought else R.string.mark_bought)
+    SmallIconButton(Icons.Default.CheckCircle, description,
         if (bought) SuperCartColors.primaryGreen else Color.Gray) {
         row.mutateAndSave { DataManagerObject.toggleBoughtStatus(row.grocery.uuid) }
     }
@@ -58,7 +59,7 @@ internal fun HierarchicalCategoryDisplayCatalogueActions(row: HierarchicalCatego
 
 @Composable
 internal fun HierarchicalCategoryDisplayMarkNotBoughtButton(row: HierarchicalCategoryDisplayRowContext) {
-    SmallIconButton(Icons.Default.Close, "Mark as not bought", Color.Red) {
+    SmallIconButton(Icons.Default.Close, stringResource(R.string.mark_not_bought), Color.Red) {
         row.mutateAndSave { DataManagerObject.updateGrocery(row.grocery.uuid) { it.copy(isBought = false) } }
     }
 }
@@ -103,7 +104,8 @@ private fun CatalogueButtons(row: HierarchicalCategoryDisplayRowContext, onMoreO
 @Composable
 private fun ShoppingListToggleButton(row: HierarchicalCategoryDisplayRowContext) {
     val inList = row.grocery.inShoppingList
-    SmallIconButton(Icons.Default.ShoppingCart, if (inList) "Remove from shopping list" else "Add to shopping list",
+    val description = if (inList) R.string.remove_from_shopping_list else R.string.add_to_shopping_list_description
+    SmallIconButton(Icons.Default.ShoppingCart, stringResource(description),
         if (inList) SuperCartColors.primaryGreen else Color.Black) {
         row.mutateAndSave { DataManagerObject.toggleShoppingListStatus(row.grocery.uuid) }
     }
@@ -111,7 +113,8 @@ private fun ShoppingListToggleButton(row: HierarchicalCategoryDisplayRowContext)
 
 @Composable
 private fun MoreOptionsButton(onClick: () -> Unit) {
-    SmallIconButton(Icons.Default.MoreVert, "More options", SuperCartColors.primaryGreen, onClick)
+    val description = stringResource(R.string.more_options)
+    SmallIconButton(Icons.Default.MoreVert, description, SuperCartColors.primaryGreen, onClick)
 }
 
 /** 24dp icon button holding a 20dp icon. */

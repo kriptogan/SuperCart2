@@ -248,4 +248,49 @@
     <string name="unique_items_count">Unique: %d</string>
     <string name="no_stores_with_items">No stores currently have items in the shopping list.</string>
     <string name="finish_shopping_store">Finish Shopping (%d bought)</string>
+
+    <!-- Settings: alerts and backup / restore -->
+    <string name="settings_show_alerts">Show Alerts</string>
+    <string name="settings_show_alerts_description">Display alert bell icon and highlight items with expiring dates or purchase reminders</string>
+    <string name="backup_and_restore">Backup &amp; Restore</string>
+    <string name="backup">Backup</string>
+    <string name="restore">Restore</string>
+    <string name="create_backup">Create Backup</string>
+    <string name="restore_backup">Restore Backup</string>
+    <string name="backup_created">Backup created: %s</string>
+    <string name="backup_failed">Failed to create backup</string>
+    <string name="backup_restored">Backup restored successfully!</string>
+    <string name="restore_failed">Failed to restore backup. Please check the file format.</string>
+    <string name="select_backup_file">Select Backup File</string>
+    <string name="no_backup_files">No backup files found in Downloads folder.</string>
+    <string name="file_size_mb">%.2f MB</string>
+    <string name="file_size_kb">%.2f KB</string>
+    <string name="file_size_bytes">%d bytes</string>
+    <string name="unknown_error">Unknown error</string>
+
+    <!-- Selection dialogs and grocery form -->
+    <string name="new_category">New Category</string>
+    <string name="new_sub_category">New Sub-Category</string>
+    <string name="create_grocery">Create Grocery</string>
+    <string name="select_date">Select Date</string>
+    <string name="no_date_selected">No date selected</string>
+    <string name="invalid_date">Invalid date</string>
+    <string name="no_categories_yet">No categories yet</string>
+
+    <!-- Catalogue and shopping list -->
+    <string name="alerts">Alerts</string>
+    <string name="collapse">Collapse</string>
+    <string name="expand">Expand</string>
+    <string name="clear_search_for">Clear search for \'%s\'</string>
+    <string name="unknown_store">Unknown</string>
+    <string name="more_options">More options</string>
+    <string name="mark_bought">Mark as bought</string>
+    <string name="mark_not_bought">Mark as not bought</string>
+    <string name="add_to_shopping_list_description">Add to shopping list</string>
+    <string name="buy_history_title">Buy History - %s</string>
+    <string name="no_purchase_history">No purchase history yet</string>
+    <string name="store_items_count">%d items</string>
+
+    <!-- Group sharing -->
+    <string name="group_code_copied">Group code copied!</string>
 </resources>

@@ -6,6 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.models.Category
@@ -34,7 +36,8 @@ private fun ActiveSubCategoryList(
     onSelected: (SubCategory) -> Unit, onNew: () -> Unit,
 ) {
     val subCategories = groceryCreationDialogActiveSubCategories(category.uuid)
-    CategorySelectionListAlert("Select Sub-Category", "New Sub-Category", onDismiss, onNew) {
+    val title = stringResource(R.string.select_sub_category)
+    CategorySelectionListAlert(title, stringResource(R.string.new_sub_category), onDismiss, onNew) {
         items(subCategories) { ActiveSubCategoryRow(it, selectedId, onSelected) }
     }
 }

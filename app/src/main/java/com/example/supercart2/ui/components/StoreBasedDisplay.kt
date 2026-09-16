@@ -30,9 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.supercart2.R
 import com.example.supercart2.data.CategoryWithSubCategories
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.models.Grocery
@@ -139,10 +141,10 @@ private fun StoreTitle(store: Store?, totalItems: Int) {
 @Composable
 private fun StoreNameAndCount(store: Store?, totalItems: Int) {
     Column {
-        val name = store?.name ?: "Not Linked to Any Store"
+        val name = store?.name ?: stringResource(R.string.not_linked_to_store)
         val nameColor = if (store == null) SuperCartColors.gray else SuperCartColors.black
         Text(text = name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = nameColor)
-        Text(text = "$totalItems items", fontSize = 12.sp, color = SuperCartColors.gray)
+        Text(stringResource(R.string.store_items_count, totalItems), fontSize = 12.sp, color = SuperCartColors.gray)
     }
 }
 

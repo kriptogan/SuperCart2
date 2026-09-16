@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.data.SubCategoryWithGroceries
@@ -37,7 +39,8 @@ private fun CategoryListAlert(
     onCategorySelected: (Category) -> Unit, onNewCategory: () -> Unit,
 ) {
     val sortedCategories = DataManagerObject.getSortedCategories()
-    CategorySelectionListAlert("Select Category", "New Category", onDismiss, onNewCategory) {
+    val title = stringResource(R.string.select_category)
+    CategorySelectionListAlert(title, stringResource(R.string.new_category), onDismiss, onNewCategory) {
         items(sortedCategories) { node -> CategoryRow(node.category, selectedCategoryId, onCategorySelected) }
     }
 }

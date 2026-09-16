@@ -53,7 +53,7 @@ private class CreateGroupState {
         try {
             createUploadAndNotify(context, onGroupCreated)
         } catch (e: Exception) {
-            update(creating = false, error = "Failed to create group: ${e.message}")
+            update(creating = false, error = context.getString(R.string.failed_to_create, e.message))
         }
     }
 

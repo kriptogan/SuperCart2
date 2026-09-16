@@ -25,9 +25,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.models.Grocery
@@ -163,7 +165,10 @@ private fun StoreChip(storeId: String, onClick: () -> Unit) {
 @Composable
 private fun rememberStoreName(storeId: String): String {
     val version = DataManagerObject.version
-    return remember(storeId, version) { DataManagerObject.stores.find { it.uuid == storeId }?.name ?: "Unknown" }
+    val unknown = stringResource(R.string.unknown_store)
+    return remember(storeId, version, unknown) {
+        DataManagerObject.stores.find { it.uuid == storeId }?.name ?: unknown
+    }
 }
 
 /** First 3 letters of a one-word name, otherwise the upper-cased initials of its first 3 words. */

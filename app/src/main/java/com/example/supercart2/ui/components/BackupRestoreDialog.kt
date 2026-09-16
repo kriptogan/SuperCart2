@@ -10,9 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.supercart2.R
 import com.example.supercart2.data.BackupManager
 import com.example.supercart2.ui.components.common.primaryButtonColors
 import com.example.supercart2.ui.theme.SuperCartColors
@@ -55,8 +57,8 @@ private class BackupRestoreDialogState(private val context: Context, private val
     ) {
         isLoading = false
         when {
-            success -> { onRestoreComplete(true, "Backup restored successfully!"); onDismiss() }
-            else -> errorMessage = "Failed to restore backup. Please check the file format."
+            success -> { onRestoreComplete(true, context.getString(R.string.backup_restored)); onDismiss() }
+            else -> errorMessage = context.getString(R.string.restore_failed)
         }
     }
 }
@@ -66,15 +68,21 @@ private fun BackupRestoreAlert(state: BackupRestoreDialogState, onDismiss: () ->
     AlertDialog(
         onDismissRequest = onDismiss, containerColor = SuperCartColors.lightGreen,
         title = { BackupRestoreTitle() }, text = { BackupRestoreBody(state, onFileClick) },
-        confirmButton = { Button(onClick = onDismiss, colors = primaryButtonColors()) { Text("Cancel") } },
+        confirmButton = { BackupRestoreCancelButton(onDismiss) },
     )
+}
+
+@Composable
+private fun BackupRestoreCancelButton(onClick: () -> Unit) {
+    Button(onClick = onClick, colors = primaryButtonColors()) { Text(stringResource(R.string.cancel)) }
 }
 
 @Composable
 private fun BackupRestoreTitle() {
     Text(
-        text = "Select Backup File", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center,
-        fontWeight = FontWeight.Bold, color = SuperCartColors.black, modifier = Modifier.fillMaxWidth(),
+        text = stringResource(R.string.select_backup_file), style = MaterialTheme.typography.headlineMedium,
+        textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = SuperCartColors.black,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
@@ -106,7 +114,7 @@ private fun RestoreError(error: String) {
 @Composable
 private fun NoBackupFiles() {
     Text(
-        text = "No backup files found in Downloads folder.", color = SuperCartColors.gray,
+        text = stringResource(R.string.no_backup_files), color = SuperCartColors.gray,
         modifier = Modifier.padding(SuperCartSpacing.md),
     )
 }
@@ -142,8 +150,9 @@ private fun BackupFileDetails(file: File) {
 private fun formatModifiedDate(file: File): String =
     SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault()).format(Date(file.lastModified()))
 
+@Composable
 private fun formatFileSize(bytes: Long): String = when {
-    bytes / 1024.0 / 1024.0 >= 1 -> String.format("%.2f MB", bytes / 1024.0 / 1024.0)
-    bytes / 1024.0 >= 1 -> String.format("%.2f KB", bytes / 1024.0)
-    else -> "$bytes bytes"
+    bytes / 1024.0 / 1024.0 >= 1 -> stringResource(R.string.file_size_mb, bytes / 1024.0 / 1024.0)
+    bytes / 1024.0 >= 1 -> stringResource(R.string.file_size_kb, bytes / 1024.0)
+    else -> stringResource(R.string.file_size_bytes, bytes)
 }

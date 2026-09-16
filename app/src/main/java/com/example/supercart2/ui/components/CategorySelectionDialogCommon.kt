@@ -25,8 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.supercart2.R
 import com.example.supercart2.ui.theme.SuperCartColors
 
 /*
@@ -56,7 +58,7 @@ private fun SelectionListColumn(list: LazyListScope.() -> Unit) {
 @Composable
 private fun SelectionListButtons(newDescription: String, onClose: () -> Unit, onNew: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        SelectionListIconButton(Icons.Default.Close, "Close", Modifier.weight(1f), onClose)
+        SelectionListIconButton(Icons.Default.Close, stringResource(R.string.close), Modifier.weight(1f), onClose)
         SelectionListIconButton(Icons.Default.Add, newDescription, Modifier.weight(1f), onNew)
     }
 }

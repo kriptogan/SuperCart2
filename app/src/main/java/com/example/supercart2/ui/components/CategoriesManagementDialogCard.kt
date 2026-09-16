@@ -98,9 +98,10 @@ private fun CategoriesManagementDialogActions(moves: CategoriesManagementDialogM
 
 @Composable
 private fun CategoriesManagementDialogArrows(moves: CategoriesManagementDialogMoves) {
-    CategoriesManagementDialogIconButton(Icons.Default.KeyboardArrowDown, "Move Down", moves.canMoveDown,
-        moves.onMoveDown)
-    CategoriesManagementDialogIconButton(Icons.Default.KeyboardArrowUp, "Move Up", moves.canMoveUp, moves.onMoveUp)
+    CategoriesManagementDialogIconButton(Icons.Default.KeyboardArrowDown, stringResource(R.string.move_down),
+        moves.canMoveDown, moves.onMoveDown)
+    CategoriesManagementDialogIconButton(Icons.Default.KeyboardArrowUp, stringResource(R.string.move_up),
+        moves.canMoveUp, moves.onMoveUp)
 }
 
 /** 40dp icon button with a 20dp icon, green when enabled and grey otherwise. */

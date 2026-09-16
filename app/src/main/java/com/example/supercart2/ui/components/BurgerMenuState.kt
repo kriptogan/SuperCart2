@@ -56,7 +56,7 @@ internal class BurgerMenuState(private val scope: CoroutineScope) {
 
     private fun onSyncFailed(context: Context, e: Exception) {
         syncPhase = null
-        errorMessage = context.getString(R.string.sync_failed, e.message ?: "Unknown error")
+        errorMessage = context.getString(R.string.sync_failed, e.message ?: context.getString(R.string.unknown_error))
         showError = true
         android.util.Log.e("BurgerMenu", "Sync failed", e)
     }
@@ -74,15 +74,15 @@ internal class BurgerMenuState(private val scope: CoroutineScope) {
     private suspend fun export(context: Context) {
         isExporting = true
         try {
-            onExportFinished(BackupManager.createBackup(context))
+            onExportFinished(context, BackupManager.createBackup(context))
         } catch (e: Exception) {
-            onExportFailed(e.message ?: "Unknown error")
+            onExportFailed(e.message ?: context.getString(R.string.unknown_error))
         }
     }
 
-    private fun onExportFinished(file: File?) {
+    private fun onExportFinished(context: Context, file: File?) {
         isExporting = false
-        if (file != null) showExportSuccess = true else onExportFailed("Unknown error")
+        if (file != null) showExportSuccess = true else onExportFailed(context.getString(R.string.unknown_error))
     }
 
     private fun onExportFailed(message: String) {

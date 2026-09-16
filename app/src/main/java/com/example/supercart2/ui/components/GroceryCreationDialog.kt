@@ -133,15 +133,21 @@ private fun FormContent(form: GroceryCreationDialogForm, popups: GroceryCreation
     }
 }
 
-/** Cancel (left) and save (right); these content descriptions are not localized. */
+/** Cancel (left) and save (right). */
 @Composable
 private fun SaveButtons(isEdit: Boolean, canSave: Boolean, onCancel: () -> Unit, onSave: () -> Unit) {
-    val saveDescription = if (isEdit) "Save Changes" else "Create Grocery"
+    val saveDescription = stringResource(if (isEdit) R.string.save_changes else R.string.create_grocery)
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)) {
         val half = Modifier.weight(1f)
-        DialogIconButton(Icons.Default.Close, "Cancel", secondaryButtonColors(), half, onClick = onCancel)
+        CancelIconButton(half, onCancel)
         DialogIconButton(Icons.Default.Check, saveDescription, primaryButtonColors(), half, canSave, onSave)
     }
+}
+
+@Composable
+private fun CancelIconButton(modifier: Modifier, onCancel: () -> Unit) {
+    val description = stringResource(R.string.cancel)
+    DialogIconButton(Icons.Default.Close, description, secondaryButtonColors(), modifier, onClick = onCancel)
 }
 
 @Composable

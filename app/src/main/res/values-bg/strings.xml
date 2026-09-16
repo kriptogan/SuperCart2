@@ -221,4 +221,76 @@
     <string name="no_stores_available">Няма налични магазини.</string>
     <string name="unchecked_stores_hidden">Неотметнати магазини ще бъдат скрити от изгледа на магазина.</string>
     <string name="no_stores_available_create">Няма налични магазини. Създайте първия си магазин, за да започнете.</string>
+    <string name="left_group_success">Напуснахте семейната група</string>
+
+    <!-- Export / Import -->
+    <string name="menu_export_import">Експорт / импорт на данни</string>
+    <string name="export_to_file">Експорт във файл</string>
+    <string name="export_to_file_description">Запазване на резервно копие в папка „Изтегляния“</string>
+    <string name="import_from_file">Импорт от файл</string>
+    <string name="import_from_file_description">Възстановяване на данни от резервно копие</string>
+    <string name="exporting_data">Експортиране на данни</string>
+    <string name="please_wait_export">Моля, изчакайте докато данните ви се експортират…</string>
+    <string name="export_successful">Експортирането е успешно</string>
+    <string name="export_success_message">Вашите данни бяха запазени в папка „Изтегляния“.</string>
+    <string name="export_failed">Експортирането се провали: %s</string>
+
+    <string name="back">Назад</string>
+
+    <!-- Stores Tab -->
+    <string name="nav_stores">Магазини</string>
+    <string name="view_groceries">Преглед на продукти</string>
+    <string name="view_groceries_desc">Разгледайте всички артикули по категории</string>
+    <string name="select_a_store">Избор на магазин</string>
+    <string name="select_a_store_desc">Започнете пазаруване в конкретен магазин</string>
+    <string name="change_to_store_view">Премини към изглед по магазини</string>
+    <string name="items_count">Артикули: %d</string>
+    <string name="unique_items_count">Уникални: %d</string>
+    <string name="no_stores_with_items">В момента няма магазини с артикули в списъка за пазаруване.</string>
+    <string name="finish_shopping_store">Приключи пазаруването (%d купени)</string>
+
+    <!-- Settings: alerts and backup / restore -->
+    <string name="settings_show_alerts">Показване на известия</string>
+    <string name="settings_show_alerts_description">Показване на иконата със звънче и открояване на артикули с изтичащ срок на годност или напомняне за покупка</string>
+    <string name="backup_and_restore">Архивиране и възстановяване</string>
+    <string name="backup">Архивиране</string>
+    <string name="restore">Възстановяване</string>
+    <string name="create_backup">Създаване на резервно копие</string>
+    <string name="restore_backup">Възстановяване от резервно копие</string>
+    <string name="backup_created">Създадено резервно копие: %s</string>
+    <string name="backup_failed">Неуспешно създаване на резервно копие</string>
+    <string name="backup_restored">Резервното копие е възстановено успешно!</string>
+    <string name="restore_failed">Неуспешно възстановяване на резервното копие. Моля, проверете формата на файла.</string>
+    <string name="select_backup_file">Изберете файл с резервно копие</string>
+    <string name="no_backup_files">Няма намерени резервни копия в папка „Изтегляния“.</string>
+    <string name="file_size_mb">%.2f МБ</string>
+    <string name="file_size_kb">%.2f КБ</string>
+    <string name="file_size_bytes">%d байта</string>
+    <string name="unknown_error">Неизвестна грешка</string>
+
+    <!-- Selection dialogs and grocery form -->
+    <string name="new_category">Нова категория</string>
+    <string name="new_sub_category">Нова подкатегория</string>
+    <string name="create_grocery">Създаване на продукт</string>
+    <string name="select_date">Избор на дата</string>
+    <string name="no_date_selected">Няма избрана дата</string>
+    <string name="invalid_date">Невалидна дата</string>
+    <string name="no_categories_yet">Все още няма категории</string>
+
+    <!-- Catalogue and shopping list -->
+    <string name="alerts">Известия</string>
+    <string name="collapse">Свий</string>
+    <string name="expand">Разгъни</string>
+    <string name="clear_search_for">Изчисти търсенето за „%s“</string>
+    <string name="unknown_store">Неизвестен</string>
+    <string name="more_options">Още опции</string>
+    <string name="mark_bought">Маркирай като купено</string>
+    <string name="mark_not_bought">Маркирай като некупено</string>
+    <string name="add_to_shopping_list_description">Добавяне към списъка за пазаруване</string>
+    <string name="buy_history_title">История на покупките - %s</string>
+    <string name="no_purchase_history">Все още няма история на покупките</string>
+    <string name="store_items_count">%d артикула</string>
+
+    <!-- Group sharing -->
+    <string name="group_code_copied">Кодът на групата е копиран!</string>
 </resources>
