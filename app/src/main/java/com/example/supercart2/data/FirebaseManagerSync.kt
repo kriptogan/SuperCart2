@@ -6,6 +6,7 @@ import com.example.supercart2.models.Grocery
 import com.example.supercart2.models.Store
 import com.example.supercart2.models.SubCategory
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.WriteBatch
 
 /**
@@ -37,33 +38,58 @@ internal class FirebaseManagerUpload<T>(
     }
 }
 
-/** Everything fetched from a group, ready to replace the local data. */
+/**
+ * Everything fetched from a group, ready to replace the local data. Sub-categories and groceries whose parents
+ * are missing (e.g. skipped as malformed) are logged and dropped, so the remaining data has valid relationships.
+ */
 internal class FirebaseManagerDownload(
     private val categories: List<Category>,
-    private val subCategories: List<SubCategory>,
-    private val groceries: List<Grocery>,
+    subCategories: List<SubCategory>,
+    groceries: List<Grocery>,
     private val stores: List<Store>,
-    private val storeCategoryOrders: Map<String, List<String>>,
+    ordersDocument: DocumentSnapshot?,
 ) {
-    fun summary(): String = "${categories.size} categories, ${subCategories.size} subcategories, " +
-        "${groceries.size} groceries, ${stores.size} stores, ${storeCategoryOrders.size} store category orders"
+    private val categoryIds = categories.map { it.uuid }.toSet()
+    private val subCategories = subCategories.keepLinked("subcategory") { it.categoryId in categoryIds }
+    private val subCategoryIds = this.subCategories.map { it.uuid }.toSet()
+    private val groceries =
+        groceries.keepLinked("grocery") { it.categoryId in categoryIds && it.subCategoryId in subCategoryIds }
+    private val storeCategoryOrders = FirebaseManagerMappers.documentToStoreCategoryOrders(ordersDocument)
+    private val storeSubCategoryOrders = FirebaseManagerMappers.documentToStoreSubCategoryOrders(ordersDocument)
 
-    fun hasValidRelationships(): Boolean = DataConverter.validateRelationships(categories, subCategories, groceries)
+    fun summary(): String = "${categories.size} categories, ${subCategories.size} subcategories, " +
+        "${groceries.size} groceries, ${stores.size} stores, ${storeCategoryOrders.size} store category orders, " +
+        "${storeSubCategoryOrders.size} store sub-category orders"
+
+    private fun <T> List<T>.keepLinked(label: String, isLinked: (T) -> Boolean): List<T> {
+        val (linked, orphans) = partition(isLinked)
+        orphans.forEach { Log.w(TAG, "⚠️ Dropped downloaded $label with a missing parent: $it") }
+        return linked
+    }
 
     /**
-     * Replaces categories, stores and store category orders. Deleted stores are kept, while
-     * buildNestedStructure drops deleted categories, sub-categories and groceries.
+     * Replaces categories, stores and the per-store orders. Like DataStoreManager.loadData, deleted stores
+     * are dropped, and buildNestedStructure drops deleted categories, sub-categories and groceries.
      */
     fun replaceLocalData() {
         val nested = DataConverter.buildNestedStructure(categories, subCategories, groceries)
         DataManagerObject.categories.replaceWith(nested)
-        DataManagerObject.stores.replaceWith(stores)
-        DataManagerObject.storeCategoryOrders.clear()
-        DataManagerObject.storeCategoryOrders.putAll(storeCategoryOrders)
+        DataManagerObject.stores.replaceWith(stores.filter { !it.deleted })
+        DataManagerObject.storeCategoryOrders.replaceWith(storeCategoryOrders)
+        DataManagerObject.storeSubCategoryOrders.replaceWith(storeSubCategoryOrders)
     }
 
     private fun <T> MutableList<T>.replaceWith(newItems: List<T>) {
         clear()
         addAll(newItems)
+    }
+
+    private fun <K, V> MutableMap<K, V>.replaceWith(newEntries: Map<K, V>) {
+        clear()
+        putAll(newEntries)
+    }
+
+    private companion object {
+        const val TAG = "FirebaseManager"
     }
 }

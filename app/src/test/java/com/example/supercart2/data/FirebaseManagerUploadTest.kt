@@ -80,7 +80,7 @@ class FirebaseManagerUploadTest : FirebaseManagerTestBase() {
     // ---------- uploadData: maps written ----------
 
     @Test
-    fun `uploadData writes every entity as a map with ISO dates and no store address`() = runTest {
+    fun `uploadData writes every entity as a map with ISO dates, including the store address`() = runTest {
         val g = grocery("g1", "c1", "s1", storeIds = listOf("A", "B"), inShoppingList = true, isBought = true).copy(
             name = "Milk", expirationDate = LocalDate.of(2024, 2, 29), imageUUID = "img", averageBuyDays = 7,
             buyEvents = listOf(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 8)), lastUpdate = t, deleted = true,
@@ -116,9 +116,11 @@ class FirebaseManagerUploadTest : FirebaseManagerTestBase() {
             ),
             byPath.getValue("groceries/g1").data,
         )
-        // Pinned (Known issue): Store.address is not written.
         assertEquals(
-            mapOf("uuid" to "A", "name" to "Shop", "viewOrder" to 2, "lastUpdate" to "2020-01-01T12:00:00", "deleted" to true),
+            mapOf(
+                "uuid" to "A", "name" to "Shop", "address" to "Main 1", "viewOrder" to 2,
+                "lastUpdate" to "2020-01-01T12:00:00", "deleted" to true,
+            ),
             byPath.getValue("stores/A").data,
         )
         listOf("categories/c1", "subcategories/s1", "groceries/g1", "stores/A").forEach { assertNull(byPath.getValue(it).options) }
@@ -139,17 +141,21 @@ class FirebaseManagerUploadTest : FirebaseManagerTestBase() {
     }
 
     @Test
-    fun `uploadData merges the store category orders into a single document, even when empty`() = runTest {
+    fun `uploadData merges the store category and sub-category orders into a single document, even when empty`() = runTest {
         FirebaseManager.uploadData()
         val empty = fake.writes.single()
         assertEquals("storeCategoryOrders/orders", empty.path)
-        assertEquals(mapOf("orders" to emptyMap<String, Any>()), empty.data)
+        assertEquals(mapOf("orders" to emptyMap<String, Any>(), "subOrders" to emptyMap<String, Any>()), empty.data)
         assertEquals(SetOptions.merge(), empty.options)
 
         fake = FirestoreFake(db, GROUP)
         DataManagerObject.storeCategoryOrders["A"] = listOf("c2", "c1")
+        DataManagerObject.storeSubCategoryOrders["A"] = mapOf("c2" to listOf("s2", "s1"))
         FirebaseManager.uploadData()
-        assertEquals(mapOf("orders" to mapOf("A" to listOf("c2", "c1"))), fake.writes.single().data)
+        assertEquals(
+            mapOf("orders" to mapOf("A" to listOf("c2", "c1")), "subOrders" to mapOf("A" to mapOf("c2" to listOf("s2", "s1")))),
+            fake.writes.single().data,
+        )
         assertEquals(1, fake.commits)
     }
 
@@ -208,13 +214,22 @@ class FirebaseManagerUploadTest : FirebaseManagerTestBase() {
     }
 
     @Test
-    fun `uploadData throws and commits nothing when an existing Firebase document is invalid`() {
-        DataManagerObject.stores.add(store("A"))
-        fake.setDocs("groceries", snapshot("g1", mapOf("name" to "x")))
-        val e = assertThrows(IllegalStateException::class.java) { runTest { FirebaseManager.uploadData() } }
-        assertEquals("Grocery g1 missing categoryId", e.message)
-        assertEquals(0, fake.commits)
-        assertTrue(fake.writes.isEmpty())
+    fun `uploadData skips invalid Firebase documents and uploads the rest`() = runTest {
+        DataManagerObject.stores.add(store("A").copy(lastUpdate = t))
+        DataManagerObject.categories.add(
+            node(category("c1").copy(lastUpdate = t), subNode(sub("s1", "c1").copy(lastUpdate = t), grocery("g1", "c1", "s1").copy(lastUpdate = t))),
+        )
+        fake.setDocs("groceries", snapshot("g1", mapOf("name" to "x")), snapshot("g2", null))
+        fake.setDocs("stores", snapshot("B", mapOf("viewOrder" to 1L)), remote("A", "2024-03-01T10:30:16"))
+
+        FirebaseManager.uploadData()
+
+        // The malformed g1 counts as missing in Firebase, so the local g1 overwrites it; A is newer in Firebase.
+        assertEquals(
+            setOf("categories/c1", "subcategories/s1", "groceries/g1", "storeCategoryOrders/orders"),
+            fake.writes.map { it.path }.toSet(),
+        )
+        assertEquals(1, fake.commits)
     }
 
     @Test

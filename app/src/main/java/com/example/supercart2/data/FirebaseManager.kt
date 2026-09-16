@@ -60,7 +60,10 @@ object FirebaseManager {
         batch.commit().await()
     }
 
-    /** Fetches every collection's Firebase items (all before writing anything) next to the local ones. */
+    /**
+     * Fetches every collection's Firebase items (all before writing anything) next to the local ones.
+     * A malformed Firebase document is skipped, so the local item with its uuid (if any) overwrites it.
+     */
     private suspend fun localUploads(groupCode: String): List<FirebaseManagerUpload<*>> {
         val (categories, subCategories, groceries) = DataConverter.flattenCategories(DataManagerObject.categories)
         val stores = DataManagerObject.stores.toList()
@@ -70,9 +73,11 @@ object FirebaseManager {
         )
     }
 
-    /** All store category orders live in one document, merged into what Firebase already has. */
+    /** All store category and sub-category orders live in one document, merged into what Firebase already has. */
     private fun queueStoreCategoryOrders(batch: WriteBatch, groupCode: String) {
-        val data = Mappers.storeCategoryOrdersToMap(DataManagerObject.storeCategoryOrders)
+        val data = Mappers.storeCategoryOrdersToMap(
+            DataManagerObject.storeCategoryOrders, DataManagerObject.storeSubCategoryOrders,
+        )
         batch.set(ordersDocument(groupCode), data, SetOptions.merge())
     }
 
@@ -81,7 +86,10 @@ object FirebaseManager {
 
     // ---------- download ----------
 
-    /** Replaces ALL local data with the group's data (if its relationships are valid), saves, then downloads images. */
+    /**
+     * Replaces ALL local data with the group's data, saves, then downloads images. Malformed documents and items
+     * whose parents are missing are logged and left out instead of failing the download.
+     */
     suspend fun downloadData(): Unit = rethrowLogged("Error downloading data") {
         val (context, groupCode) = requireGroup("download")
         Log.d(TAG, "Downloading data from group: $groupCode")
@@ -89,14 +97,20 @@ object FirebaseManager {
         transferImages("download") { FirebaseStorageManager.batchDownloadImages(context) }
     }
 
-    private suspend fun fetchGroup(groupCode: String) = FirebaseManagerDownload(
-        categories = fetchAll(groupCode, Codecs.categories), subCategories = fetchAll(groupCode, Codecs.subCategories),
-        groceries = fetchAll(groupCode, Codecs.groceries), stores = fetchAll(groupCode, Codecs.stores),
-        storeCategoryOrders = Mappers.documentToStoreCategoryOrders(fetchOrdersDocument(groupCode)),
-    )
+    private suspend fun fetchGroup(groupCode: String): FirebaseManagerDownload {
+        val categories = fetchAll(groupCode, Codecs.categories)
+        val subCategories = fetchAll(groupCode, Codecs.subCategories)
+        val groceries = fetchAll(groupCode, Codecs.groceries)
+        val stores = fetchAll(groupCode, Codecs.stores)
+        return FirebaseManagerDownload(categories, subCategories, groceries, stores, fetchOrdersDocument(groupCode))
+    }
 
+    /** Fetch failures are thrown; malformed documents are logged and skipped. */
     private suspend fun <T> fetchAll(groupCode: String, codec: FirebaseManagerCodec<T>): List<T> =
-        getGroupCollection(groupCode, codec.collection).get().await().documents.map(codec.fromDocument)
+        getGroupCollection(groupCode, codec.collection).get().await().documents.mapNotNull { decodeOrSkip(codec, it) }
+
+    private fun <T> decodeOrSkip(codec: FirebaseManagerCodec<T>, doc: DocumentSnapshot): T? =
+        recoverWith(null, "⚠️ Skipping malformed ${codec.label} document ${doc.id}") { codec.fromDocument(doc) }
 
     private suspend fun fetchOrdersDocument(groupCode: String): DocumentSnapshot? = try {
         ordersDocument(groupCode).get().await()
@@ -107,7 +121,6 @@ object FirebaseManager {
 
     private suspend fun replaceLocalData(download: FirebaseManagerDownload) {
         Log.d(TAG, "Downloaded: ${download.summary()}")
-        check(download.hasValidRelationships()) { "Invalid data relationships in downloaded data" }
         download.replaceLocalData()
         DataManagerObject.updateData()
         DataStoreManager.saveDataGlobally()

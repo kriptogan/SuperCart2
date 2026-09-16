@@ -106,7 +106,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
         )
         fake.setDocs(
             "stores",
-            snapshot("A", mapOf("name" to "Shop", "address" to "Main 1", "viewOrder" to 2L, "lastUpdate" to "2024-03-01T10:30:15.123", "deleted" to true)),
+            snapshot("A", mapOf("name" to "Shop", "address" to "Main 1", "viewOrder" to 2L, "lastUpdate" to "2024-03-01T10:30:15.123")),
         )
 
         FirebaseManager.downloadData()
@@ -124,8 +124,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
             ),
             groceries().single(),
         )
-        // Pinned (Known issue): Store.address is not read.
-        assertEquals(listOf(Store("A", "Shop", address = "", viewOrder = 2, lastUpdate = t, deleted = true)), DataManagerObject.stores)
+        assertEquals(listOf(Store("A", "Shop", address = "Main 1", viewOrder = 2, lastUpdate = t)), DataManagerObject.stores)
     }
 
     @Test
@@ -162,7 +161,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
     @Test
     fun `downloadData uses defaults for missing or mistyped optional fields`() = runTest {
         val before = LocalDateTime.now()
-        fake.setDocs("categories", snapshot("c1", mapOf("name" to "c", "viewOrder" to 3, "default" to "yes")))
+        fake.setDocs("categories", snapshot("c1", mapOf("name" to "c", "viewOrder" to "3", "default" to "yes")))
         fake.setDocs("subcategories", snapshot("s1", mapOf("categoryId" to "c1", "name" to "s", "lastUpdate" to 5L)))
         fake.setDocs(
             "groceries",
@@ -170,11 +169,11 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
                 "g1",
                 mapOf(
                     "name" to "g", "categoryId" to "c1", "subCategoryId" to "s1", "expirationDate" to 20240229L,
-                    "buyEvents" to "2024-01-01", "storeIds" to "A", "averageBuyDays" to 7, "imageUUID" to 1,
+                    "buyEvents" to "2024-01-01", "storeIds" to "A", "averageBuyDays" to "7", "imageUUID" to 1,
                 ),
             ),
         )
-        fake.setDocs("stores", snapshot("A", mapOf("name" to "Shop", "viewOrder" to 2)))
+        fake.setDocs("stores", snapshot("A", mapOf("name" to "Shop", "viewOrder" to true, "address" to 5)))
 
         FirebaseManager.downloadData()
         val after = LocalDateTime.now()
@@ -188,31 +187,24 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
         val g = groceries().single()
         assertEquals(Grocery("g1", "g", "c1", "s1", lastUpdate = g.lastUpdate), g)
         val store = DataManagerObject.stores.single()
-        assertEquals(Store("A", "Shop", viewOrder = 0, lastUpdate = store.lastUpdate), store)
+        assertEquals(Store("A", "Shop", address = "", viewOrder = 0, lastUpdate = store.lastUpdate), store)
     }
 
     @Test
-    fun `downloadData throws on a missing required field and keeps local data`() {
-        val cases = listOf(
-            Triple("categories", snapshot("c1", mapOf("default" to true)), "Category c1 missing name"),
-            Triple("categories", snapshot("c1", null), "Document c1 has no data"),
-            Triple("subcategories", snapshot("s1", mapOf("name" to "s")), "SubCategory s1 missing categoryId"),
-            Triple("subcategories", snapshot("s1", mapOf("categoryId" to "c1")), "SubCategory s1 missing name"),
-            Triple("groceries", snapshot("g1", mapOf("categoryId" to "c", "subCategoryId" to "s")), "Grocery g1 missing name"),
-            Triple("groceries", snapshot("g1", mapOf("name" to "g", "subCategoryId" to "s")), "Grocery g1 missing categoryId"),
-            Triple("groceries", snapshot("g1", mapOf("name" to "g", "categoryId" to "c")), "Grocery g1 missing subCategoryId"),
-            Triple("stores", snapshot("A", mapOf("viewOrder" to 1L)), "Store A missing name"),
-            Triple("stores", snapshot("A", null), "Document A has no data"),
+    fun `downloadData reads Int and Double numbers like Long`() = runTest {
+        fake.setDocs("categories", snapshot("c1", mapOf("name" to "c", "viewOrder" to 3)))
+        fake.setDocs("subcategories", snapshot("s1", mapOf("categoryId" to "c1", "name" to "s")))
+        fake.setDocs(
+            "groceries",
+            snapshot("g1", mapOf("name" to "g", "categoryId" to "c1", "subCategoryId" to "s1", "averageBuyDays" to 7.0)),
         )
-        installLocal()
-        for ((collection, doc, message) in cases) {
-            fake = FirestoreFake(db, GROUP)
-            fake.setDocs(collection, doc)
-            val e = downloadFails()
-            assertTrue(e is IllegalStateException)
-            assertEquals(message, e.message)
-        }
-        assertLocalUnchanged()
+        fake.setDocs("stores", snapshot("A", mapOf("name" to "A", "viewOrder" to 2.0)), snapshot("B", mapOf("name" to "B", "viewOrder" to 4)))
+
+        FirebaseManager.downloadData()
+
+        assertEquals(3, DataManagerObject.categories.single().category.viewOrder)
+        assertEquals(7, groceries().single().averageBuyDays)
+        assertEquals(listOf(2, 4), DataManagerObject.stores.map { it.viewOrder })
     }
 
     // ---------- replacing local data ----------
@@ -228,23 +220,28 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
     }
 
     @Test
-    fun `downloadData replaces local data, keeps deleted stores, saves and downloads images`() = runTest {
+    fun `downloadData replaces local data, drops deleted stores, saves and downloads images`() = runTest {
         installLocal()
         DataManagerObject.hiddenStoreIds.add("localStore")
         DataManagerObject.storeSubCategoryOrders["localStore"] = mapOf("local" to listOf("localSub"))
         installRemoteTree()
-        fake.setOrders(mapOf("orders" to mapOf("A" to listOf("c1"), "B" to "notAList", "C" to listOf("x", 1))))
+        fake.setOrders(
+            mapOf(
+                "orders" to mapOf("A" to listOf("c1"), "B" to "notAList", "C" to listOf("x", 1)),
+                "subOrders" to mapOf("A" to mapOf("c1" to listOf("s1", 2), "c2" to "bad"), "B" to listOf("x"), "C" to emptyMap<String, Any>()),
+            ),
+        )
         val version = DataManagerObject.version
 
         FirebaseManager.downloadData()
 
-        // Pinned: deleted categories are dropped, deleted stores are kept (Known issue).
+        // Deleted categories and deleted stores are dropped, like DataStoreManager.loadData.
         assertEquals(listOf("c1"), DataManagerObject.categories.map { it.category.uuid })
         assertEquals(listOf("g1"), groceries().map { it.uuid })
-        assertEquals(listOf("A", "B"), DataManagerObject.stores.map { it.uuid })
+        assertEquals(listOf("A"), DataManagerObject.stores.map { it.uuid })
         assertEquals(mapOf("A" to listOf("c1"), "C" to listOf("x")), DataManagerObject.storeCategoryOrders)
         assertEquals(listOf("localStore"), DataManagerObject.hiddenStoreIds.toList())
-        assertEquals(mapOf("localStore" to mapOf("local" to listOf("localSub"))), DataManagerObject.storeSubCategoryOrders)
+        assertEquals(mapOf("A" to mapOf("c1" to listOf("s1")), "C" to emptyMap()), DataManagerObject.storeSubCategoryOrders)
         assertEquals(version + 1, DataManagerObject.version)
         coVerify(exactly = 1) { FirebaseStorageManager.batchDownloadImages(context) }
 
@@ -260,29 +257,18 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
             { fake.ordersTask = Tasks.forException(RuntimeException("no doc")) },
             { fake.setOrders(mapOf("orders" to listOf("A"))) },
             { fake.setOrders(mapOf("other" to 1)) },
+            { fake.setOrders(mapOf("orders" to listOf("A"), "subOrders" to listOf("A"))) },
         )
         for (setup in setups) {
             DataManagerObject.storeCategoryOrders["old"] = listOf("x")
+            DataManagerObject.storeSubCategoryOrders["old"] = mapOf("c" to listOf("s"))
             fake = FirestoreFake(db, GROUP)
             installRemoteTree()
             setup()
             FirebaseManager.downloadData()
             assertEquals(emptyMap<String, List<String>>(), DataManagerObject.storeCategoryOrders)
+            assertEquals(emptyMap<String, Map<String, List<String>>>(), DataManagerObject.storeSubCategoryOrders)
         }
-    }
-
-    @Test
-    fun `downloadData throws on invalid relationships and keeps local data`() {
-        installLocal()
-        fake.setDocs("subcategories", snapshot("s1", mapOf("categoryId" to "missing", "name" to "s")))
-        fake.setDocs("stores", snapshot("A", mapOf("name" to "A")))
-
-        val e = downloadFails()
-
-        assertTrue(e is IllegalStateException)
-        assertEquals("Invalid data relationships in downloaded data", e.message)
-        assertLocalUnchanged()
-        coVerify(exactly = 0) { FirebaseStorageManager.batchDownloadImages(any()) }
     }
 
     @Test

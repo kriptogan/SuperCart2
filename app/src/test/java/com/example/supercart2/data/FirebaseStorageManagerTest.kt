@@ -120,8 +120,9 @@ class FirebaseStorageManagerTest {
             grocery("gDeleted", "c1", "s1", deleted = true).copy(imageUUID = "deleted"),
             grocery("gNoImage", "c1", "s1"),
         )
+        val inDeletedSub = subNode(sub("sDel", "c1", deleted = true), grocery("gInDeletedSub", "c1", "sDel").copy(imageUUID = "deletedSub"))
         val orphan = subNode(sub("s2", "cDel"), grocery("gInDeletedCat", "cDel", "s2").copy(imageUUID = "orphan"))
-        DataManagerObject.categories.add(node(category("c1"), live))
+        DataManagerObject.categories.add(node(category("c1"), live, inDeletedSub))
         DataManagerObject.categories.add(node(category("cDel", deleted = true), orphan))
     }
 
@@ -185,21 +186,21 @@ class FirebaseStorageManagerTest {
     // ---------- batch upload ----------
 
     @Test
-    fun `batchUploadImages uploads existing local images of non-deleted groceries and counts successes`() = runTest {
+    fun `batchUploadImages uploads existing local images of visible groceries and counts successes`() = runTest {
         installGroceries()
         localImage("local")
         localImage("failing")
         localImage("deleted")
         localImage("orphan")
+        localImage("deletedSub")
         failUpload("failing")
 
-        // Pinned: groceries inside a deleted category are still uploaded (only the grocery's flag is checked).
-        assertEquals(2, FirebaseStorageManager.batchUploadImages(context))
+        // Deleted groceries and groceries inside a deleted category or sub-category are not uploaded.
+        assertEquals(1, FirebaseStorageManager.batchUploadImages(context))
 
         verify(exactly = 1) { ref("grocery_images/local.jpg").putFile(any()) }
         verify(exactly = 1) { ref("grocery_images/failing.jpg").putFile(any()) }
-        verify(exactly = 1) { ref("grocery_images/orphan.jpg").putFile(any()) }
-        assertEquals(setOf("grocery_images/local.jpg", "grocery_images/failing.jpg", "grocery_images/orphan.jpg"), refs.keys)
+        assertEquals(setOf("grocery_images/local.jpg", "grocery_images/failing.jpg"), refs.keys)
     }
 
     @Test
@@ -214,14 +215,14 @@ class FirebaseStorageManagerTest {
     // ---------- batch download ----------
 
     @Test
-    fun `batchDownloadImages downloads only missing images of non-deleted groceries and counts successes`() = runTest {
+    fun `batchDownloadImages downloads only missing images of visible groceries and counts successes`() = runTest {
         installGroceries()
         localImage("local")
         failDownload("failing")
 
-        assertEquals(2, FirebaseStorageManager.batchDownloadImages(context)) // "missing" and "orphan"
+        assertEquals(1, FirebaseStorageManager.batchDownloadImages(context)) // "missing"
 
-        assertEquals(setOf("grocery_images/missing.jpg", "grocery_images/failing.jpg", "grocery_images/orphan.jpg"), refs.keys)
+        assertEquals(setOf("grocery_images/missing.jpg", "grocery_images/failing.jpg"), refs.keys)
         verify(exactly = 1) { ref("grocery_images/missing.jpg").getFile(ImageManager.getImageFile("missing", context)) }
     }
 

@@ -79,14 +79,16 @@ internal object FirebaseManagerMappers {
         "lastUpdate" to formatDateTime(grocery.lastUpdate), "deleted" to grocery.deleted,
     )
 
-    /** Known issue: Store.address is not synced. */
     fun storeToMap(store: Store): Map<String, Any?> = mapOf(
-        "uuid" to store.uuid, "name" to store.name, "viewOrder" to store.viewOrder,
+        "uuid" to store.uuid, "name" to store.name, "address" to store.address, "viewOrder" to store.viewOrder,
         "lastUpdate" to formatDateTime(store.lastUpdate), "deleted" to store.deleted,
     )
 
-    fun storeCategoryOrdersToMap(orders: Map<String, List<String>>): Map<String, Any> =
-        mapOf("orders" to orders.toMap())
+    /** `orders` (storeId -> categoryIds) and `subOrders` (storeId -> categoryId -> subCategoryIds). */
+    fun storeCategoryOrdersToMap(
+        orders: Map<String, List<String>>,
+        subOrders: Map<String, Map<String, List<String>>>,
+    ): Map<String, Any> = mapOf("orders" to orders.toMap(), "subOrders" to subOrders.toMap())
 
     // ---------- document -> entity ----------
 
@@ -116,23 +118,36 @@ internal object FirebaseManagerMappers {
         storeIds = strings("storeIds"), lastUpdate = dateTime("lastUpdate"), deleted = flag("deleted"),
     )
 
-    /** Known issue: Store.address is not synced. */
     private fun FirebaseManagerDocument.toStore() = Store(
-        uuid = id, name = required("name"), viewOrder = int("viewOrder") ?: 0,
+        uuid = id, name = required("name"), address = string("address") ?: "", viewOrder = int("viewOrder") ?: 0,
         lastUpdate = dateTime("lastUpdate"), deleted = flag("deleted"),
     )
 
     /** storeId -> categoryIds from the `orders` field; missing documents and malformed entries are ignored. */
     fun documentToStoreCategoryOrders(doc: DocumentSnapshot?): Map<String, List<String>> {
-        if (doc == null || !doc.exists()) return emptyMap()
-        val orders = doc.data?.get("orders") as? Map<*, *> ?: return emptyMap()
+        val orders = ordersField(doc, "orders") ?: return emptyMap()
         return orders.mapNotNull { (key, value) -> orderEntry(key, value) }.toMap()
     }
 
+    /** storeId -> categoryId -> subCategoryIds from the `subOrders` field; missing or malformed entries are ignored. */
+    fun documentToStoreSubCategoryOrders(doc: DocumentSnapshot?): Map<String, Map<String, List<String>>> {
+        val subOrders = ordersField(doc, "subOrders") ?: return emptyMap()
+        return subOrders.mapNotNull { (key, value) -> subOrderEntry(key, value) }.toMap()
+    }
+
+    private fun ordersField(doc: DocumentSnapshot?, key: String): Map<*, *>? =
+        doc?.takeIf { it.exists() }?.data?.get(key) as? Map<*, *>
+
     private fun orderEntry(key: Any?, value: Any?): Pair<String, List<String>>? {
+        val id = key as? String ?: return null
+        val orderedIds = (value as? List<*>)?.mapNotNull { it as? String } ?: return null
+        return id to orderedIds
+    }
+
+    private fun subOrderEntry(key: Any?, value: Any?): Pair<String, Map<String, List<String>>>? {
         val storeId = key as? String ?: return null
-        val categoryIds = (value as? List<*>)?.mapNotNull { it as? String } ?: return null
-        return storeId to categoryIds
+        val byCategory = value as? Map<*, *> ?: return null
+        return storeId to byCategory.mapNotNull { (categoryId, ids) -> orderEntry(categoryId, ids) }.toMap()
     }
 
     // ---------- dates ----------
@@ -175,7 +190,8 @@ internal class FirebaseManagerDocument(private val doc: DocumentSnapshot, privat
 
     fun flag(key: String): Boolean = data[key] as? Boolean ?: false
 
-    fun int(key: String): Int? = (data[key] as? Long)?.toInt()
+    /** Any Number (Long, Int, Double...) truncated to Int; anything else is null. */
+    fun int(key: String): Int? = (data[key] as? Number)?.toInt()
 
     fun strings(key: String): List<String> = (data[key] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
 
