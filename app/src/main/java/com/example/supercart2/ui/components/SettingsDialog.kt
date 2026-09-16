@@ -1,385 +1,186 @@
 package com.example.supercart2.ui.components
 
-import androidx.activity.ComponentActivity
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.supercart2.R
-import com.example.supercart2.data.BackupManager
-import com.example.supercart2.data.SettingsManager
-import com.example.supercart2.ui.theme.AppPalettes
+import com.example.supercart2.ui.components.common.DialogIconButton
+import com.example.supercart2.ui.components.common.primaryButtonColors
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
-import com.example.supercart2.utils.AppLanguage
-import com.example.supercart2.utils.LanguageManager
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsDialog(
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
-    val activity = context as? ComponentActivity
-    var showAlerts by remember { mutableStateOf(true) }
-    var currentLanguage by remember { mutableStateOf<AppLanguage?>(null) }
-    var expandedLanguage by remember { mutableStateOf(false) }
-    var currentPaletteId by remember { mutableStateOf("green") }
-    var expandedPalette by remember { mutableStateOf(false) }
-    var showBackupMessage by remember { mutableStateOf<String?>(null) }
-    var showRestoreMessage by remember { mutableStateOf<String?>(null) }
-    var showRestoreDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val state = remember { SettingsDialogState(scope, context) }
+    LaunchedEffect(Unit) { state.load() }
+    SettingsDialogAlert(state, onDismiss)
+    if (state.showRestoreDialog) SettingsDialogRestorePicker(state)
+}
 
-    // Load current settings
-    LaunchedEffect(Unit) {
-        showAlerts = SettingsManager.getShowAlerts()
-        currentLanguage = LanguageManager.getCurrentLanguage(context)
-        currentPaletteId = SettingsManager.getColorPalette()
-    }
-    
+@Composable
+private fun SettingsDialogAlert(state: SettingsDialogState, onDismiss: () -> Unit) {
     AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = SuperCartColors.lightGreen,
-        title = {
-            Text(
-                text = "Settings",
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                color = SuperCartColors.black,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Show Alerts Setting
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = SuperCartSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = "Show Alerts",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = SuperCartColors.black
-                        )
-                        Text(
-                            text = "Display alert bell icon and highlight items with expiring dates or purchase reminders",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = SuperCartColors.gray,
-                            modifier = Modifier.padding(top = SuperCartSpacing.xs)
-                        )
-                    }
-                    Switch(
-                        checked = showAlerts,
-                        onCheckedChange = { 
-                            showAlerts = it
-                            scope.launch {
-                                SettingsManager.setShowAlerts(it)
-                            }
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = SuperCartColors.primaryGreen,
-                            checkedTrackColor = SuperCartColors.primaryGreen.copy(alpha = 0.5f)
-                        )
-                    )
-                }
-                
-                // Language Selection
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = SuperCartSpacing.sm)
-                ) {
-                    Text(
-                        text = stringResource(R.string.menu_language),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = SuperCartColors.black,
-                        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
-                    )
-                    ExposedDropdownMenuBox(
-                        expanded = expandedLanguage,
-                        onExpandedChange = { expandedLanguage = !expandedLanguage }
-                    ) {
-                        OutlinedTextField(
-                            value = currentLanguage?.nativeDisplayName ?: "",
-                            onValueChange = {},
-                            readOnly = true,
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedLanguage)
-                            },
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
-                                .fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SuperCartColors.primaryGreen,
-                                unfocusedBorderColor = SuperCartColors.gray,
-                                focusedLabelColor = SuperCartColors.black,
-                                unfocusedLabelColor = SuperCartColors.black,
-                                focusedTextColor = SuperCartColors.black,
-                                unfocusedTextColor = SuperCartColors.black,
-                                focusedContainerColor = SuperCartColors.white,
-                                unfocusedContainerColor = SuperCartColors.white
-                            )
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedLanguage,
-                            onDismissRequest = { expandedLanguage = false }
-                        ) {
-                            AppLanguage.values().forEach { language ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Column {
-                                            Text(
-                                                text = language.displayName,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = SuperCartColors.black
-                                            )
-                                            Text(
-                                                text = language.nativeDisplayName,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = SuperCartColors.gray
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        scope.launch {
-                                            LanguageManager.setLanguage(context, language)
-                                            currentLanguage = language
-                                            expandedLanguage = false
-                                            // Recreate activity to apply new language
-                                            activity?.recreate()
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Color palette selection
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = SuperCartSpacing.sm)
-                ) {
-                    Text(
-                        text = stringResource(R.string.color_palette),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = SuperCartColors.black,
-                        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
-                    )
-                    val paletteOptionNames = mapOf(
-                        "green" to R.string.palette_green,
-                        "orange" to R.string.palette_orange,
-                        "purple" to R.string.palette_purple,
-                        "blue" to R.string.palette_blue,
-                        "pink" to R.string.palette_pink
-                    )
-                    ExposedDropdownMenuBox(
-                        expanded = expandedPalette,
-                        onExpandedChange = { expandedPalette = !expandedPalette }
-                    ) {
-                        OutlinedTextField(
-                            value = stringResource(paletteOptionNames[currentPaletteId] ?: R.string.palette_green),
-                            onValueChange = {},
-                            readOnly = true,
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPalette)
-                            },
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
-                                .fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SuperCartColors.primaryGreen,
-                                unfocusedBorderColor = SuperCartColors.gray,
-                                focusedLabelColor = SuperCartColors.black,
-                                unfocusedLabelColor = SuperCartColors.black,
-                                focusedTextColor = SuperCartColors.black,
-                                unfocusedTextColor = SuperCartColors.black,
-                                focusedContainerColor = SuperCartColors.white,
-                                unfocusedContainerColor = SuperCartColors.white
-                            )
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedPalette,
-                            onDismissRequest = { expandedPalette = false }
-                        ) {
-                            paletteOptionNames.forEach { (id, nameRes) ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = stringResource(nameRes),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = SuperCartColors.black
-                                        )
-                                    },
-                                    onClick = {
-                                        scope.launch {
-                                            SettingsManager.setColorPalette(id)
-                                            currentPaletteId = id
-                                            expandedPalette = false
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-                
-                // Backup and Restore Section
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = SuperCartSpacing.sm)
-                ) {
-                    Text(
-                        text = "Backup & Restore",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = SuperCartColors.black,
-                        modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
-                    )
-                    
-                    // Backup message
-                    showBackupMessage?.let { message ->
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (message.contains("success", ignoreCase = true)) 
-                                SuperCartColors.primaryGreen 
-                            else 
-                                MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
-                        )
-                    }
-                    
-                    // Restore message
-                    showRestoreMessage?.let { message ->
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (message.contains("success", ignoreCase = true)) 
-                                SuperCartColors.primaryGreen 
-                            else 
-                                MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
-                        )
-                    }
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
-                    ) {
-                        // Create Backup Button
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    val backupFile = BackupManager.createBackup(context)
-                                    if (backupFile != null) {
-                                        showBackupMessage = "Backup created: ${backupFile.name}"
-                                    } else {
-                                        showBackupMessage = "Failed to create backup"
-                                    }
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = SuperCartColors.primaryGreen,
-                                contentColor = SuperCartColors.white
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudUpload,
-                                contentDescription = "Create Backup",
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(SuperCartSpacing.xs))
-                            Text("Backup")
-                        }
-                        
-                        // Restore Backup Button
-                        Button(
-                            onClick = {
-                                showRestoreDialog = true
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = SuperCartColors.primaryGreen,
-                                contentColor = SuperCartColors.white
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDownload,
-                                contentDescription = "Restore Backup",
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(SuperCartSpacing.xs))
-                            Text("Restore")
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
-            ) {
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.primaryGreen,
-                        contentColor = SuperCartColors.white
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Close"
-                    )
-                }
-            }
-        }
+        onDismissRequest = onDismiss, containerColor = SuperCartColors.lightGreen,
+        title = { SettingsDialogTitle() }, text = { SettingsDialogSections(state) },
+        confirmButton = { SettingsDialogCloseRow(onDismiss) },
     )
-    
-    // Show restore dialog
-    if (showRestoreDialog) {
-        BackupRestoreDialog(
-            onDismiss = { showRestoreDialog = false },
-            onRestoreComplete = { success, message ->
-                showRestoreMessage = message
-                showRestoreDialog = false
-            }
-        )
+}
+
+@Composable
+private fun SettingsDialogTitle() {
+    Text(
+        text = "Settings", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center,
+        fontWeight = FontWeight.Bold, color = SuperCartColors.black, modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/** Show alerts, language, color palette, backup & restore — in that order. */
+@Composable
+private fun SettingsDialogSections(state: SettingsDialogState) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SettingsDialogAlertsRow(checked = state.showAlerts, onCheckedChange = state::onShowAlertsChange)
+        SettingsDialogLanguageSection(state)
+        SettingsDialogPaletteSection(state)
+        SettingsDialogBackupSection(state)
     }
+}
+
+@Composable
+private fun SettingsDialogCloseRow(onDismiss: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)) {
+        DialogIconButton(Icons.Default.Check, "Close", primaryButtonColors(), Modifier.weight(1f), onClick = onDismiss)
+    }
+}
+
+/** Section label; shared by every section title. */
+@Composable
+internal fun SettingsDialogLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium,
+        color = SuperCartColors.black, modifier = modifier,
+    )
+}
+
+/** Full-width section with vertical padding and a label above its [content]. */
+@Composable
+internal fun SettingsDialogSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = SuperCartSpacing.sm)) {
+        SettingsDialogLabel(title, Modifier.padding(bottom = SuperCartSpacing.xs))
+        content()
+    }
+}
+
+@Composable
+private fun SettingsDialogAlertsRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val modifier = Modifier.fillMaxWidth().padding(vertical = SuperCartSpacing.sm)
+    Row(modifier, Arrangement.SpaceBetween, Alignment.CenterVertically) {
+        SettingsDialogAlertsTexts(Modifier.weight(1f))
+        SettingsDialogAlertsSwitch(checked, onCheckedChange)
+    }
+}
+
+@Composable
+private fun SettingsDialogAlertsTexts(modifier: Modifier) {
+    Column(modifier = modifier) {
+        SettingsDialogLabel("Show Alerts")
+        SettingsDialogAlertsDescription()
+    }
+}
+
+@Composable
+private fun SettingsDialogAlertsDescription() {
+    Text(
+        text = "Display alert bell icon and highlight items with expiring dates or purchase reminders",
+        style = MaterialTheme.typography.bodySmall, color = SuperCartColors.gray,
+        modifier = Modifier.padding(top = SuperCartSpacing.xs),
+    )
+}
+
+@Composable
+private fun SettingsDialogAlertsSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val green = SuperCartColors.primaryGreen
+    Switch(
+        checked = checked, onCheckedChange = onCheckedChange,
+        colors = SwitchDefaults.colors(checkedThumbColor = green, checkedTrackColor = green.copy(alpha = 0.5f)),
+    )
+}
+
+@Composable
+private fun SettingsDialogBackupSection(state: SettingsDialogState) {
+    SettingsDialogSection("Backup & Restore") {
+        state.showBackupMessage?.let { SettingsDialogStatusMessage(it) }
+        state.showRestoreMessage?.let { SettingsDialogStatusMessage(it) }
+        SettingsDialogBackupButtons(onBackup = state::createBackup, onRestore = { state.showRestoreDialog = true })
+    }
+}
+
+/** Green when the message mentions "success", error color otherwise. */
+@Composable
+private fun SettingsDialogStatusMessage(message: String) {
+    val success = message.contains("success", ignoreCase = true)
+    val color = if (success) SuperCartColors.primaryGreen else MaterialTheme.colorScheme.error
+    val modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
+    Text(text = message, style = MaterialTheme.typography.bodySmall, color = color, modifier = modifier)
+}
+
+@Composable
+private fun SettingsDialogBackupButtons(onBackup: () -> Unit, onRestore: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)) {
+        SettingsDialogHalfButton(Icons.Default.CloudUpload, "Create Backup", "Backup", onBackup)
+        SettingsDialogHalfButton(Icons.Default.CloudDownload, "Restore Backup", "Restore", onRestore)
+    }
+}
+
+/** Icon + label button taking an equal share of the row. */
+@Composable
+private fun RowScope.SettingsDialogHalfButton(
+    icon: ImageVector, description: String, label: String, onClick: () -> Unit,
+) {
+    Button(onClick = onClick, colors = primaryButtonColors(), modifier = Modifier.weight(1f)) {
+        Icon(imageVector = icon, contentDescription = description, modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.width(SuperCartSpacing.xs))
+        Text(label)
+    }
+}
+
+@Composable
+private fun SettingsDialogRestorePicker(state: SettingsDialogState) {
+    BackupRestoreDialog(
+        onDismiss = { state.showRestoreDialog = false },
+        onRestoreComplete = { _, message -> state.showRestoreMessage = message; state.showRestoreDialog = false },
+    )
 }
