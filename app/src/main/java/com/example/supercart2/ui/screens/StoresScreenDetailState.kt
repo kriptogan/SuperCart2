@@ -24,9 +24,13 @@ internal class StoresScreenDetailState(private val scope: CoroutineScope) {
     var isGroceryEditMode by mutableStateOf(false)
     var editStoreName by mutableStateOf("")
     var editStoreAddress by mutableStateOf("")
+    var storeExists by mutableStateOf(false)
+        private set
     val snackbarHostState = SnackbarHostState()
 
+    /** Fills the edit fields from [store]; a missing (unknown or deleted) store leaves them empty. */
     fun loadStore(store: Store?) {
+        storeExists = store != null
         editStoreName = store?.name ?: ""
         editStoreAddress = store?.address ?: ""
     }
@@ -49,18 +53,13 @@ internal class StoresScreenDetailState(private val scope: CoroutineScope) {
         groceryToEdit = null
     }
 
-    fun onGroceryCreated(newGrocery: Grocery) {
-        val original = groceryToEdit
-        if (isGroceryEditMode && original != null) storesScreenApplyGroceryEdit(original, newGrocery)
-        else DataManagerObject.addGrocery(newGrocery)
-        save()
-        closeGroceryDialog()
-    }
-
-    /** Saves the trimmed name and address (ignored when the name is blank), then shows [savedText]. */
+    /**
+     * Saves the trimmed name and address, then shows [savedText]. Ignored when the name is blank or the store is
+     * unknown or deleted.
+     */
     fun confirmStoreInfo(storeId: String, savedText: String) {
         val trimmedName = editStoreName.trim()
-        if (trimmedName.isBlank()) return
+        if (trimmedName.isBlank() || DataManagerObject.getSortedStores().none { it.uuid == storeId }) return
         DataManagerObject.updateStore(storeId) { it.copy(name = trimmedName, address = editStoreAddress.trim()) }
         scope.launch { saveAndShow(savedText) }
     }

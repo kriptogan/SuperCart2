@@ -83,16 +83,13 @@ private fun StoresScreenFinishShoppingButtons(onCancel: () -> Unit, onConfirm: (
     }
 }
 
-/**
- * Create (linked to the store; added to the shopping list in buying mode) or edit a grocery.
- * GroceryCreationDialog saves by itself and currently never calls onGroceryCreated.
- */
+/** Create (linked to the store; added to the shopping list in buying mode) or edit a grocery; the dialog saves. */
 @Composable
 private fun StoresScreenGroceryDialog(model: StoresScreenDetailModel, state: StoresScreenDetailState) {
     GroceryCreationDialog(
         groceryToEdit = if (state.isGroceryEditMode) state.groceryToEdit else null, initialGroceryName = "",
         initialStoreId = if (!state.isGroceryEditMode) model.storeId else null,
         addToShoppingList = model.mode == StoreMode.Buying && !state.isGroceryEditMode,
-        onDismiss = { state.closeGroceryDialog() }, onGroceryCreated = { state.onGroceryCreated(it) },
+        onDismiss = { state.closeGroceryDialog() },
     )
 }

@@ -39,7 +39,7 @@ internal fun ShoppingListScreenDialogs(state: ShoppingListScreenState, onNavigat
     val scope = rememberCoroutineScope()
     if (state.showFinishConfirmation) ShoppingListScreenFinishDialog(state, scope)
     ShoppingListScreenManagementDialogs(state, onNavigateToStoreEdit)
-    if (state.showGroceryCreation) ShoppingListScreenGroceryDialog(state, scope)
+    if (state.showGroceryCreation) ShoppingListScreenGroceryDialog(state)
 }
 
 @Composable
@@ -80,13 +80,12 @@ private fun ShoppingListScreenImportDialog(state: ShoppingListScreenState) {
 }
 
 @Composable
-private fun ShoppingListScreenGroceryDialog(state: ShoppingListScreenState, scope: CoroutineScope) {
+private fun ShoppingListScreenGroceryDialog(state: ShoppingListScreenState) {
     GroceryCreationDialog(
         groceryToEdit = state.groceryToEdit,
         initialGroceryName = if (state.isEditMode) "" else state.searchQuery,
         // new groceries created from the shopping list go straight into the list
         addToShoppingList = !state.isEditMode, onDismiss = { state.dismissGroceryDialog() },
-        onGroceryCreated = { ShoppingListScreenActions.onGroceryCreated(state, it, scope) },
     )
 }
 

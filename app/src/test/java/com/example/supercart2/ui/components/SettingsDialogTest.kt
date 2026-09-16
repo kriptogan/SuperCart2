@@ -35,6 +35,10 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "h1200dp")
@@ -191,6 +195,46 @@ class SettingsDialogTest {
         compose.onAllNodesWithText("Select Backup File").assertCountEquals(0)
         compose.onNodeWithText("Backup restored successfully!").assertIsDisplayed()
         assertEquals(0, dismissed)
+    }
+
+    @Test
+    fun `backup exception shows the failure message`() {
+        coEvery { BackupManager.createBackup(any()) } throws RuntimeException("disk full")
+        show()
+        compose.onNodeWithText("Backup").performClick()
+        compose.onNodeWithText("Failed to create backup").assertIsDisplayed()
+    }
+
+    private fun backupState(): SettingsDialogState {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        return SettingsDialogState(CoroutineScope(Dispatchers.Unconfined), context)
+    }
+
+    @Test
+    fun `created backup is tracked as a success`() {
+        coEvery { BackupManager.createBackup(any()) } returns File("dir/supercart_backup_42.zip")
+        val state = backupState()
+        state.createBackup()
+        assertEquals(SettingsDialogStatus("Backup created: supercart_backup_42.zip", true), state.backupStatus)
+    }
+
+    @Test
+    fun `failed or throwing backup is tracked as a failure`() {
+        val state = backupState()
+        coEvery { BackupManager.createBackup(any()) } returns null
+        state.createBackup()
+        assertEquals(SettingsDialogStatus("Failed to create backup", false), state.backupStatus)
+        coEvery { BackupManager.createBackup(any()) } throws RuntimeException("disk full")
+        state.createBackup()
+        assertEquals(SettingsDialogStatus("Failed to create backup", false), state.backupStatus)
+    }
+
+    @Test
+    fun `restore result is tracked with its success flag`() {
+        val state = backupState()
+        state.onRestoreComplete(true, "Backup restored successfully!")
+        assertEquals(SettingsDialogStatus("Backup restored successfully!", true), state.restoreStatus)
+        assertEquals(false, state.showRestoreDialog)
     }
 
     @Test

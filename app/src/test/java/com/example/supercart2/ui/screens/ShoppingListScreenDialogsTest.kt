@@ -186,7 +186,6 @@ class ShoppingListScreenDialogsTest {
         assertEquals("c1" to "s1", eggs.single().categoryId to eggs.single().subCategoryId)
         compose.onAllNodesWithText("Create New Grocery").assertCountEquals(0)
         compose.onNodeWithText("(3)").assertIsDisplayed()
-        // Pinned: GroceryCreationDialog saves by itself and never calls onGroceryCreated.
         coVerify(exactly = 1) { DataStoreManager.saveDataGlobally() }
     }
 

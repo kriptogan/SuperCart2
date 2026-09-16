@@ -2,10 +2,8 @@ package com.example.supercart2.ui.screens
 
 import com.example.supercart2.TestData
 import com.example.supercart2.TestData.findGrocery
-import com.example.supercart2.TestData.locationOf
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.COSTCO
-import com.example.supercart2.ui.screens.StoresScreenTestFixtures.bakery
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.costco
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.dairy
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.install
@@ -55,25 +53,6 @@ class StoresScreenDetailStateTest {
     }
 
     @Test
-    fun `created grocery is added when not editing`() {
-        install()
-        state.openGroceryCreation()
-        state.onGroceryCreated(dairy("Milk", COSTCO))
-        assertEquals("Dairy" to "DairySub", locationOf("Milk"))
-        assertFalse(state.showGroceryCreation)
-    }
-
-    @Test
-    fun `edited grocery replaces the original and moves it when its category changed`() {
-        install(dairy("Milk", COSTCO))
-        state.openGroceryEdit(findGrocery("Milk")!!)
-        state.onGroceryCreated(bakery("Milk", COSTCO).copy(name = "Milk bread"))
-        assertEquals("Bakery" to "BakerySub", locationOf("Milk"))
-        assertEquals("Milk bread", findGrocery("Milk")!!.name)
-        assertNull(state.groceryToEdit)
-    }
-
-    @Test
     fun `confirming store info trims and saves, blank names are ignored`() {
         install()
         state.editStoreName = "   "
@@ -85,6 +64,25 @@ class StoresScreenDetailStateTest {
         state.confirmStoreInfo(COSTCO, "Done")
         assertEquals("Big Costco", DataManagerObject.stores.first().name)
         assertEquals("Elm", DataManagerObject.stores.first().address)
+    }
+
+    @Test
+    fun `confirming store info for an unknown or deleted store saves nothing and shows no message`() {
+        install(stores = listOf(costco.copy(deleted = true)))
+        state.editStoreName = "Ghost"
+        state.confirmStoreInfo("missing", "Done")
+        state.confirmStoreInfo(COSTCO, "Done")
+        assertNull(state.snackbarHostState.currentSnackbarData)
+        assertEquals("Costco", DataManagerObject.stores.first().name)
+        assertFalse(state.storeExists)
+    }
+
+    @Test
+    fun `loading an existing store marks it as existing`() {
+        state.loadStore(costco)
+        assertTrue(state.storeExists)
+        state.loadStore(null)
+        assertFalse(state.storeExists)
     }
 
     @Test

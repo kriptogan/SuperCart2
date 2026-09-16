@@ -117,7 +117,7 @@ class HierarchicalCategoryDisplayCatalogueRowTest {
     }
 
     @Test
-    fun `pinned - edit passes the grocery from the categories argument, row shows the live one`() {
+    fun `edit passes the live grocery shown in the row, not the one from the categories argument`() {
         install(grocery("g1", "c1", "s1").copy(name = "fresh", inShoppingList = true))
         val stale = grocery("g1", "c1", "s1").copy(name = "stale")
         show(listOf(node(category("c1"), subNode(sub("s1", "c1"), stale))))
@@ -125,7 +125,7 @@ class HierarchicalCategoryDisplayCatalogueRowTest {
         compose.onNodeWithContentDescription("Remove from shopping list").assertIsDisplayed()
         compose.onNodeWithContentDescription("More options").performClick()
         compose.onNodeWithText("Edit item").performClick()
-        assertEquals(listOf(stale), edited)
+        assertEquals(listOf("fresh"), edited.map { it.name })
     }
 
     @Test

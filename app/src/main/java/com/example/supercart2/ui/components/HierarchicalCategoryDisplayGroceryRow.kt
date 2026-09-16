@@ -55,22 +55,24 @@ internal class HierarchicalCategoryDisplayRowContext(
 
 @Composable
 internal fun HierarchicalCategoryDisplayGroceryItem(
-    grocery: Grocery, onEdit: () -> Unit, options: HierarchicalCategoryDisplayOptions,
+    grocery: Grocery, options: HierarchicalCategoryDisplayOptions,
 ) {
     val scope = rememberCoroutineScope()
     var showBuyHistory by remember { mutableStateOf(false) }
-    val row = rowContext(grocery, options, scope, onEdit) { showBuyHistory = true }
+    val row = rowContext(grocery, options, scope) { showBuyHistory = true }
     GroceryRow(row)
     if (showBuyHistory) HierarchicalCategoryDisplayBuyHistoryDialog(row.grocery) { showBuyHistory = false }
 }
 
+/** Row context around the live grocery; edit reports that live copy. */
 @Composable
 private fun rowContext(
-    grocery: Grocery, options: HierarchicalCategoryDisplayOptions, scope: CoroutineScope,
-    onEdit: () -> Unit, onShowBuyHistory: () -> Unit,
+    grocery: Grocery, options: HierarchicalCategoryDisplayOptions, scope: CoroutineScope, onShowBuyHistory: () -> Unit,
 ): HierarchicalCategoryDisplayRowContext {
     val current = rememberCurrentGrocery(grocery)
-    val categoryName = remember(current.categoryId) { categoryNameOf(current.categoryId) }
+    val version = DataManagerObject.version
+    val categoryName = remember(current.categoryId, version) { categoryNameOf(current.categoryId) }
+    val onEdit = { options.onEditGrocery(current) }
     return HierarchicalCategoryDisplayRowContext(current, categoryName, options, scope, onEdit, onShowBuyHistory)
 }
 
@@ -97,10 +99,10 @@ private fun GroceryRow(row: HierarchicalCategoryDisplayRowContext) {
     }
 }
 
-/** Alerts are only highlighted in the catalogue, and only when enabled. */
+/** Alerts are only highlighted in the catalogue, and only when enabled; recomputed on every data change. */
 @Composable
 private fun rememberHasAlert(grocery: Grocery, options: HierarchicalCategoryDisplayOptions): Boolean =
-    remember(grocery, options.isShoppingList, options.showAlerts) {
+    remember(grocery, DataManagerObject.version, options.isShoppingList, options.showAlerts) {
         !options.isShoppingList && options.showAlerts && grocery.hasAlert()
     }
 

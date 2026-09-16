@@ -127,5 +127,14 @@ class HierarchicalCategoryDisplayShoppingRowTest {
         compose.onNodeWithContentDescription("Mark as bought").assertDoesNotExist()
     }
 
+    @Test
+    fun `bought row shows the new category name after a rename`() {
+        show(grocery("g1", "c1", "s1", inShoppingList = true, isBought = true), categoryName = "Vegetables")
+        compose.onAllNodesWithText("Vegetables").assertCountEquals(2)
+        compose.runOnIdle { DataManagerObject.updateCategory("c1") { it.copy(name = "Fruits") } }
+        compose.onAllNodesWithText("Fruits").assertCountEquals(2)
+        compose.onAllNodesWithText("Vegetables").assertCountEquals(0)
+    }
+
     private fun top(text: String) = compose.onNodeWithText(text).fetchSemanticsNode().boundsInRoot.top
 }
