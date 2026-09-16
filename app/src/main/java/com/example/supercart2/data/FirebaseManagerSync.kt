@@ -51,13 +51,13 @@ internal class FirebaseManagerDownload(
     fun hasValidRelationships(): Boolean = DataConverter.validateRelationships(categories, subCategories, groceries)
 
     /**
-     * Replaces categories, stores and store category orders. Deleted stores are kept, while
-     * buildNestedStructure drops deleted categories, sub-categories and groceries.
+     * Replaces categories, stores and store category orders. Like DataStoreManager.loadData, deleted stores
+     * are dropped, and buildNestedStructure drops deleted categories, sub-categories and groceries.
      */
     fun replaceLocalData() {
         val nested = DataConverter.buildNestedStructure(categories, subCategories, groceries)
         DataManagerObject.categories.replaceWith(nested)
-        DataManagerObject.stores.replaceWith(stores)
+        DataManagerObject.stores.replaceWith(stores.filter { !it.deleted })
         DataManagerObject.storeCategoryOrders.clear()
         DataManagerObject.storeCategoryOrders.putAll(storeCategoryOrders)
     }

@@ -106,7 +106,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
         )
         fake.setDocs(
             "stores",
-            snapshot("A", mapOf("name" to "Shop", "address" to "Main 1", "viewOrder" to 2L, "lastUpdate" to "2024-03-01T10:30:15.123", "deleted" to true)),
+            snapshot("A", mapOf("name" to "Shop", "address" to "Main 1", "viewOrder" to 2L, "lastUpdate" to "2024-03-01T10:30:15.123")),
         )
 
         FirebaseManager.downloadData()
@@ -124,7 +124,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
             ),
             groceries().single(),
         )
-        assertEquals(listOf(Store("A", "Shop", address = "Main 1", viewOrder = 2, lastUpdate = t, deleted = true)), DataManagerObject.stores)
+        assertEquals(listOf(Store("A", "Shop", address = "Main 1", viewOrder = 2, lastUpdate = t)), DataManagerObject.stores)
     }
 
     @Test
@@ -244,7 +244,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
     }
 
     @Test
-    fun `downloadData replaces local data, keeps deleted stores, saves and downloads images`() = runTest {
+    fun `downloadData replaces local data, drops deleted stores, saves and downloads images`() = runTest {
         installLocal()
         DataManagerObject.hiddenStoreIds.add("localStore")
         DataManagerObject.storeSubCategoryOrders["localStore"] = mapOf("local" to listOf("localSub"))
@@ -254,10 +254,10 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
 
         FirebaseManager.downloadData()
 
-        // Pinned: deleted categories are dropped, deleted stores are kept (Known issue).
+        // Deleted categories and deleted stores are dropped, like DataStoreManager.loadData.
         assertEquals(listOf("c1"), DataManagerObject.categories.map { it.category.uuid })
         assertEquals(listOf("g1"), groceries().map { it.uuid })
-        assertEquals(listOf("A", "B"), DataManagerObject.stores.map { it.uuid })
+        assertEquals(listOf("A"), DataManagerObject.stores.map { it.uuid })
         assertEquals(mapOf("A" to listOf("c1"), "C" to listOf("x")), DataManagerObject.storeCategoryOrders)
         assertEquals(listOf("localStore"), DataManagerObject.hiddenStoreIds.toList())
         assertEquals(mapOf("localStore" to mapOf("local" to listOf("localSub"))), DataManagerObject.storeSubCategoryOrders)
