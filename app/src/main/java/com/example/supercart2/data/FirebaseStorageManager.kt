@@ -1,215 +1,134 @@
 package com.example.supercart2.data
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.tasks.await
 import java.io.File
 
+/** Grocery photos in Firebase Storage under `grocery_images/{uuid}.jpg`. Failures are logged, never thrown. */
 object FirebaseStorageManager {
-    // Initialize Firebase Storage with explicit bucket URL
-    private val storage: FirebaseStorage by lazy {
-        try {
-            // Use the bucket URL from google-services.json
-            val instance = FirebaseStorage.getInstance("gs://supercart2-58caf.firebasestorage.app")
-            android.util.Log.d("FirebaseStorageManager", "✅ Storage initialized with bucket: ${instance.reference.bucket}")
-            instance
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseStorageManager", "❌ Failed to initialize Storage", e)
-            // Fallback to default instance
-            FirebaseStorage.getInstance()
-        }
-    }
-    
+    private const val TAG = "FirebaseStorageManager"
+    private const val BUCKET_URL = "gs://supercart2-58caf.firebasestorage.app" // from google-services.json
+    private const val IMAGES_PATH = "grocery_images"
+
+    private val STORAGE_ERROR_HINTS = mapOf(
+        StorageException.ERROR_BUCKET_NOT_FOUND to "Bucket not found! Is Storage enabled in Firebase Console?",
+        StorageException.ERROR_OBJECT_NOT_FOUND to "Object or bucket not found! Is Storage enabled?",
+        StorageException.ERROR_NOT_AUTHENTICATED to "Not authenticated.",
+        StorageException.ERROR_NOT_AUTHORIZED to "Not authorized. Check Storage Rules.",
+    )
+
+    private val storage: FirebaseStorage by lazy { createStorage() }
+
     private val storageRef: StorageReference
         get() = storage.reference
-    
-    private const val IMAGES_PATH = "grocery_images"
-    
-    /**
-     * Test if Firebase Storage is properly initialized and accessible
-     */
-    suspend fun testStorageConnection(): Boolean {
-        return try {
-            android.util.Log.d("FirebaseStorageManager", "🔍 Testing Storage connection...")
-            android.util.Log.d("FirebaseStorageManager", "Bucket: ${storageRef.bucket}")
-            android.util.Log.d("FirebaseStorageManager", "Path: ${storageRef.path}")
-            
-            // Try to get metadata of the root (should work even if empty)
-            val listResult = storageRef.listAll().await()
-            android.util.Log.d("FirebaseStorageManager", "✅ Storage is accessible! Found ${listResult.items.size} items")
-            true
-        } catch (e: com.google.firebase.storage.StorageException) {
-            when (e.errorCode) {
-                com.google.firebase.storage.StorageException.ERROR_BUCKET_NOT_FOUND -> {
-                    android.util.Log.e("FirebaseStorageManager", "❌ Storage bucket not found! Storage might not be enabled in Firebase Console.", e)
-                }
-                else -> {
-                    android.util.Log.e("FirebaseStorageManager", "❌ Storage connection test failed (code: ${e.errorCode})", e)
-                }
-            }
-            false
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseStorageManager", "❌ Storage connection test failed", e)
-            false
-        }
+
+    private fun createStorage(): FirebaseStorage = try {
+        FirebaseStorage.getInstance(BUCKET_URL).also { Log.d(TAG, "✅ Storage bucket: ${it.reference.bucket}") }
+    } catch (e: Exception) {
+        Log.e(TAG, "❌ Failed to initialize Storage, falling back to the default instance", e)
+        FirebaseStorage.getInstance()
     }
-    
-    /**
-     * Upload a single image to Firebase Storage
-     * Returns true if successful
-     */
-    suspend fun uploadImage(imageFile: File, uuid: String): Boolean {
-        return try {
-            val imageRef = storageRef.child("$IMAGES_PATH/$uuid.jpg")
-            android.util.Log.d("FirebaseStorageManager", "Uploading to: ${imageRef.path} in bucket: ${imageRef.bucket}")
-            
-            imageRef.putFile(android.net.Uri.fromFile(imageFile)).await()
-            
-            android.util.Log.d("FirebaseStorageManager", "Uploaded image: $uuid")
-            true
-        } catch (e: com.google.firebase.storage.StorageException) {
-            when (e.errorCode) {
-                com.google.firebase.storage.StorageException.ERROR_OBJECT_NOT_FOUND -> {
-                    android.util.Log.e("FirebaseStorageManager", "❌ Firebase Storage bucket not found! Please enable Storage in Firebase Console.", e)
-                }
-                com.google.firebase.storage.StorageException.ERROR_NOT_AUTHENTICATED -> {
-                    android.util.Log.e("FirebaseStorageManager", "❌ Not authenticated to upload images", e)
-                }
-                com.google.firebase.storage.StorageException.ERROR_NOT_AUTHORIZED -> {
-                    android.util.Log.e("FirebaseStorageManager", "❌ Not authorized to upload images. Check Storage Rules.", e)
-                }
-                else -> {
-                    android.util.Log.e("FirebaseStorageManager", "❌ Error uploading image: $uuid (code: ${e.errorCode})", e)
-                }
-            }
-            false
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseStorageManager", "❌ Error uploading image: $uuid", e)
-            false
-        }
+
+    private fun imageRef(uuid: String): StorageReference = storageRef.child("$IMAGES_PATH/$uuid.jpg")
+
+    /** True when the bucket root can be listed. */
+    suspend fun testStorageConnection(): Boolean = orOnError(false, "❌ Storage connection test failed") {
+        Log.d(TAG, "🔍 Testing Storage connection (bucket: ${storageRef.bucket}, path: ${storageRef.path})")
+        val listResult = storageRef.listAll().await()
+        Log.d(TAG, "✅ Storage is accessible! Found ${listResult.items.size} items")
+        true
     }
-    
-    /**
-     * Download a single image from Firebase Storage
-     * Returns the local file or null on error
-     */
-    suspend fun downloadImage(uuid: String, context: Context): File? {
-        return try {
-            val imageRef = storageRef.child("$IMAGES_PATH/$uuid.jpg")
-            val localFile = ImageManager.getImageFile(uuid, context)
-            
-            // Download to local file
-            imageRef.getFile(localFile).await()
-            
-            android.util.Log.d("FirebaseStorageManager", "Downloaded image: $uuid")
-            localFile
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseStorageManager", "Error downloading image: $uuid", e)
-            null
-        }
+
+    /** Uploads a single image; true if successful. */
+    suspend fun uploadImage(imageFile: File, uuid: String): Boolean = orOnError(false, "❌ Error uploading $uuid") {
+        val imageRef = imageRef(uuid)
+        Log.d(TAG, "Uploading to: ${imageRef.path} in bucket: ${imageRef.bucket}")
+        imageRef.putFile(Uri.fromFile(imageFile)).await()
+        true
     }
-    
-    /**
-     * Batch upload all local images that aren't in Firebase yet
-     * Returns count of successfully uploaded images
-     */
-    suspend fun batchUploadImages(context: Context): Int {
-        var uploadedCount = 0
-        
+
+    /** Downloads a single image into the local image cache; returns that file, or null on error. */
+    suspend fun downloadImage(uuid: String, context: Context): File? = orOnError(null, "Error downloading $uuid") {
+        val imageRef = imageRef(uuid)
+        val localFile = ImageManager.getImageFile(uuid, context)
+        imageRef.getFile(localFile).await()
+        localFile
+    }
+
+    /** Uploads the local images of all non-deleted groceries; returns how many succeeded. */
+    suspend fun batchUploadImages(context: Context): Int = countSuccesses("upload") { uploadAll(context, it) }
+
+    /** Downloads the images of non-deleted groceries that have no local copy; returns how many succeeded. */
+    suspend fun batchDownloadImages(context: Context): Int = countSuccesses("download") { downloadAll(context, it) }
+
+    private suspend fun uploadAll(context: Context, results: MutableList<Boolean>) {
+        if (storageUnavailable("upload")) return
+        val imageUUIDs = groceryImageUUIDs()
+        Log.d(TAG, "📤 Found ${imageUUIDs.size} groceries with images")
+        imageUUIDs.forEach { uuid -> results += uploadIfLocal(context, uuid) }
+        Log.d(TAG, "📤 Batch upload complete: ${results.count { it }}/${imageUUIDs.size} images uploaded")
+    }
+
+    private suspend fun uploadIfLocal(context: Context, uuid: String): Boolean {
+        val localFile = ImageManager.getLocalImageFile(uuid, context)
+        if (localFile == null || !localFile.exists()) {
+            Log.w(TAG, "⚠️ Local file not found for image $uuid")
+            return false
+        }
+        return uploadImage(localFile, uuid).also { if (!it) Log.w(TAG, "❌ Failed to upload image $uuid") }
+    }
+
+    private suspend fun downloadAll(context: Context, results: MutableList<Boolean>) {
+        if (storageUnavailable("download")) return
+        val imageUUIDs = groceryImageUUIDs()
+        Log.d(TAG, "📥 Found ${imageUUIDs.size} groceries with images")
+        imageUUIDs.forEach { uuid -> downloadIfMissing(context, uuid)?.let { results += it } }
+        Log.d(TAG, "📥 Batch download: ${results.count { it }} downloaded, ${imageUUIDs.size - results.size} skipped")
+    }
+
+    /** Checks the local copy right before downloading, so a uuid shared by several groceries is fetched once. */
+    private suspend fun downloadIfMissing(context: Context, uuid: String): Boolean? {
+        if (ImageManager.getLocalImageFile(uuid, context)?.exists() == true) return null // already exists locally
+        val downloaded = downloadImage(uuid, context) != null
+        if (!downloaded) Log.w(TAG, "❌ Failed to download image $uuid")
+        return downloaded
+    }
+
+    /** Image uuids of non-deleted groceries (their category's deleted flag is not checked). */
+    private fun groceryImageUUIDs(): List<String> = DataManagerObject.categories
+        .flatMap { it.subCategories }
+        .flatMap { it.groceries }
+        .filter { !it.deleted }
+        .mapNotNull { it.imageUUID }
+
+    private suspend fun storageUnavailable(action: String): Boolean {
+        val unavailable = !testStorageConnection()
+        if (unavailable) Log.e(TAG, "❌ Storage connection test failed. Aborting $action.")
+        return unavailable
+    }
+
+    /** Runs a batch transfer that records one result per attempt; an unexpected error keeps the results so far. */
+    private inline fun countSuccesses(action: String, transfer: (MutableList<Boolean>) -> Unit): Int {
+        val results = mutableListOf<Boolean>()
+        orOnError(Unit, "Error in batch $action") { transfer(results) }
+        return results.count { it }
+    }
+
+    private inline fun <T> orOnError(fallback: T, errorMessage: String, block: () -> T): T =
         try {
-            // Test Storage connection first
-            if (!testStorageConnection()) {
-                android.util.Log.e("FirebaseStorageManager", "❌ Storage connection test failed. Aborting upload.")
-                android.util.Log.e("FirebaseStorageManager", "📖 Please enable Firebase Storage in Firebase Console:")
-                android.util.Log.e("FirebaseStorageManager", "   1. Go to https://console.firebase.google.com/")
-                android.util.Log.e("FirebaseStorageManager", "   2. Select project: supercart2-58caf")
-                android.util.Log.e("FirebaseStorageManager", "   3. Click 'Storage' in left menu")
-                android.util.Log.e("FirebaseStorageManager", "   4. Click 'Get Started' button")
-                return 0
-            }
-            
-            // Get all groceries with images
-            val groceriesWithImages = DataManagerObject.categories
-                .flatMap { it.subCategories }
-                .flatMap { it.groceries }
-                .filter { it.imageUUID != null && !it.deleted }
-            
-            android.util.Log.d("FirebaseStorageManager", "📤 Found ${groceriesWithImages.size} groceries with images")
-            
-            groceriesWithImages.forEach { grocery ->
-                val uuid = grocery.imageUUID ?: return@forEach
-                val localFile = ImageManager.getLocalImageFile(uuid, context)
-                
-                android.util.Log.d("FirebaseStorageManager", "Processing image $uuid, local file exists: ${localFile?.exists()}")
-                
-                if (localFile != null && localFile.exists()) {
-                    if (uploadImage(localFile, uuid)) {
-                        uploadedCount++
-                        android.util.Log.d("FirebaseStorageManager", "✅ Uploaded image $uuid ($uploadedCount/${groceriesWithImages.size})")
-                    } else {
-                        android.util.Log.w("FirebaseStorageManager", "❌ Failed to upload image $uuid")
-                    }
-                } else {
-                    android.util.Log.w("FirebaseStorageManager", "⚠️ Local file not found for image $uuid")
-                }
-            }
-            
-            android.util.Log.d("FirebaseStorageManager", "📤 Batch upload complete: $uploadedCount/${groceriesWithImages.size} images uploaded")
+            block()
         } catch (e: Exception) {
-            android.util.Log.e("FirebaseStorageManager", "Error in batch upload", e)
+            Log.e(TAG, listOfNotNull(errorMessage, storageErrorHint(e)).joinToString(" "), e)
+            fallback
         }
-        
-        return uploadedCount
-    }
-    
-    /**
-     * Batch download images for groceries that don't have local copies
-     * Returns count of successfully downloaded images
-     */
-    suspend fun batchDownloadImages(context: Context): Int {
-        var downloadedCount = 0
-        
-        try {
-            // Test Storage connection first
-            if (!testStorageConnection()) {
-                android.util.Log.e("FirebaseStorageManager", "❌ Storage connection test failed. Aborting download.")
-                return 0
-            }
-            
-            // Get all groceries with images
-            val groceriesWithImages = DataManagerObject.categories
-                .flatMap { it.subCategories }
-                .flatMap { it.groceries }
-                .filter { it.imageUUID != null && !it.deleted }
-            
-            android.util.Log.d("FirebaseStorageManager", "📥 Found ${groceriesWithImages.size} groceries with images")
-            
-            var skippedCount = 0
-            groceriesWithImages.forEach { grocery ->
-                val uuid = grocery.imageUUID ?: return@forEach
-                val localFile = ImageManager.getLocalImageFile(uuid, context)
-                
-                // Only download if we don't have it locally
-                if (localFile == null || !localFile.exists()) {
-                    android.util.Log.d("FirebaseStorageManager", "Downloading missing image $uuid...")
-                    if (downloadImage(uuid, context) != null) {
-                        downloadedCount++
-                        android.util.Log.d("FirebaseStorageManager", "✅ Downloaded image $uuid ($downloadedCount downloaded)")
-                    } else {
-                        android.util.Log.w("FirebaseStorageManager", "❌ Failed to download image $uuid")
-                    }
-                } else {
-                    skippedCount++
-                    android.util.Log.d("FirebaseStorageManager", "⏭️ Skipped $uuid (already exists locally)")
-                }
-            }
-            
-            android.util.Log.d("FirebaseStorageManager", "📥 Batch download complete: $downloadedCount downloaded, $skippedCount skipped")
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseStorageManager", "Error in batch download", e)
-        }
-        
-        return downloadedCount
+
+    private fun storageErrorHint(e: Exception): String? {
+        val code = (e as? StorageException)?.errorCode ?: return null
+        return STORAGE_ERROR_HINTS[code] ?: "(code: $code)"
     }
 }
