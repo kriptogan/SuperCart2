@@ -13,6 +13,10 @@ import com.example.supercart2.ui.components.StoreWithCategories
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+/**
+ * The app state. Tree mutations are implemented by the helpers in DataManagerObjectGroceries.kt,
+ * DataManagerObjectCategories.kt, DataManagerObjectConfirmBought.kt and DataManagerObjectStores.kt.
+ */
 object DataManagerObject {
     val categories: SnapshotStateList<CategoryWithSubCategories> = mutableStateListOf()
     val stores: SnapshotStateList<Store> = mutableStateListOf()
@@ -36,39 +40,17 @@ object DataManagerObject {
     // Get categories sorted by viewOrder, without deleted categories, sub-categories and groceries
     fun getSortedCategories(): List<CategoryWithSubCategories> = categories
         .filter { !it.category.deleted }
-        .map { categoryWithSubs ->
-            categoryWithSubs.copy(
-                subCategories = categoryWithSubs.subCategories
-                    .filter { !it.subCategory.deleted }
-                    .map { it.copy(groceries = it.groceries.filterNot { grocery -> grocery.deleted }.toMutableList()) }
-                    .toMutableList()
-            )
-        }
+        .map { it.withoutDeletedChildren() }
         .sortedBy { it.category.viewOrder }
-
-    /** Replaces the groceries of one sub-category, rebuilding its (current) category immutably. */
-    private fun setGroceries(categoryIndex: Int, subCategoryIndex: Int, groceries: MutableList<Grocery>) {
-        val category = categories[categoryIndex]
-        val subCategories = category.subCategories.toMutableList()
-        subCategories[subCategoryIndex] = subCategories[subCategoryIndex].copy(groceries = groceries)
-        categories[categoryIndex] = category.copy(subCategories = subCategories)
-    }
 
     // ========== Groceries ==========
 
     fun updateGrocery(groceryUuid: String, update: (Grocery) -> Grocery) {
-        categories.forEachIndexed { categoryIndex, category ->
-            category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
-                val index = subCategory.groceries.indexOfFirst { it.uuid == groceryUuid }
-                if (index != -1) {
-                    val groceries = subCategory.groceries.toMutableList()
-                    groceries[index] = update(groceries[index]).copy(lastUpdate = LocalDateTime.now())
-                    setGroceries(categoryIndex, subCategoryIndex, groceries)
-                    updateData()
-                    return
-                }
-            }
-        }
+        val (categoryIndex, subCategoryIndex, groceryIndex) = categories.findGroceryPath(groceryUuid) ?: return
+        val groceries = categories[categoryIndex].subCategories[subCategoryIndex].groceries.toMutableList()
+        groceries[groceryIndex] = update(groceries[groceryIndex]).copy(lastUpdate = LocalDateTime.now())
+        categories.setGroceries(categoryIndex, subCategoryIndex, groceries)
+        updateData()
     }
 
     // Toggling shopping list status always resets bought status
@@ -82,47 +64,19 @@ object DataManagerObject {
     }
 
     fun addGrocery(grocery: Grocery) {
-        val categoryIndex = categories.indexOfFirst { it.category.uuid == grocery.categoryId }
-        if (categoryIndex == -1) return
-        val subCategories = categories[categoryIndex].subCategories
-        val subCategoryIndex = subCategories.indexOfFirst { it.subCategory.uuid == grocery.subCategoryId }
-        if (subCategoryIndex == -1) return
-
-        setGroceries(categoryIndex, subCategoryIndex, (subCategories[subCategoryIndex].groceries + grocery).toMutableList())
+        val (categoryIndex, subCategoryIndex) =
+            categories.findSubCategoryPath(grocery.categoryId, grocery.subCategoryId) ?: return
+        categories.appendGrocery(categoryIndex, subCategoryIndex, grocery)
         updateData()
     }
 
     // Moves a grocery to another category/sub-category. Note: does not stamp lastUpdate.
     fun updateGroceryLocation(groceryUuid: String, newCategoryId: String, newSubCategoryId: String) {
-        var source: Pair<Int, Int>? = null
-        var target: Pair<Int, Int>? = null
-        var groceryToMove: Grocery? = null
-
-        categories.forEachIndexed { catIndex, category ->
-            category.subCategories.forEachIndexed { subIndex, subCategory ->
-                subCategory.groceries.find { it.uuid == groceryUuid }?.let {
-                    source = catIndex to subIndex
-                    groceryToMove = it
-                }
-                if (category.category.uuid == newCategoryId && subCategory.subCategory.uuid == newSubCategoryId) {
-                    target = catIndex to subIndex
-                }
-            }
+        val source = categories.lastSubCategoryPathContaining(groceryUuid) ?: return
+        val target = categories.lastSubCategoryPath(newCategoryId, newSubCategoryId) ?: return
+        categories.moveGrocery(groceryUuid, source, target) { grocery ->
+            grocery.copy(categoryId = newCategoryId, subCategoryId = newSubCategoryId)
         }
-
-        val (sourceCat, sourceSub) = source ?: return
-        val (targetCat, targetSub) = target ?: return
-        val moved = groceryToMove ?: return
-
-        val sourceGroceries = categories[sourceCat].subCategories[sourceSub].groceries
-        setGroceries(sourceCat, sourceSub, sourceGroceries.filterNot { it.uuid == groceryUuid }.toMutableList())
-
-        // Re-read the target: it may be the category (or sub-category) just rebuilt above
-        val targetGroceries = categories[targetCat].subCategories[targetSub].groceries
-        setGroceries(
-            targetCat, targetSub,
-            (targetGroceries + moved.copy(categoryId = newCategoryId, subCategoryId = newSubCategoryId)).toMutableList()
-        )
         updateData()
     }
 
@@ -132,13 +86,7 @@ object DataManagerObject {
 
         // Delete local image if exists
         val context = DataStoreManager.globalContext ?: return
-        categories.forEach { category ->
-            category.subCategories.forEach { subCategory ->
-                subCategory.groceries.find { it.uuid == groceryUuid }?.imageUUID?.let { imageUUID ->
-                    ImageManager.deleteLocalImage(imageUUID, context)
-                }
-            }
-        }
+        categories.imageUuidsOf(groceryUuid).forEach { ImageManager.deleteLocalImage(it, context) }
     }
 
     // ========== Categories ==========
@@ -146,10 +94,7 @@ object DataManagerObject {
     fun updateCategory(categoryUuid: String, update: (Category) -> Category) {
         val index = categories.indexOfFirst { it.category.uuid == categoryUuid }
         if (index == -1) return
-        val categoryWithSubs = categories[index]
-        categories[index] = categoryWithSubs.copy(
-            category = update(categoryWithSubs.category).copy(lastUpdate = LocalDateTime.now())
-        )
+        categories[index] = categories[index].withUpdatedCategory(update)
         updateData()
     }
 
@@ -168,11 +113,7 @@ object DataManagerObject {
     fun deleteCategory(categoryUuid: String) {
         // Soft delete - mark as deleted instead of removing
         updateCategory(categoryUuid) { it.copy(deleted = true) }
-
-        // Remove category from all store orders
-        storeCategoryOrders.forEach { (storeId, categoryIds) ->
-            storeCategoryOrders[storeId] = categoryIds.filter { it != categoryUuid }
-        }
+        storeCategoryOrders.removeCategoryFromAll(categoryUuid)
     }
 
     // ========== Sub-categories ==========
@@ -182,20 +123,14 @@ object DataManagerObject {
         val index = subCategories.indexOfFirst { it.subCategory.uuid == subCategoryUuid }
         if (index == -1) return
         // Updated in place (the category's list is mutated, not replaced)
-        subCategories[index] = subCategories[index].copy(
-            subCategory = update(subCategories[index].subCategory).copy(lastUpdate = LocalDateTime.now())
-        )
+        subCategories[index] = subCategories[index].withUpdatedSubCategory(update)
         updateData()
     }
 
     fun addSubCategory(categoryUuid: String, subCategory: SubCategory) {
         val index = categories.indexOfFirst { it.category.uuid == categoryUuid }
         if (index == -1) return
-        val categoryWithSubs = categories[index]
-        categories[index] = categoryWithSubs.copy(
-            subCategories = (categoryWithSubs.subCategories + SubCategoryWithGroceries(subCategory, mutableListOf()))
-                .toMutableList()
-        )
+        categories[index] = categories[index].withAddedSubCategory(subCategory)
         updateData()
     }
 
@@ -206,66 +141,17 @@ object DataManagerObject {
 
     // ========== Confirm bought ==========
 
-    // Average days between the newest (up to 4) buy events, rounded down; null with fewer than 2 events
-    private fun calculateAverageBuyDays(buyEvents: List<LocalDate>): Int? {
-        if (buyEvents.size < 2) return null
-        return buyEvents.sortedDescending().take(4)
-            .zipWithNext { newer, older -> newer.toEpochDay() - older.toEpochDay() }
-            .average().toInt()
-    }
-
-    // Adds today's buy event (once per day), recomputes the average and takes the item off the list
-    private fun confirmBought(grocery: Grocery, today: LocalDate): Grocery {
-        @Suppress("USELESS_ELVIS") // Gson can leave buyEvents null for old data
-        val existingEvents = grocery.buyEvents ?: emptyList()
-        val updatedEvents = if (today in existingEvents) existingEvents else existingEvents + today
-        return grocery.copy(
-            isBought = false,
-            inShoppingList = false,
-            buyEvents = updatedEvents,
-            averageBuyDays = calculateAverageBuyDays(updatedEvents),
-            lastUpdate = LocalDateTime.now()
-        )
-    }
-
-    // NOTE (known bug, pinned by tests): both confirm functions rebuild each category from `category`,
-    // the snapshot taken at the start of the outer loop, so within one category only the last updated
-    // sub-category survives.
-
     // Confirms all bought items - adds buyEvent and resets their status
     fun confirmBoughtItems() {
-        val today = LocalDate.now()
-        categories.forEachIndexed { categoryIndex, category ->
-            category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
-                if (subCategory.groceries.any { it.isBought }) {
-                    val updatedGroceries = subCategory.groceries
-                        .map { if (it.isBought) confirmBought(it, today) else it }
-                        .toMutableList()
-                    categories[categoryIndex] = category.withSubCategory(subCategoryIndex, updatedGroceries)
-                }
-            }
-        }
+        categories.confirmBought(LocalDate.now()) { it.isBought }
         updateData()
     }
 
     // Confirms bought items that are linked to a specific store
     fun confirmBoughtItemsForStore(storeId: String) {
-        val today = LocalDate.now()
-        categories.forEachIndexed { categoryIndex, category ->
-            category.subCategories.forEachIndexed { subCategoryIndex, subCategory ->
-                val updatedGroceries = subCategory.groceries
-                    .map { if (it.isBought && storeId in it.storeIds) confirmBought(it, today) else it }
-                    .toMutableList()
-                if (updatedGroceries != subCategory.groceries) {
-                    categories[categoryIndex] = category.withSubCategory(subCategoryIndex, updatedGroceries)
-                }
-            }
-        }
+        categories.confirmBought(LocalDate.now()) { it.isBought && storeId in it.storeIds }
         updateData()
     }
-
-    private fun CategoryWithSubCategories.withSubCategory(index: Int, groceries: MutableList<Grocery>) =
-        copy(subCategories = subCategories.toMutableList().apply { set(index, get(index).copy(groceries = groceries)) })
 
     // ========== Stores ==========
 
@@ -292,16 +178,7 @@ object DataManagerObject {
 
     // Note: edits grocery lists in place and does not stamp lastUpdate
     fun unlinkStoreFromAllGroceries(storeUuid: String) {
-        categories.forEach { categoryWithSubs ->
-            categoryWithSubs.subCategories.forEach { subCategoryWithGroceries ->
-                val groceries = subCategoryWithGroceries.groceries
-                groceries.forEachIndexed { index, grocery ->
-                    if (storeUuid in grocery.storeIds) {
-                        groceries[index] = grocery.copy(storeIds = grocery.storeIds.filter { it != storeUuid })
-                    }
-                }
-            }
-        }
+        categories.forEach { category -> category.subCategories.forEach { it.groceries.unlinkStore(storeUuid) } }
         updateData()
     }
 
@@ -339,37 +216,13 @@ object DataManagerObject {
         updateData()
     }
 
-    /** Items whose id appears in [ids] first (in that order), then the rest via [sortRest]. */
-    private fun <T> List<T>.orderedBy(
-        ids: List<String>,
-        idOf: (T) -> String,
-        sortRest: (List<T>) -> List<T> = { it },
-    ): List<T> {
-        val remaining = toMutableList()
-        val ordered = ids.mapNotNull { id -> remaining.find { idOf(it) == id }?.also { remaining.remove(it) } }
-        return ordered + sortRest(remaining)
-    }
-
-    // Store's custom category order first, remaining categories by global viewOrder
-    private fun List<CategoryWithSubCategories>.inStoreCategoryOrder(storeId: String) =
-        orderedBy(getStoreCategoryOrder(storeId).orEmpty(), { it.category.uuid }) { rest ->
-            rest.sortedBy { it.category.viewOrder }
-        }
-
     /**
      * Returns categories sorted by store-specific category order,
      * with sub-categories sorted by store-specific sub-category order.
      */
     fun getSortedCategoriesForStore(storeId: String): List<CategoryWithSubCategories> =
         getSortedCategories()
-            .map { catWithSubs ->
-                val subOrder = getStoreSubCategoryOrder(storeId, catWithSubs.category.uuid)
-                    ?: return@map catWithSubs
-                CategoryWithSubCategories(
-                    catWithSubs.category,
-                    catWithSubs.subCategories.orderedBy(subOrder, { it.subCategory.uuid }).toMutableList()
-                )
-            }
+            .map { it.inStoreSubCategoryOrder(storeId) }
             .inStoreCategoryOrder(storeId)
 
     /**
@@ -377,14 +230,7 @@ object DataManagerObject {
      * followed by a `store = null` group for groceries not linked to any store.
      */
     fun groupGroceriesByStore(categories: List<CategoryWithSubCategories>): List<StoreWithCategories> {
-        val byStore = getSortedStores()
-            .filterNot { isStoreHidden(it.uuid) }
-            .mapNotNull { store ->
-                categories.filterGroceries { store.uuid in it.storeIds }
-                    .inStoreCategoryOrder(store.uuid)
-                    .takeIf { it.isNotEmpty() }
-                    ?.let { StoreWithCategories(store = store, categories = it) }
-            }
+        val byStore = getSortedStores().filterNot { isStoreHidden(it.uuid) }.mapNotNull { categories.groupForStore(it) }
         val notLinked = categories.filterGroceries { it.storeIds.isEmpty() }.sortedBy { it.category.viewOrder }
         return if (notLinked.isEmpty()) byStore else byStore + StoreWithCategories(store = null, categories = notLinked)
     }
@@ -396,14 +242,16 @@ object DataManagerObject {
  */
 fun List<CategoryWithSubCategories>.filterGroceries(predicate: (Grocery) -> Boolean): List<CategoryWithSubCategories> =
     mapNotNull { categoryWithSubs ->
-        val subCategories = categoryWithSubs.subCategories.mapNotNull { subCategoryWithGroceries ->
-            subCategoryWithGroceries.groceries.filter(predicate)
-                .takeIf { it.isNotEmpty() }
-                ?.let { SubCategoryWithGroceries(subCategoryWithGroceries.subCategory, it.toMutableList()) }
-        }
-        subCategories.takeIf { it.isNotEmpty() }
+        categoryWithSubs.subCategories.mapNotNull { it.filterGroceries(predicate) }
+            .takeIf { it.isNotEmpty() }
             ?.let { CategoryWithSubCategories(categoryWithSubs.category, it.toMutableList()) }
     }
+
+/** A copy with only the groceries matching [predicate], or null when none match. */
+private fun SubCategoryWithGroceries.filterGroceries(predicate: (Grocery) -> Boolean): SubCategoryWithGroceries? =
+    groceries.filter(predicate)
+        .takeIf { it.isNotEmpty() }
+        ?.let { SubCategoryWithGroceries(subCategory, it.toMutableList()) }
 
 data class CategoryWithSubCategories(
     val category: Category,
