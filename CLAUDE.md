@@ -124,34 +124,24 @@ BurgerMenu / group dialogs ─► FirebaseManager.uploadData()/downloadData(), G
 - Theming: `ui/theme` (`SuperCartColors`, palettes selectable in Settings).
 
 ## Simplification backlog
-- `onGroceryCreated` handlers in HomeScreen / ShoppingListScreen / StoresScreen are dead code:
-  `GroceryCreationDialog` saves by itself and never calls the callback.
 - Duplicated composables across screens: search + expand/collapse row, finish-shopping confirmation,
   bought-grocery card, top bar with burger menu.
 - `EditCategoryDialog` ignores its `onCategoryUpdated`/`onSubCategory*` callbacks; `BottomNavigationBar.selectedItem`
   is written but never read; `searchQuery` is accepted but unused by the category/store display composables.
 
-## Known issues (found during onboarding, intentionally not fixed yet)
-- **`confirmBoughtItems` / `confirmBoughtItemsForStore` lose updates**: when several sub-categories of the same
-  category contain bought items, only the last one is confirmed (each write rebuilds the category from a stale
-  snapshot). Pinned by "(bug)" tests in `DataManagerObjectConfirmBoughtTest`.
-- **Date picker saves the previous day** east of UTC (e.g. Israel) in `GroceryCreationDialog`.
-- **Category rename in `EditCategoryDialog` is not persisted** (no `saveDataGlobally()`), lost on restart.
-- **Sync:** `Store.address` is not written to or read from Firestore → lost on sync. `storeSubCategoryOrders` is
-  neither in backups nor synced. One malformed Firestore document makes `uploadData` throw before writing.
-  `downloadData` drops deleted categories/sub-categories/groceries from memory but keeps deleted stores.
-- `updateGroceryLocation` and `unlinkStoreFromAllGroceries` don't bump `lastUpdate`, so those changes can be
-  skipped by upload conflict resolution.
-- **Backups:** Gson ignores Kotlin default values, so JSON missing a field (older saves) yields `null` in non-null
-  properties. A backup whose groceries lack `storeIds`/`buyEvents` is rejected by restore; one without
-  `hiddenStoreIds` fails half-way (data partly replaced). Legacy file backups use the deprecated
-  `Environment.getExternalStoragePublicDirectory`.
-- **Deleted items leak into UI:** the sub-category picker and `EditCategoryDialog` list deleted sub-categories;
-  choosing a category can pre-select a deleted sub-category; import treats deleted groceries as existing (and can
-  put new ones into a deleted "Other"); the store list counts groceries of deleted categories.
-- **Images:** a failed compression still deletes the old photo while the grocery keeps its `imageUUID`.
-- **Store screens:** hidden stores still appear in the store picker; the per-store reorder dialog hides
-  sub-categories missing from a saved custom order and says "No stores yet" when there are no categories.
-- **UI text:** "left group" toast shows "Group Code"; backup success message is colored as an error; several
-  strings are hard-coded English (Settings labels, selection dialogs, group errors, some button descriptions),
-  and 21 string keys have no iw/ru/bg translation.
+## Sync and persistence rules (established while fixing bugs)
+- Entities read from JSON (DataStore, backups) go through `normalized()` (`data/JsonConfig.kt`): Gson bypasses
+  Kotlin defaults, so missing lists/strings would otherwise be `null`.
+- Backup restore is atomic: parse, normalize and validate everything before replacing in-memory data. Backups
+  include `storeSubCategoryOrders`.
+- Firestore: `storeCategoryOrders/orders` holds `orders` (category orders) and `subOrders` (sub-category orders).
+  Malformed documents are skipped (logged); download drops orphaned sub-categories/groceries and deleted stores.
+  Only images of fully visible groceries are synced.
+- Reordering (`swapCategoryOrder` / `swapStoreOrder`) renumbers visible items 1..n so ties always move.
+- Any mutation that must sync has to stamp `lastUpdate`.
+
+## Known issues (intentionally not changed)
+- Hidden stores are only hidden in the shopping list's store view; the Stores tab still lists them (design choice).
+- Backups use the deprecated `Environment.getExternalStoragePublicDirectory` (works; migrating to MediaStore/SAF is
+  a larger change).
+- `CreateCategoryDialog` counts deleted categories when choosing the next `viewOrder` (harmless gaps).
