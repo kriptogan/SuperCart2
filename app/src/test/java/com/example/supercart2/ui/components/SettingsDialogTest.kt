@@ -1,5 +1,8 @@
 package com.example.supercart2.ui.components
 
+import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
@@ -28,6 +31,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -139,6 +143,26 @@ class SettingsDialogTest {
         compose.onNodeWithText("Hebrew").performClick()
         compose.waitForIdle()
         coVerify(exactly = 1) { LanguageManager.setLanguage(any(), AppLanguage.HEBREW) }
+    }
+
+    class RecordingActivity : ComponentActivity() {
+        var recreated = 0
+        override fun recreate() { recreated++ }
+    }
+
+    @Test
+    fun `selecting a language recreates the activity from the dialog's LocalContext`() {
+        val host = Robolectric.buildActivity(RecordingActivity::class.java).setup().get()
+        compose.setContent {
+            CompositionLocalProvider(LocalContext provides host) { SettingsDialog(onDismiss = { dismissed++ }) }
+        }
+        compose.onNodeWithText("English").performClick()
+        compose.onNodeWithText("Russian").performClick()
+        compose.waitForIdle()
+        coVerify(exactly = 1) { LanguageManager.setLanguage(host, AppLanguage.RUSSIAN) }
+        assertEquals(1, host.recreated)
+        compose.onNodeWithText("Русский").assertIsDisplayed()
+        compose.onAllNodesWithText("Bulgarian").assertCountEquals(0)
     }
 
     @Test
