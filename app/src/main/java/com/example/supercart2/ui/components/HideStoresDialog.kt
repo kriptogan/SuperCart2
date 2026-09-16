@@ -20,15 +20,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import com.example.supercart2.R
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
+import com.example.supercart2.models.Store
 import com.example.supercart2.ui.theme.SuperCartColors
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -37,103 +39,92 @@ fun HideStoresDialog(
 ) {
     val version = DataManagerObject.version
     val scope = rememberCoroutineScope()
-    
-    val allStores = remember(version) {
-        DataManagerObject.getSortedStores()
+    val allStores = remember(version) { DataManagerObject.getSortedStores() }
+    val hiddenStoreIds = remember(version) { DataManagerObject.hiddenStoreIds.toList() }
+    HideStoresAlert(allStores, hiddenStoreIds, StoreVisibilityActions(scope), onDismiss)
+}
+
+/** Visibility changes are applied and saved in a coroutine; each bumps the data version. */
+private class StoreVisibilityActions(private val scope: CoroutineScope) {
+    fun toggle(storeId: String) {
+        scope.launch {
+            DataManagerObject.toggleStoreHidden(storeId)
+            DataStoreManager.saveDataGlobally()
+        }
     }
-    
-    val hiddenStoreIds = remember(version) {
-        DataManagerObject.hiddenStoreIds.toList()
+
+    fun setVisible(storeId: String, visible: Boolean) {
+        scope.launch {
+            applyStoreVisibility(storeId, visible)
+            DataManagerObject.updateData()
+            DataStoreManager.saveDataGlobally()
+        }
     }
-    
+}
+
+private fun applyStoreVisibility(storeId: String, visible: Boolean) {
+    val hidden = DataManagerObject.hiddenStoreIds
+    when {
+        visible -> hidden.remove(storeId)
+        !hidden.contains(storeId) -> hidden.add(storeId)
+    }
+}
+
+@Composable
+private fun HideStoresAlert(
+    stores: List<Store>, hiddenIds: List<String>, actions: StoreVisibilityActions, onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { 
-            Text(stringResource(R.string.show_hide_stores), color = SuperCartColors.black) 
-        },
-        text = {
-            if (allStores.isEmpty()) {
-                Text(
-                    stringResource(R.string.no_stores_available),
-                    color = SuperCartColors.gray,
-                    fontStyle = FontStyle.Italic
-                )
-            } else {
-                Column {
-                    Text(
-                        stringResource(R.string.unchecked_stores_hidden),
-                        fontSize = 12.sp,
-                        color = SuperCartColors.gray,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(allStores) { store ->
-                            val isVisible = !hiddenStoreIds.contains(store.uuid)
-                            
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        scope.launch {
-                                            DataManagerObject.toggleStoreHidden(store.uuid)
-                                            DataStoreManager.saveDataGlobally()
-                                        }
-                                    }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = isVisible,
-                                    onCheckedChange = { visible ->
-                                        scope.launch {
-                                            if (visible) {
-                                                // Show store (remove from hidden list)
-                                                DataManagerObject.hiddenStoreIds.remove(store.uuid)
-                                            } else {
-                                                // Hide store (add to hidden list)
-                                                if (!DataManagerObject.hiddenStoreIds.contains(store.uuid)) {
-                                                    DataManagerObject.hiddenStoreIds.add(store.uuid)
-                                                }
-                                            }
-                                            DataManagerObject.updateData()
-                                            DataStoreManager.saveDataGlobally()
-                                        }
-                                    },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = SuperCartColors.primaryGreen
-                                    )
-                                )
-                                
-                                Spacer(modifier = Modifier.width(8.dp))
-                                
-                                Text(
-                                    text = store.name,
-                                    color = if (isVisible) {
-                                        SuperCartColors.black
-                                    } else {
-                                        SuperCartColors.gray
-                                    },
-                                    style = if (isVisible) {
-                                        MaterialTheme.typography.bodyMedium
-                                    } else {
-                                        MaterialTheme.typography.bodyMedium.copy(
-                                            textDecoration = TextDecoration.LineThrough
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.done))
-            }
-        }
+        title = { Text(stringResource(R.string.show_hide_stores), color = SuperCartColors.black) },
+        text = { if (stores.isEmpty()) NoStoresToHideText() else StoreVisibilityList(stores, hiddenIds, actions) },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.done)) } },
     )
+}
+
+@Composable
+private fun NoStoresToHideText() {
+    Text(stringResource(R.string.no_stores_available), color = SuperCartColors.gray, fontStyle = FontStyle.Italic)
+}
+
+@Composable
+private fun StoreVisibilityList(stores: List<Store>, hiddenIds: List<String>, actions: StoreVisibilityActions) {
+    Column {
+        HiddenStoresHint()
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(stores) { store -> StoreVisibilityRow(store, isVisible = !hiddenIds.contains(store.uuid), actions) }
+        }
+    }
+}
+
+@Composable
+private fun HiddenStoresHint() {
+    Text(
+        stringResource(R.string.unchecked_stores_hidden), fontSize = 12.sp, color = SuperCartColors.gray,
+        modifier = Modifier.padding(bottom = 8.dp),
+    )
+}
+
+@Composable
+private fun StoreVisibilityRow(store: Store, isVisible: Boolean, actions: StoreVisibilityActions) {
+    val rowModifier = Modifier.fillMaxWidth().clickable { actions.toggle(store.uuid) }.padding(vertical = 8.dp)
+    Row(modifier = rowModifier, verticalAlignment = Alignment.CenterVertically) {
+        StoreVisibilityCheckbox(isVisible) { visible -> actions.setVisible(store.uuid, visible) }
+        Spacer(modifier = Modifier.width(8.dp))
+        StoreVisibilityName(store.name, isVisible)
+    }
+}
+
+@Composable
+private fun StoreVisibilityCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val colors = CheckboxDefaults.colors(checkedColor = SuperCartColors.primaryGreen)
+    Checkbox(checked = checked, onCheckedChange = onCheckedChange, colors = colors)
+}
+
+/** Visible stores in black; hidden ones grayed out and struck through. */
+@Composable
+private fun StoreVisibilityName(name: String, isVisible: Boolean) {
+    val base = MaterialTheme.typography.bodyMedium
+    val style = if (isVisible) base else base.copy(textDecoration = TextDecoration.LineThrough)
+    Text(text = name, color = if (isVisible) SuperCartColors.black else SuperCartColors.gray, style = style)
 }

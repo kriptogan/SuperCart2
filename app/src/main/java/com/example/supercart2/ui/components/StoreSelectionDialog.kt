@@ -13,30 +13,27 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import com.example.supercart2.R
+import com.example.supercart2.data.DataManagerObject
+import com.example.supercart2.models.Store
+import com.example.supercart2.ui.components.common.DialogIconButton
+import com.example.supercart2.ui.components.common.primaryButtonColors
+import com.example.supercart2.ui.components.common.secondaryButtonColors
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
-import com.example.supercart2.data.DataManagerObject
-import com.example.supercart2.data.DataStoreManager
-import kotlinx.coroutines.launch
 
 @Composable
 fun StoreSelectionDialog(
@@ -44,119 +41,89 @@ fun StoreSelectionDialog(
     onDismiss: () -> Unit,
     onStoresSelected: (List<String>) -> Unit
 ) {
-    val version = DataManagerObject.version
-    val allStores = remember(version) {
-        DataManagerObject.getSortedStores()
+    val allStores = remember(DataManagerObject.version) { DataManagerObject.getSortedStores() }
+    val state = remember { StoreSelectionState(selectedStoreIds) }
+    StoreSelectionAlert(allStores, state, onClose = { state.close(onStoresSelected, onDismiss) })
+    if (state.showCreateStore) {
+        CreateStoreDialog(onDismiss = { state.showCreateStore = false }, onStoreCreated = state::onStoreCreated)
     }
-    
-    var selectedIds by remember { 
-        mutableStateOf(selectedStoreIds.toMutableSet()) 
+}
+
+/** Selected store ids (kept in insertion order) and whether the nested create-store dialog is open. */
+private class StoreSelectionState(initialIds: List<String>) {
+    var selectedIds by mutableStateOf(initialIds.toMutableSet())
+    var showCreateStore by mutableStateOf(false)
+
+    fun isSelected(storeId: String) = selectedIds.contains(storeId)
+
+    fun toggle(storeId: String) = setSelected(storeId, !isSelected(storeId))
+
+    fun setSelected(storeId: String, selected: Boolean) {
+        selectedIds = selectedIds.toMutableSet().apply { if (selected) add(storeId) else remove(storeId) }
     }
-    var showCreateStore by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    
+
+    /** Closing (button or outside tap) always reports the current selection first. */
+    fun close(onStoresSelected: (List<String>) -> Unit, onDismiss: () -> Unit) {
+        onStoresSelected(selectedIds.toList())
+        onDismiss()
+    }
+
+    fun onStoreCreated(store: Store) {
+        setSelected(store.uuid, true)
+        showCreateStore = false
+    }
+}
+
+@Composable
+private fun StoreSelectionAlert(stores: List<Store>, state: StoreSelectionState, onClose: () -> Unit) {
     AlertDialog(
-        onDismissRequest = {
-            // Auto-save selections when dismissing
-            onStoresSelected(selectedIds.toList())
-            onDismiss()
-        },
+        onDismissRequest = onClose,
         title = { Text(stringResource(R.string.select_stores), color = SuperCartColors.black) },
-        text = {
-            if (allStores.isEmpty() && !showCreateStore) {
-                Text(
-                    stringResource(R.string.no_stores_available_create),
-                    color = SuperCartColors.gray,
-                    fontStyle = FontStyle.Italic
-                )
-            } else if (!showCreateStore) {
-                LazyColumn {
-                    items(allStores) { store ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selectedIds = if (selectedIds.contains(store.uuid)) {
-                                        selectedIds.toMutableSet().apply { remove(store.uuid) }
-                                    } else {
-                                        selectedIds.toMutableSet().apply { add(store.uuid) }
-                                    }
-                                }
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = selectedIds.contains(store.uuid),
-                                onCheckedChange = { checked ->
-                                    selectedIds = if (checked) {
-                                        selectedIds.toMutableSet().apply { add(store.uuid) }
-                                    } else {
-                                        selectedIds.toMutableSet().apply { remove(store.uuid) }
-                                    }
-                                },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = SuperCartColors.primaryGreen
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = store.name)
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
-            ) {
-                // Close Button - auto-saves selections
-                Button(
-                    onClick = {
-                        onStoresSelected(selectedIds.toList())
-                        onDismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.white,
-                        contentColor = SuperCartColors.primaryGreen
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.close)
-                    )
-                }
-                
-                // Create Store Button
-                Button(
-                    onClick = { showCreateStore = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.primaryGreen,
-                        contentColor = SuperCartColors.white
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.create_store)
-                    )
-                }
-            }
-        }
+        text = { StoreSelectionContent(stores, state) },
+        confirmButton = { StoreSelectionButtons(onClose, onCreateStore = { state.showCreateStore = true }) },
     )
-    
-    // Create Store Dialog
-    if (showCreateStore) {
-        CreateStoreDialog(
-            onDismiss = { showCreateStore = false },
-            onStoreCreated = { newStore ->
-                // Auto-select the newly created store
-                selectedIds = selectedIds.toMutableSet().apply { add(newStore.uuid) }
-                
-                // Close create dialog
-                showCreateStore = false
-            }
-        )
+}
+
+/** Empty while the create-store dialog is open. */
+@Composable
+private fun StoreSelectionContent(stores: List<Store>, state: StoreSelectionState) {
+    when {
+        state.showCreateStore -> {}
+        stores.isEmpty() -> NoStoresToSelectText()
+        else -> LazyColumn { items(stores) { store -> SelectableStoreRow(store, state) } }
+    }
+}
+
+@Composable
+private fun NoStoresToSelectText() {
+    Text(
+        stringResource(R.string.no_stores_available_create), color = SuperCartColors.gray, fontStyle = FontStyle.Italic,
+    )
+}
+
+@Composable
+private fun SelectableStoreRow(store: Store, state: StoreSelectionState) {
+    val rowModifier = Modifier.fillMaxWidth().clickable { state.toggle(store.uuid) }.padding(vertical = 8.dp)
+    Row(modifier = rowModifier, verticalAlignment = Alignment.CenterVertically) {
+        StoreSelectionCheckbox(state.isSelected(store.uuid)) { checked -> state.setSelected(store.uuid, checked) }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = store.name)
+    }
+}
+
+@Composable
+private fun StoreSelectionCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val colors = CheckboxDefaults.colors(checkedColor = SuperCartColors.primaryGreen)
+    Checkbox(checked = checked, onCheckedChange = onCheckedChange, colors = colors)
+}
+
+/** Close (✕, left, reports the selection) and create store (+, right). */
+@Composable
+private fun StoreSelectionButtons(onClose: () -> Unit, onCreateStore: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)) {
+        DialogIconButton(Icons.Default.Close, stringResource(R.string.close), secondaryButtonColors(),
+            Modifier.weight(1f), onClick = onClose)
+        DialogIconButton(Icons.Default.Add, stringResource(R.string.create_store), primaryButtonColors(),
+            Modifier.weight(1f), onClick = onCreateStore)
     }
 }
