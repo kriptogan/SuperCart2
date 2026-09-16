@@ -1,19 +1,7 @@
 package com.example.supercart2.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,16 +10,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.example.supercart2.R
-import com.example.supercart2.ui.theme.SuperCartColors
-import com.example.supercart2.ui.theme.SuperCartSpacing
-import com.example.supercart2.ui.theme.SuperCartShapes
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
+import com.example.supercart2.ui.components.common.CancelConfirmButtons
+import com.example.supercart2.ui.components.common.DialogTitle
+import com.example.supercart2.ui.components.common.superCartTextFieldColors
+import com.example.supercart2.ui.theme.SuperCartColors
+import com.example.supercart2.ui.theme.SuperCartShapes
 
 @Composable
 fun CreateCategoryDialog(
@@ -39,104 +27,40 @@ fun CreateCategoryDialog(
     onCategoryCreated: (Category, SubCategory) -> Unit
 ) {
     var categoryName by remember { mutableStateOf("") }
-    
+    val create: () -> Unit = {
+        buildCategory(categoryName)?.let { (category, general) -> onCategoryCreated(category, general); onDismiss() }
+    }
+    CreateCategoryAlert(categoryName, { categoryName = it }, onDismiss, create)
+}
+
+@Composable
+private fun CreateCategoryAlert(
+    name: String, onNameChange: (String) -> Unit, onDismiss: () -> Unit, onCreate: () -> Unit,
+) {
+    val createLabel = stringResource(R.string.create_category)
     AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = SuperCartColors.lightGreen,
-        title = {
-            Text(
-                text = stringResource(R.string.create_category),
-                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
-                color = SuperCartColors.black,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = categoryName,
-                    onValueChange = { categoryName = it },
-                    label = { Text(stringResource(R.string.category_name)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = false,
-                    maxLines = 4,
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = SuperCartColors.primaryGreen,
-                    unfocusedBorderColor = SuperCartColors.gray,
-                    focusedLabelColor = SuperCartColors.black,
-                    unfocusedLabelColor = SuperCartColors.black,
-                    focusedTextColor = SuperCartColors.black,
-                    unfocusedTextColor = SuperCartColors.black,
-                    focusedContainerColor = SuperCartColors.white,
-                    unfocusedContainerColor = SuperCartColors.white
-                ),
-                    shape = SuperCartShapes.small
-                )
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SuperCartSpacing.sm)
-            ) {
-                // Cancel Button (left) - secondary styled
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.white,
-                        contentColor = SuperCartColors.primaryGreen
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.cancel)
-                    )
-                }
-                
-                // Accept Button (right) - primary styled
-                Button(
-                    onClick = {
-                        if (categoryName.isNotBlank()) {
-                            // Calculate the highest existing viewOrder + 1
-                            val highestViewOrder = DataManagerObject.categories
-                                .map { it.category.viewOrder }
-                                .maxOrNull() ?: 0
-                            
-                                                       val newCategory = Category(
-                               name = categoryName.trim(),
-                               default = false,
-                               viewOrder = highestViewOrder + 1,
-                               protected = false
-                           )
-                            
-                            // Create a "General" sub-category for the new category
-                            val generalSubCategory = SubCategory(
-                                categoryId = newCategory.uuid,
-                                name = "General",
-                                protected = true
-                            )
-                            
-                            onCategoryCreated(newCategory, generalSubCategory)
-                            onDismiss()
-                        }
-                    },
-                    enabled = categoryName.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SuperCartColors.primaryGreen,
-                        contentColor = SuperCartColors.white
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = stringResource(R.string.create_category)
-                    )
-                }
-            }
-        }
+        onDismissRequest = onDismiss, containerColor = SuperCartColors.lightGreen,
+        title = { DialogTitle(createLabel) }, text = { CategoryNameField(name, onNameChange) },
+        confirmButton = { CancelConfirmButtons(onDismiss, createLabel, name.isNotBlank(), onCreate) },
     )
+}
+
+@Composable
+private fun CategoryNameField(value: String, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value, onValueChange = onValueChange, label = { Text(stringResource(R.string.category_name)) },
+        modifier = Modifier.fillMaxWidth(), singleLine = false, maxLines = 4,
+        colors = superCartTextFieldColors(), shape = SuperCartShapes.small,
+    )
+}
+
+/**
+ * Builds a category placed after the highest existing viewOrder (deleted categories included) together with its
+ * protected "General" sub-category; null when the name is blank. Nothing is added to [DataManagerObject].
+ */
+private fun buildCategory(name: String): Pair<Category, SubCategory>? {
+    if (name.isBlank()) return null
+    val viewOrder = (DataManagerObject.categories.maxOfOrNull { it.category.viewOrder } ?: 0) + 1
+    val category = Category(name = name.trim(), default = false, viewOrder = viewOrder, protected = false)
+    return category to SubCategory(categoryId = category.uuid, name = "General", protected = true)
 }
