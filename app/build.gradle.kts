@@ -20,6 +20,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // ./gradlew createDebugUnitTestCoverageReport
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -38,6 +42,14 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // android.util.Log etc. return defaults instead of throwing in plain JVM tests
+            isReturnDefaultValues = true
+            // Robolectric needs merged resources
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -53,7 +65,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
     
     // DataStore and Gson for local data persistence
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("com.google.code.gson:gson:2.10.1")
     
     // Image loading library
@@ -73,10 +85,24 @@ dependencies {
     implementation(libs.firebase.storage)
     
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// Count classes loaded by Robolectric's sandbox classloader in the JaCoCo report.
+// AGP attaches the JaCoCo extension after configuration, so set it at execution time.
+tasks.withType<Test>().configureEach {
+    doFirst {
+        extensions.findByType(JacocoTaskExtension::class.java)?.apply {
+            isIncludeNoLocationClasses = true
+            excludes = listOf("jdk.internal.*")
+        }
+    }
 }
