@@ -48,13 +48,13 @@ internal data class StoreCardData(
 
 /**
  * Stores (in the given order) having at least one non-deleted shopping-list grocery, with the number of those
- * groceries and how many are linked to that store only. Groceries of deleted categories are counted too.
+ * groceries and how many are linked to that store only. Groceries of deleted categories or sub-categories are ignored.
  */
 internal fun storesScreenActiveStores(
     categories: List<CategoryWithSubCategories>, stores: List<Store>,
 ): List<StoreCardData> {
-    val shoppingGroceries = categories.flatMap { it.subCategories }.flatMap { it.groceries }
-        .filter { it.inShoppingList && !it.deleted }
+    val shoppingGroceries = categories.filter { !it.category.deleted }.flatMap { it.subCategories }
+        .filter { !it.subCategory.deleted }.flatMap { it.groceries }.filter { it.inShoppingList && !it.deleted }
     return stores.mapNotNull { store -> storesScreenCardData(store, shoppingGroceries) }
 }
 

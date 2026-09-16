@@ -100,15 +100,24 @@ class StoresScreenSelectStoreTest {
     }
 
     @Test
-    fun `Pinned - groceries of a deleted category still make the store active, but its detail is empty`() {
-        install(dairy("Milk", COSTCO))
+    fun `groceries of a deleted category are not counted`() {
+        install(dairy("Milk", COSTCO), bakery("Bread", ALDI))
         val dairyNode = DataManagerObject.categories[0]
         DataManagerObject.categories[0] = dairyNode.copy(category = dairyNode.category.copy(deleted = true))
         showStoreList()
-        compose.onNodeWithText("Items: 1").assertIsDisplayed()
+        compose.onNodeWithText("Costco").assertDoesNotExist()
+        compose.onNodeWithText("Aldi").assertIsDisplayed()
+    }
 
-        compose.onNodeWithText("Costco").performClick()
-        compose.onNodeWithText("No items to buy").assertIsDisplayed()
+    @Test
+    fun `groceries of a deleted sub-category are not counted`() {
+        install(dairy("Milk", COSTCO), dairy("Eggs", COSTCO, ALDI))
+        val dairyNode = DataManagerObject.categories[0]
+        val subNode = dairyNode.subCategories[0]
+        val deletedSub = subNode.copy(subCategory = subNode.subCategory.copy(deleted = true))
+        DataManagerObject.categories[0] = dairyNode.copy(subCategories = mutableListOf(deletedSub))
+        showStoreList()
+        compose.onNodeWithText("No stores yet").assertIsDisplayed()
     }
 
     @Test
