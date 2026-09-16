@@ -11,7 +11,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 
-/** confirmBoughtItems / confirmBoughtItemsForStore: buy events, averageBuyDays and the pinned lost-update bug. */
+/** confirmBoughtItems / confirmBoughtItemsForStore: buy events, averageBuyDays, and confirming across sub-categories. */
 class DataManagerObjectConfirmBoughtTest {
 
     private val dm = DataManagerObject
@@ -61,34 +61,30 @@ class DataManagerObjectConfirmBoughtTest {
         assertEquals(events + today, findGrocery("g1")!!.buyEvents) // all events kept
     }
 
-    /**
-     * Pinned BUG: both confirm functions rebuild each category from the snapshot taken at the start of
-     * the loop, so when several sub-categories of one category have bought items, only the last
-     * sub-category's update survives. See CLAUDE.md known issues.
-     */
     @Test
-    fun `confirmBoughtItems only keeps the last sub-category's update within a category (bug)`() {
+    fun `confirmBoughtItems confirms bought items in every sub-category of a category`() {
         dm.addGrocery(grocery("g4", "c1", "s2"))
         dm.updateGrocery("g1") { it.copy(isBought = true, inShoppingList = true) }
         dm.updateGrocery("g4") { it.copy(isBought = true, inShoppingList = true) }
 
         dm.confirmBoughtItems()
 
-        assertTrue(findGrocery("g1")!!.isBought) // lost update
-        assertTrue(findGrocery("g1")!!.buyEvents.isEmpty())
+        assertFalse(findGrocery("g1")!!.isBought)
+        assertEquals(listOf(today), findGrocery("g1")!!.buyEvents)
         assertFalse(findGrocery("g4")!!.isBought)
         assertEquals(listOf(today), findGrocery("g4")!!.buyEvents)
     }
 
     @Test
-    fun `confirmBoughtItemsForStore only keeps the last sub-category's update within a category (bug)`() {
+    fun `confirmBoughtItemsForStore confirms bought items in every sub-category of a category`() {
         dm.addGrocery(grocery("g4", "c1", "s2"))
         dm.updateGrocery("g1") { it.copy(isBought = true, storeIds = listOf("A")) }
         dm.updateGrocery("g4") { it.copy(isBought = true, storeIds = listOf("A")) }
 
         dm.confirmBoughtItemsForStore("A")
 
-        assertTrue(findGrocery("g1")!!.isBought) // lost update
+        assertFalse(findGrocery("g1")!!.isBought)
+        assertEquals(listOf(today), findGrocery("g1")!!.buyEvents)
         assertEquals(listOf(today), findGrocery("g4")!!.buyEvents)
     }
 

@@ -6,17 +6,25 @@ import java.time.LocalDateTime
 
 /**
  * Confirms every grocery matching [isConfirmed]: see [confirmBought].
- *
- * NOTE (known bug, pinned by tests): each category is rebuilt from `category`, the snapshot taken at the
- * start of the outer loop, so within one category only the last updated sub-category survives.
+ * Each sub-category is rebuilt from the current category, so earlier sub-categories' updates are kept.
  */
 internal fun MutableList<CategoryWithSubCategories>.confirmBought(today: LocalDate, isConfirmed: (Grocery) -> Boolean) {
-    forEachIndexed { catIndex, category ->
-        category.subCategories.forEachIndexed { subIndex, subCategory ->
-            val updated = subCategory.confirmedGroceries(today, isConfirmed)
-            if (updated != subCategory.groceries) this[catIndex] = category.withSubCategory(subIndex, updated)
+    indices.forEach { catIndex ->
+        this[catIndex].subCategories.indices.forEach { subIndex ->
+            confirmSubCategory(catIndex, subIndex, today, isConfirmed)
         }
     }
+}
+
+private fun MutableList<CategoryWithSubCategories>.confirmSubCategory(
+    catIndex: Int,
+    subIndex: Int,
+    today: LocalDate,
+    isConfirmed: (Grocery) -> Boolean,
+) {
+    val subCategory = this[catIndex].subCategories[subIndex]
+    val updated = subCategory.confirmedGroceries(today, isConfirmed)
+    if (updated != subCategory.groceries) this[catIndex] = this[catIndex].withSubCategory(subIndex, updated)
 }
 
 private fun SubCategoryWithGroceries.confirmedGroceries(today: LocalDate, isConfirmed: (Grocery) -> Boolean) =

@@ -1,6 +1,7 @@
 package com.example.supercart2.data
 
 import com.example.supercart2.models.Grocery
+import java.time.LocalDateTime
 
 // Grocery-level helpers for DataManagerObject's category tree.
 // Paths are indices: (category, sub-category) or (category, sub-category, grocery).
@@ -94,10 +95,10 @@ internal fun List<CategoryWithSubCategories>.imageUuidsOf(groceryUuid: String): 
         subCategory.groceries.find { it.uuid == groceryUuid }?.imageUUID
     }
 
-/** Removes [storeUuid] from every grocery in this list, replacing the items in place (lastUpdate untouched). */
+/** Removes [storeUuid] from every grocery in this list, replacing changed items in place with lastUpdate stamped. */
 internal fun MutableList<Grocery>.unlinkStore(storeUuid: String) {
     forEachIndexed { index, grocery ->
         if (storeUuid !in grocery.storeIds) return@forEachIndexed
-        this[index] = grocery.copy(storeIds = grocery.storeIds.filter { it != storeUuid })
+        this[index] = grocery.copy(storeIds = grocery.storeIds.filter { it != storeUuid }, lastUpdate = LocalDateTime.now())
     }
 }

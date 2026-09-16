@@ -70,11 +70,14 @@ class StoreOperationsTest {
     }
 
     @Test
-    fun `unlinkStoreFromAllGroceries removes the id without stamping lastUpdate`() {
+    fun `unlinkStoreFromAllGroceries removes the id and stamps lastUpdate on affected groceries only`() {
         dm.unlinkStoreFromAllGroceries("A")
         assertEquals(emptyList<String>(), findGrocery("g1")!!.storeIds)
         assertEquals(listOf("B"), findGrocery("g2")!!.storeIds)
-        assertEquals(OLD, findGrocery("g2")!!.lastUpdate) // pinned: see CLAUDE.md known issues
+        assertTrue(findGrocery("g1")!!.lastUpdate.isAfter(OLD))
+        assertTrue(findGrocery("g2")!!.lastUpdate.isAfter(OLD))
+        assertEquals(OLD, findGrocery("g4")!!.lastUpdate) // linked to B only
+        assertEquals(OLD, findGrocery("g3")!!.lastUpdate) // no store
     }
 
     @Test
@@ -212,11 +215,16 @@ class StoreOperationsTest {
     }
 
     @Test
-    fun `groupGroceriesByStore ignores per-store sub-category orders`() {
+    fun `groupGroceriesByStore applies per-store sub-category orders`() {
         dm.setStoreSubCategoryOrders("A", mapOf("c2" to listOf("s4", "s3")))
         dm.addGrocery(grocery("g7", "c2", "s3", listOf("A")))
-        val a = dm.groupGroceriesByStore(dm.getSortedCategories()).single { it.store?.uuid == "A" }
-        assertEquals(listOf("s3", "s4"), a.categories[1].subCategories.map { it.subCategory.uuid })
+        val groups = dm.groupGroceriesByStore(dm.getSortedCategories())
+        val a = groups.single { it.store?.uuid == "A" }
+        assertEquals(listOf("s4", "s3"), a.categories[1].subCategories.map { it.subCategory.uuid })
+        // other stores keep the data order
+        dm.addGrocery(grocery("g8", "c2", "s4", listOf("B")))
+        val b = dm.groupGroceriesByStore(dm.getSortedCategories()).single { it.store?.uuid == "B" }
+        assertEquals(listOf("s3", "s4"), b.categories[1].subCategories.map { it.subCategory.uuid })
     }
 
     @Test

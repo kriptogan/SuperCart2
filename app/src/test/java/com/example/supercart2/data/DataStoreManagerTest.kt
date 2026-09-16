@@ -216,6 +216,25 @@ class DataStoreManagerTest {
     }
 
     @Test
+    fun `load fills fields missing from older saves with defaults instead of null`() = runTest {
+        installRichData()
+        DataStoreManager.saveData(context)
+        writeRaw("groceries_flat", """[{"uuid":"g1","name":"Milk","categoryId":"c1","subCategoryId":"s1"}]""")
+        writeRaw("stores_flat", """[{"uuid":"A","name":"Shop","viewOrder":1}]""")
+
+        TestData.reset()
+        DataStoreManager.loadData(context)
+
+        val g = dm.categories.single().subCategories.single().groceries.single()
+        @Suppress("SENSELESS_COMPARISON") assertTrue(g.storeIds != null && g.buyEvents != null)
+        assertEquals(emptyList<String>(), g.storeIds)
+        assertEquals(emptyList<LocalDate>(), g.buyEvents)
+        assertFalse(g.inShoppingList)
+        assertEquals("", dm.stores.single().address)
+        @Suppress("SENSELESS_COMPARISON") assertTrue(dm.stores.single().lastUpdate != null)
+    }
+
+    @Test
     fun `corrupt main data falls back to defaults`() = runTest {
         installRichData()
         DataStoreManager.saveData(context)

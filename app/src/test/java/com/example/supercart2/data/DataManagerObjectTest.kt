@@ -119,8 +119,8 @@ class DataManagerObjectTest {
         val g = findGrocery("g1")!!
         assertEquals("c2", g.categoryId)
         assertEquals("s3", g.subCategoryId)
-        // Pinned current behaviour: the move does NOT stamp lastUpdate (see CLAUDE.md known issues)
-        assertEquals(OLD, g.lastUpdate)
+        assertTrue(g.lastUpdate.isAfter(OLD)) // stamped so the move is uploaded
+        assertEquals(OLD, findGrocery("g2")!!.lastUpdate)
     }
 
     @Test
