@@ -1,11 +1,27 @@
 # SuperCart2
 
-Android grocery / shopping-list app. Single-module Kotlin + Jetpack Compose (Material3), no ViewModels,
-no DI, no Navigation library. Local persistence via DataStore (JSON strings through Gson); optional
-sharing through Firebase Firestore + Storage, scoped by a "group code" (UUID).
+## Description
+SuperCart2 is an Android app for managing household groceries. It keeps a catalogue of groceries organised
+in categories and sub-categories, with expiration dates, photos, linked stores and purchase history, and
+turns it into a shopping list that can be viewed per category or per store.
 
-`.cursor/` holds old planning notes/roadmaps from earlier development. They describe intent at the time
-and are frequently out of date — trust the code, not those files.
+## Purpose
+Make grocery shopping easier to plan and share:
+- **Know what to buy** — alerts for items that are expiring or due to be bought again (based on the average
+  interval between past purchases).
+- **Plan the trip** — see the shopping list per store, hide stores you won't visit, and walk each store in
+  your own category/sub-category order.
+- **Shop together** — share the same data with family members through a group code synced via Firebase.
+- **Never lose data** — local persistence plus backup/restore to a ZIP file.
+- **Everyone can use it** — English, Hebrew (RTL), Russian and Bulgarian.
+
+## Coding rules
+@.claude/coding-rules.md
+
+## Tech overview
+Single-module Kotlin + Jetpack Compose (Material3), no ViewModels, no DI, no Navigation library. Local
+persistence via DataStore (JSON strings through Gson); optional sharing through Firebase Firestore + Storage,
+scoped by a "group code" (UUID).
 
 ## Build & test
 
