@@ -79,9 +79,8 @@ internal object FirebaseManagerMappers {
         "lastUpdate" to formatDateTime(grocery.lastUpdate), "deleted" to grocery.deleted,
     )
 
-    /** Known issue: Store.address is not synced. */
     fun storeToMap(store: Store): Map<String, Any?> = mapOf(
-        "uuid" to store.uuid, "name" to store.name, "viewOrder" to store.viewOrder,
+        "uuid" to store.uuid, "name" to store.name, "address" to store.address, "viewOrder" to store.viewOrder,
         "lastUpdate" to formatDateTime(store.lastUpdate), "deleted" to store.deleted,
     )
 
@@ -116,9 +115,8 @@ internal object FirebaseManagerMappers {
         storeIds = strings("storeIds"), lastUpdate = dateTime("lastUpdate"), deleted = flag("deleted"),
     )
 
-    /** Known issue: Store.address is not synced. */
     private fun FirebaseManagerDocument.toStore() = Store(
-        uuid = id, name = required("name"), viewOrder = int("viewOrder") ?: 0,
+        uuid = id, name = required("name"), address = string("address") ?: "", viewOrder = int("viewOrder") ?: 0,
         lastUpdate = dateTime("lastUpdate"), deleted = flag("deleted"),
     )
 
@@ -175,7 +173,8 @@ internal class FirebaseManagerDocument(private val doc: DocumentSnapshot, privat
 
     fun flag(key: String): Boolean = data[key] as? Boolean ?: false
 
-    fun int(key: String): Int? = (data[key] as? Long)?.toInt()
+    /** Any Number (Long, Int, Double...) truncated to Int; anything else is null. */
+    fun int(key: String): Int? = (data[key] as? Number)?.toInt()
 
     fun strings(key: String): List<String> = (data[key] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
 

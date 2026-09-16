@@ -80,7 +80,7 @@ class FirebaseManagerUploadTest : FirebaseManagerTestBase() {
     // ---------- uploadData: maps written ----------
 
     @Test
-    fun `uploadData writes every entity as a map with ISO dates and no store address`() = runTest {
+    fun `uploadData writes every entity as a map with ISO dates, including the store address`() = runTest {
         val g = grocery("g1", "c1", "s1", storeIds = listOf("A", "B"), inShoppingList = true, isBought = true).copy(
             name = "Milk", expirationDate = LocalDate.of(2024, 2, 29), imageUUID = "img", averageBuyDays = 7,
             buyEvents = listOf(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 8)), lastUpdate = t, deleted = true,
@@ -116,9 +116,11 @@ class FirebaseManagerUploadTest : FirebaseManagerTestBase() {
             ),
             byPath.getValue("groceries/g1").data,
         )
-        // Pinned (Known issue): Store.address is not written.
         assertEquals(
-            mapOf("uuid" to "A", "name" to "Shop", "viewOrder" to 2, "lastUpdate" to "2020-01-01T12:00:00", "deleted" to true),
+            mapOf(
+                "uuid" to "A", "name" to "Shop", "address" to "Main 1", "viewOrder" to 2,
+                "lastUpdate" to "2020-01-01T12:00:00", "deleted" to true,
+            ),
             byPath.getValue("stores/A").data,
         )
         listOf("categories/c1", "subcategories/s1", "groceries/g1", "stores/A").forEach { assertNull(byPath.getValue(it).options) }

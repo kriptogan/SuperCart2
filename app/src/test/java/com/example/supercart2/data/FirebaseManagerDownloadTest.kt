@@ -124,8 +124,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
             ),
             groceries().single(),
         )
-        // Pinned (Known issue): Store.address is not read.
-        assertEquals(listOf(Store("A", "Shop", address = "", viewOrder = 2, lastUpdate = t, deleted = true)), DataManagerObject.stores)
+        assertEquals(listOf(Store("A", "Shop", address = "Main 1", viewOrder = 2, lastUpdate = t, deleted = true)), DataManagerObject.stores)
     }
 
     @Test
@@ -162,7 +161,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
     @Test
     fun `downloadData uses defaults for missing or mistyped optional fields`() = runTest {
         val before = LocalDateTime.now()
-        fake.setDocs("categories", snapshot("c1", mapOf("name" to "c", "viewOrder" to 3, "default" to "yes")))
+        fake.setDocs("categories", snapshot("c1", mapOf("name" to "c", "viewOrder" to "3", "default" to "yes")))
         fake.setDocs("subcategories", snapshot("s1", mapOf("categoryId" to "c1", "name" to "s", "lastUpdate" to 5L)))
         fake.setDocs(
             "groceries",
@@ -170,11 +169,11 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
                 "g1",
                 mapOf(
                     "name" to "g", "categoryId" to "c1", "subCategoryId" to "s1", "expirationDate" to 20240229L,
-                    "buyEvents" to "2024-01-01", "storeIds" to "A", "averageBuyDays" to 7, "imageUUID" to 1,
+                    "buyEvents" to "2024-01-01", "storeIds" to "A", "averageBuyDays" to "7", "imageUUID" to 1,
                 ),
             ),
         )
-        fake.setDocs("stores", snapshot("A", mapOf("name" to "Shop", "viewOrder" to 2)))
+        fake.setDocs("stores", snapshot("A", mapOf("name" to "Shop", "viewOrder" to true, "address" to 5)))
 
         FirebaseManager.downloadData()
         val after = LocalDateTime.now()
@@ -188,7 +187,24 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
         val g = groceries().single()
         assertEquals(Grocery("g1", "g", "c1", "s1", lastUpdate = g.lastUpdate), g)
         val store = DataManagerObject.stores.single()
-        assertEquals(Store("A", "Shop", viewOrder = 0, lastUpdate = store.lastUpdate), store)
+        assertEquals(Store("A", "Shop", address = "", viewOrder = 0, lastUpdate = store.lastUpdate), store)
+    }
+
+    @Test
+    fun `downloadData reads Int and Double numbers like Long`() = runTest {
+        fake.setDocs("categories", snapshot("c1", mapOf("name" to "c", "viewOrder" to 3)))
+        fake.setDocs("subcategories", snapshot("s1", mapOf("categoryId" to "c1", "name" to "s")))
+        fake.setDocs(
+            "groceries",
+            snapshot("g1", mapOf("name" to "g", "categoryId" to "c1", "subCategoryId" to "s1", "averageBuyDays" to 7.0)),
+        )
+        fake.setDocs("stores", snapshot("A", mapOf("name" to "A", "viewOrder" to 2.0)), snapshot("B", mapOf("name" to "B", "viewOrder" to 4)))
+
+        FirebaseManager.downloadData()
+
+        assertEquals(3, DataManagerObject.categories.single().category.viewOrder)
+        assertEquals(7, groceries().single().averageBuyDays)
+        assertEquals(listOf(2, 4), DataManagerObject.stores.map { it.viewOrder })
     }
 
     @Test
