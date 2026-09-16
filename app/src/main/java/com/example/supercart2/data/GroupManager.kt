@@ -6,7 +6,7 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 object GroupManager {
-    
+
     /**
      * Generate a new group code (UUID)
      */
@@ -15,110 +15,78 @@ object GroupManager {
         android.util.Log.d("GroupManager", "Generated group code: $uuid")
         return uuid
     }
-    
+
     /**
-     * Create a new group
-     * 1. Generate UUID
-     * 2. Save to DataStore
-     * 3. Populate groupId in all local data
-     * 4. Trigger upload to Firebase
+     * Create a new group: generate a UUID and save it as the group code.
+     * Errors are logged and rethrown.
      */
     suspend fun createGroup(context: Context): String {
         return withContext(Dispatchers.IO) {
-            try {
-                // Generate group code
-                val groupCode = generateGroupCode()
-                android.util.Log.d("GroupManager", "Creating group with code: $groupCode")
-                
-                // Save to DataStore
-                DataStoreManager.saveGroupCode(context, groupCode)
-                
-                android.util.Log.d("GroupManager", "✅ Group created successfully: $groupCode")
-                groupCode
-            } catch (e: Exception) {
-                android.util.Log.e("GroupManager", "❌ Error creating group", e)
-                throw e
-            }
+            logAndRethrow("❌ Error creating group") { saveNewGroupCode(context) }
         }
     }
-    
+
+    private suspend fun saveNewGroupCode(context: Context): String {
+        val groupCode = generateGroupCode()
+        android.util.Log.d("GroupManager", "Creating group with code: $groupCode")
+        DataStoreManager.saveGroupCode(context, groupCode)
+        android.util.Log.d("GroupManager", "✅ Group created successfully: $groupCode")
+        return groupCode
+    }
+
     /**
      * Join an existing group
-     * 1. Validate group code exists in Firebase
+     * 1. Validate group code format and that the group exists in Firebase
      * 2. Save to DataStore
      * 3. Download group data (will overwrite local)
+     * Any error is logged and returns false.
      */
     suspend fun joinGroup(context: Context, groupCode: String): Boolean {
         return withContext(Dispatchers.IO) {
-            try {
-                android.util.Log.d("GroupManager", "Attempting to join group: $groupCode")
-                
-                // Validate UUID format
-                if (!isValidGroupCode(groupCode)) {
-                    android.util.Log.e("GroupManager", "❌ Invalid group code format")
-                    return@withContext false
-                }
-                
-                // Check if group exists in Firebase
-                val groupExists = FirebaseManager.checkGroupExists(groupCode)
-                if (!groupExists) {
-                    android.util.Log.e("GroupManager", "❌ Group does not exist: $groupCode")
-                    return@withContext false
-                }
-                
-                // Save group code
-                DataStoreManager.saveGroupCode(context, groupCode)
-                
-                // Download group data (will overwrite ALL local data)
-                FirebaseManager.downloadData()
-                
-                android.util.Log.d("GroupManager", "✅ Successfully joined group: $groupCode")
-                true
-            } catch (e: Exception) {
-                android.util.Log.e("GroupManager", "❌ Error joining group", e)
-                false
-            }
+            falseOnError("❌ Error joining group") { joinExistingGroup(context, groupCode) }
         }
     }
-    
+
+    private suspend fun joinExistingGroup(context: Context, groupCode: String): Boolean {
+        android.util.Log.d("GroupManager", "Attempting to join group: $groupCode")
+        if (!isValidGroupCode(groupCode)) return logFailure("❌ Invalid group code format")
+        if (!FirebaseManager.checkGroupExists(groupCode)) return logFailure("❌ Group does not exist: $groupCode")
+        DataStoreManager.saveGroupCode(context, groupCode)
+        FirebaseManager.downloadData() // overwrites ALL local data
+        return logSuccess("✅ Successfully joined group: $groupCode")
+    }
+
     /**
-     * Leave the current group
-     * 1. Clear group code from DataStore
-     * 2. Clear groupId from all local data
-     * 3. Keep local data intact
+     * Leave the current group: clear the group code, keeping local data intact.
+     * Errors are logged and rethrown.
      */
     suspend fun leaveGroup(context: Context) {
         return withContext(Dispatchers.IO) {
-            try {
-                val currentCode = DataStoreManager.loadGroupCode(context)
-                android.util.Log.d("GroupManager", "Leaving group: $currentCode")
-                
-                // Clear group code (local data stays intact)
-                DataStoreManager.clearGroupCode(context)
-                
-                android.util.Log.d("GroupManager", "✅ Successfully left group (local data preserved)")
-            } catch (e: Exception) {
-                android.util.Log.e("GroupManager", "❌ Error leaving group", e)
-                throw e
-            }
+            logAndRethrow("❌ Error leaving group") { leaveCurrentGroup(context) }
         }
     }
-    
+
+    private suspend fun leaveCurrentGroup(context: Context) {
+        val currentCode = DataStoreManager.loadGroupCode(context)
+        android.util.Log.d("GroupManager", "Leaving group: $currentCode")
+        DataStoreManager.clearGroupCode(context)
+        android.util.Log.d("GroupManager", "✅ Successfully left group (local data preserved)")
+    }
+
     /**
      * Get current group code
      */
     suspend fun getCurrentGroupCode(context: Context): String? {
         return DataStoreManager.loadGroupCode(context)
     }
-    
+
     /**
      * Check if user is in a group
      */
     suspend fun isInGroup(context: Context): Boolean {
         return DataStoreManager.hasGroupCode(context)
     }
-    
-    
+
     /**
      * Validate group code format (UUID)
      */
@@ -129,5 +97,29 @@ object GroupManager {
         } catch (e: IllegalArgumentException) {
             false
         }
+    }
+
+    private fun logFailure(message: String): Boolean {
+        android.util.Log.e("GroupManager", message)
+        return false
+    }
+
+    private fun logSuccess(message: String): Boolean {
+        android.util.Log.d("GroupManager", message)
+        return true
+    }
+
+    private inline fun falseOnError(message: String, block: () -> Boolean): Boolean = try {
+        block()
+    } catch (e: Exception) {
+        android.util.Log.e("GroupManager", message, e)
+        false
+    }
+
+    private inline fun <T> logAndRethrow(message: String, block: () -> T): T = try {
+        block()
+    } catch (e: Exception) {
+        android.util.Log.e("GroupManager", message, e)
+        throw e
     }
 }

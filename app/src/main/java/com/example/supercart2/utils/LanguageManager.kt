@@ -2,7 +2,6 @@ package com.example.supercart2.utils
 
 import android.content.Context
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.os.Build
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.datastore.preferences.core.edit
@@ -65,25 +64,25 @@ object LanguageManager {
     fun applyLanguage(context: Context, language: AppLanguage): Context {
         val locale = language.toLocale()
         Locale.setDefault(locale)
-        
-        val resources: Resources = context.resources
-        val config: Configuration = Configuration(resources.configuration)
-        
+        val config = Configuration(context.resources.configuration)
         android.util.Log.d("LanguageManager", "Applying language: ${language.code}, RTL: ${language.isRtl}")
-        
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            config.setLocale(locale)
-            config.setLayoutDirection(locale)
-            context.createConfigurationContext(config)
-        } else {
-            @Suppress("DEPRECATION")
-            config.locale = locale
-            @Suppress("DEPRECATION")
-            config.setLayoutDirection(locale)
-            @Suppress("DEPRECATION")
-            resources.updateConfiguration(config, resources.displayMetrics)
-            context
-        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return applyLegacyLocale(context, config, locale)
+        return createLocalizedContext(context, config, locale)
+    }
+
+    private fun createLocalizedContext(context: Context, config: Configuration, locale: Locale): Context {
+        config.setLocale(locale)
+        config.setLayoutDirection(locale)
+        return context.createConfigurationContext(config)
+    }
+
+    // Before API 24 the locale is applied to the given context's resources in place
+    @Suppress("DEPRECATION")
+    private fun applyLegacyLocale(context: Context, config: Configuration, locale: Locale): Context {
+        config.locale = locale
+        config.setLayoutDirection(locale)
+        context.resources.updateConfiguration(config, context.resources.displayMetrics)
+        return context
     }
     
     /**
