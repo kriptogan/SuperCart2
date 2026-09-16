@@ -60,10 +60,10 @@ object FirebaseStorageManager {
         localFile
     }
 
-    /** Uploads the local images of all non-deleted groceries; returns how many succeeded. */
+    /** Uploads the local images of all visible groceries; returns how many succeeded. */
     suspend fun batchUploadImages(context: Context): Int = countSuccesses("upload") { uploadAll(context, it) }
 
-    /** Downloads the images of non-deleted groceries that have no local copy; returns how many succeeded. */
+    /** Downloads the images of visible groceries that have no local copy; returns how many succeeded. */
     suspend fun batchDownloadImages(context: Context): Int = countSuccesses("download") { downloadAll(context, it) }
 
     private suspend fun uploadAll(context: Context, results: MutableList<Boolean>) {
@@ -99,12 +99,10 @@ object FirebaseStorageManager {
         return downloaded
     }
 
-    /** Image uuids of non-deleted groceries (their category's deleted flag is not checked). */
-    private fun groceryImageUUIDs(): List<String> = DataManagerObject.categories
-        .flatMap { it.subCategories }
-        .flatMap { it.groceries }
-        .filter { !it.deleted }
-        .mapNotNull { it.imageUUID }
+    /** Image uuids of visible groceries: the grocery, its sub-category and its category are all non-deleted. */
+    private fun groceryImageUUIDs(): List<String> =
+        DataConverter.flattenCategories(DataManagerObject.categories, includeDeleted = false).third
+            .mapNotNull { it.imageUUID }
 
     private suspend fun storageUnavailable(action: String): Boolean {
         val unavailable = !testStorageConnection()
