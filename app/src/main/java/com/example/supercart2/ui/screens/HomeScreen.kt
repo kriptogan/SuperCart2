@@ -58,7 +58,9 @@ import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.data.CategoryWithSubCategories
 import com.example.supercart2.data.SubCategoryWithGroceries
+import com.example.supercart2.data.filterGroceries
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.hasAlert
 import android.util.Log
 import kotlinx.coroutines.launch
 
@@ -570,58 +572,18 @@ fun HomeScreen(onNavigateToStoreEdit: (String) -> Unit = {}) {
     }
 }
 
+// Filter data based on expiration dates and buy patterns
+private fun filterAlertData(categories: List<CategoryWithSubCategories>): List<CategoryWithSubCategories> {
+    val today = java.time.LocalDate.now()
+    return categories.filterGroceries { it.hasAlert(today) }
+}
+
 /**
  * Filters and expands data based on search query
  * - Shows only categories/sub-categories that contain matching groceries
  * - Automatically expands categories/sub-categories with matches
  * - Hides empty categories and sub-categories
  */
-// Filter data based on expiration dates and buy patterns
-private fun filterAlertData(categories: List<CategoryWithSubCategories>): List<CategoryWithSubCategories> {
-    val today = java.time.LocalDate.now()
-    val tomorrow = today.plusDays(1)
-    
-    return categories.mapNotNull { categoryWithSubs ->
-        // Filter sub-categories
-        val filteredSubCategories = categoryWithSubs.subCategories.mapNotNull { subCategoryWithGroceries ->
-            // Filter groceries based on alert conditions
-            val filteredGroceries = subCategoryWithGroceries.groceries.filter { grocery ->
-                // Check expiration date condition
-                val isExpiringSoon = grocery.expirationDate?.let { expDate ->
-                    expDate <= tomorrow // Due tomorrow or already passed
-                } ?: false
-                
-                // Check buy pattern condition
-                val needsToBuy = grocery.averageBuyDays?.let { avgDays ->
-                    grocery.buyEvents.maxOrNull()?.let { lastBuyDate ->
-                        val daysSinceLastBuy = today.toEpochDay() - lastBuyDate.toEpochDay()
-                        daysSinceLastBuy >= avgDays
-                    }
-                } ?: false
-                
-                // Show if either condition is met
-                isExpiringSoon || needsToBuy
-            }
-            
-            // Only include sub-category if it has matching groceries
-            if (filteredGroceries.isNotEmpty()) {
-                SubCategoryWithGroceries(
-                    subCategory = subCategoryWithGroceries.subCategory,
-                    groceries = mutableListOf<Grocery>().apply { addAll(filteredGroceries) }
-                )
-            } else null
-        }
-        
-        // Only include category if it has sub-categories with matching groceries
-        if (filteredSubCategories.isNotEmpty()) {
-            CategoryWithSubCategories(
-                category = categoryWithSubs.category,
-                subCategories = mutableListOf<SubCategoryWithGroceries>().apply { addAll(filteredSubCategories) }
-            )
-        } else null
-    }
-}
-
 private fun filterAndExpandData(
     categories: List<CategoryWithSubCategories>,
     searchQuery: String

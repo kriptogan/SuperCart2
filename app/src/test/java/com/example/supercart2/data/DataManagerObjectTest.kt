@@ -274,6 +274,37 @@ class DataManagerObjectTest {
         assertEquals(events + today, findGrocery("g1")!!.buyEvents) // all events kept
     }
 
+    /**
+     * Pinned BUG: both confirm functions rebuild each category from the snapshot taken at the start of
+     * the loop, so when several sub-categories of one category have bought items, only the last
+     * sub-category's update survives. See CLAUDE.md known issues.
+     */
+    @Test
+    fun `confirmBoughtItems only keeps the last sub-category's update within a category (bug)`() {
+        dm.addGrocery(grocery("g4", "c1", "s2"))
+        dm.updateGrocery("g1") { it.copy(isBought = true, inShoppingList = true) }
+        dm.updateGrocery("g4") { it.copy(isBought = true, inShoppingList = true) }
+
+        dm.confirmBoughtItems()
+
+        assertTrue(findGrocery("g1")!!.isBought) // lost update
+        assertTrue(findGrocery("g1")!!.buyEvents.isEmpty())
+        assertFalse(findGrocery("g4")!!.isBought)
+        assertEquals(listOf(today), findGrocery("g4")!!.buyEvents)
+    }
+
+    @Test
+    fun `confirmBoughtItemsForStore only keeps the last sub-category's update within a category (bug)`() {
+        dm.addGrocery(grocery("g4", "c1", "s2"))
+        dm.updateGrocery("g1") { it.copy(isBought = true, storeIds = listOf("A")) }
+        dm.updateGrocery("g4") { it.copy(isBought = true, storeIds = listOf("A")) }
+
+        dm.confirmBoughtItemsForStore("A")
+
+        assertTrue(findGrocery("g1")!!.isBought) // lost update
+        assertEquals(listOf(today), findGrocery("g4")!!.buyEvents)
+    }
+
     @Test
     fun `confirmBoughtItemsForStore only confirms groceries linked to that store`() {
         dm.updateGrocery("g1") { it.copy(isBought = true, inShoppingList = true, storeIds = listOf("A")) }

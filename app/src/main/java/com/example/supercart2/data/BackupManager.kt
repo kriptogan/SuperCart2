@@ -4,14 +4,6 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonDeserializer
-import com.google.gson.JsonElement
-import com.google.gson.JsonPrimitive
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
-import com.google.gson.reflect.TypeToken
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
@@ -19,12 +11,8 @@ import com.example.supercart2.models.Store
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.IOException
-import java.lang.reflect.Type
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -43,45 +31,7 @@ object BackupManager {
     private const val ZIP_DATA_ENTRY = "data.json"
     private const val ZIP_IMAGES_DIR = "images/"
 
-    // LocalDate adapter for Gson
-    private class LocalDateAdapter : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
-        private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
-
-        override fun serialize(src: LocalDate?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement =
-            JsonPrimitive(src?.format(formatter))
-
-        override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): LocalDate? =
-            try {
-                json?.asString?.let { LocalDate.parse(it, formatter) }
-            } catch (e: Exception) {
-                Log.e("BackupManager", "Error deserializing LocalDate: ${json?.asString}", e)
-                null
-            }
-    }
-
-    // LocalDateTime adapter for Gson
-    private class LocalDateTimeAdapter : JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
-        private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-
-        override fun serialize(src: LocalDateTime?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement =
-            JsonPrimitive(src?.format(formatter))
-
-        override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): LocalDateTime =
-            try {
-                json?.asString?.let { LocalDateTime.parse(it, formatter) } ?: LocalDateTime.now()
-            } catch (e: Exception) {
-                Log.e("BackupManager", "Error deserializing LocalDateTime: ${json?.asString}", e)
-                LocalDateTime.now()
-            }
-    }
-
-    private val gson: Gson by lazy {
-        GsonBuilder()
-            .setPrettyPrinting()
-            .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
-            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
-            .create()
-    }
+    private val gson: Gson by lazy { gsonBuilder().setPrettyPrinting().create() }
 
     /**
      * Data structure written to data.json inside the ZIP.

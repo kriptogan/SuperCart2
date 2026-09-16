@@ -153,40 +153,4 @@ object ImageManager {
         
         return output
     }
-    
-    /**
-     * Get all local image UUIDs
-     */
-    fun getAllLocalImageUUIDs(context: Context): List<String> {
-        return try {
-            getImagesDir(context).listFiles()
-                ?.mapNotNull { it.nameWithoutExtension }
-                ?: emptyList()
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-    
-    /**
-     * Clean up orphaned images (images not linked to any grocery)
-     */
-    fun cleanupOrphanedImages(context: Context) {
-        try {
-            val allImageUUIDs = getAllLocalImageUUIDs(context)
-            val groceryImageUUIDs = DataManagerObject.categories
-                .flatMap { it.subCategories }
-                .flatMap { it.groceries }
-                .mapNotNull { it.imageUUID }
-                .toSet()
-            
-            val orphanedUUIDs = allImageUUIDs.filterNot { groceryImageUUIDs.contains(it) }
-            
-            orphanedUUIDs.forEach { uuid ->
-                deleteLocalImage(uuid, context)
-                android.util.Log.d("ImageManager", "Cleaned up orphaned image: $uuid")
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("ImageManager", "Error cleaning orphaned images", e)
-        }
-    }
 }

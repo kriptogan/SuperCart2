@@ -2,100 +2,24 @@ package com.example.supercart2.data
 
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.CoroutineScope
 
 object DataInitializer {
-    
+
+    /** Creates and saves the default categories, only when there are no categories at all. */
     suspend fun initializeDefaultData(context: android.content.Context) {
-        if (DataManagerObject.categories.isEmpty()) {
-            android.util.Log.d("DataInitializer", "Creating default categories...")
-            createDefaultCategories()
-            android.util.Log.d("DataInitializer", "Default categories created. Count: ${DataManagerObject.categories.size}")
-            // Save the default data to local storage
-            DataStoreManager.saveData(context)
-            android.util.Log.d("DataInitializer", "Default data saved to storage")
-        } else {
-            android.util.Log.d("DataInitializer", "Categories already exist. Count: ${DataManagerObject.categories.size}")
-        }
+        if (DataManagerObject.categories.isNotEmpty()) return
+        createDefaultCategories()
+        DataStoreManager.saveData(context)
     }
-    
+
+    // Names are stored in English and translated at display time (see LocalizedCategoryNames).
+    // "Other" is the protected fallback category; every default "General" sub-category is protected.
     private fun createDefaultCategories() {
-        // Create "Other" category
-        val otherCategory = Category(
-            name = "Other",
-            default = true,
-            viewOrder = 1,
-            protected = true
-        )
-        
-        val otherSubCategory = SubCategory(
-            categoryId = otherCategory.uuid,
-            name = "General",
-            protected = true
-        )
-        
-        val otherCategoryWithSubs = CategoryWithSubCategories(
-            category = otherCategory,
-            subCategories = mutableListOf(
-                SubCategoryWithGroceries(
-                    subCategory = otherSubCategory,
-                    groceries = mutableListOf()
-                )
-            )
-        )
-        
-        // Create "Vegetables" category
-        val vegetablesCategory = Category(
-            name = "Vegetables",
-            default = true,
-            viewOrder = 2,
-            protected = false
-        )
-        
-        val vegetablesSubCategory = SubCategory(
-            categoryId = vegetablesCategory.uuid,
-            name = "General",
-            protected = true
-        )
-        
-        val vegetablesCategoryWithSubs = CategoryWithSubCategories(
-            category = vegetablesCategory,
-            subCategories = mutableListOf(
-                SubCategoryWithGroceries(
-                    subCategory = vegetablesSubCategory,
-                    groceries = mutableListOf()
-                )
-            )
-        )
-        
-        // Create "Fruits" category
-        val fruitsCategory = Category(
-            name = "Fruits",
-            default = true,
-            viewOrder = 3,
-            protected = false
-        )
-        
-        val fruitsSubCategory = SubCategory(
-            categoryId = fruitsCategory.uuid,
-            name = "General",
-            protected = true
-        )
-        
-        val fruitsCategoryWithSubs = CategoryWithSubCategories(
-            category = fruitsCategory,
-            subCategories = mutableListOf(
-                SubCategoryWithGroceries(
-                    subCategory = fruitsSubCategory,
-                    groceries = mutableListOf()
-                )
-            )
-        )
-        
-        // Add all categories to the data manager
-        DataManagerObject.categories.addAll(
-            listOf(otherCategoryWithSubs, vegetablesCategoryWithSubs, fruitsCategoryWithSubs)
-        )
+        val defaults = listOf("Other", "Vegetables", "Fruits").mapIndexed { index, name ->
+            val category = Category(name = name, default = true, viewOrder = index + 1, protected = name == "Other")
+            val general = SubCategory(categoryId = category.uuid, name = "General", protected = true)
+            CategoryWithSubCategories(category, mutableListOf(SubCategoryWithGroceries(general, mutableListOf())))
+        }
+        DataManagerObject.categories.addAll(defaults)
     }
 }

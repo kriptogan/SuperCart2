@@ -57,17 +57,6 @@ object FirebaseManager {
         }
     }
     
-    // Test Firebase connection
-    suspend fun testConnection(): Boolean {
-        return try {
-            db.collection(CATEGORIES_COLLECTION).limit(1).get().await()
-            true
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseManager", "Connection test failed", e)
-            false
-        }
-    }
-
     // Helper function to convert Category to Map for Firestore (with date serialization)
     private fun categoryToMap(category: Category): Map<String, Any?> {
         return mapOf(
@@ -453,90 +442,6 @@ object FirebaseManager {
             }
         } catch (e: Exception) {
             android.util.Log.e("FirebaseManager", "Error downloading data", e)
-            throw e
-        }
-    }
-    
-
-    suspend fun deleteCategory(categoryId: String) {
-        try {
-            // Get all subcategories for this category
-            val subCategories = db.collection(SUBCATEGORIES_COLLECTION)
-                .whereEqualTo("categoryId", categoryId)
-                .get()
-                .await()
-            
-            // Get all groceries for this category
-            val groceries = db.collection(GROCERIES_COLLECTION)
-                .whereEqualTo("categoryId", categoryId)
-                .get()
-                .await()
-            
-            // Create a batch operation
-            val batch = db.batch()
-            
-            // Delete the category
-            batch.delete(db.collection(CATEGORIES_COLLECTION).document(categoryId))
-            
-            // Delete all subcategories
-            subCategories.documents.forEach { doc ->
-                batch.delete(doc.reference)
-            }
-            
-            // Delete all groceries
-            groceries.documents.forEach { doc ->
-                batch.delete(doc.reference)
-            }
-            
-            // Execute the batch
-            batch.commit().await()
-            
-            android.util.Log.d("FirebaseManager", "Category and related items deleted successfully")
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseManager", "Error deleting category", e)
-            throw e
-        }
-    }
-
-    suspend fun deleteSubCategory(subCategoryId: String) {
-        try {
-            // Get all groceries for this subcategory
-            val groceries = db.collection(GROCERIES_COLLECTION)
-                .whereEqualTo("subCategoryId", subCategoryId)
-                .get()
-                .await()
-            
-            // Create a batch operation
-            val batch = db.batch()
-            
-            // Delete the subcategory
-            batch.delete(db.collection(SUBCATEGORIES_COLLECTION).document(subCategoryId))
-            
-            // Delete all groceries
-            groceries.documents.forEach { doc ->
-                batch.delete(doc.reference)
-            }
-            
-            // Execute the batch
-            batch.commit().await()
-            
-            android.util.Log.d("FirebaseManager", "Subcategory and related items deleted successfully")
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseManager", "Error deleting subcategory", e)
-            throw e
-        }
-    }
-
-    suspend fun deleteGrocery(groceryId: String) {
-        try {
-            db.collection(GROCERIES_COLLECTION)
-                .document(groceryId)
-                .delete()
-                .await()
-            
-            android.util.Log.d("FirebaseManager", "Grocery deleted successfully")
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseManager", "Error deleting grocery", e)
             throw e
         }
     }

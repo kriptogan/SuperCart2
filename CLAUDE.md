@@ -87,11 +87,30 @@ BurgerMenu / group dialogs ─► FirebaseManager.uploadData()/downloadData(), G
 
 ### UI conventions
 - Composables mutate `DataManagerObject` directly, then `scope.launch { DataStoreManager.saveDataGlobally() }`.
-- "Alert" = expiration date ≤ tomorrow, or days since last buy ≥ `averageBuyDays`.
+- "Alert" = expiration date ≤ tomorrow, or days since last buy ≥ `averageBuyDays` → use `Grocery.hasAlert()`
+  (`models/GroceryAlerts.kt`).
+- To filter the category tree by a grocery predicate use `List<CategoryWithSubCategories>.filterGroceries { }`
+  (drops emptied sub-categories/categories). Several screens still hand-roll this (ShoppingListScreen,
+  StoresScreen, HomeScreen search) — see "Simplification backlog".
+- Gson for persistence/backups comes from `gsonBuilder()` in `data/JsonConfig.kt`.
+
+## Simplification backlog (UI code has no tests — cover it before changing behaviour)
+- Hand-rolled tree filters: `ShoppingListScreen` to-buy/bought, `StoresScreen` per-store to-buy/bought,
+  `HomeScreen.filterAndExpandData` (returns `mutableStateListOf` lists, so check before swapping in `filterGroceries`).
+- `onGroceryCreated` handlers duplicated across HomeScreen / ShoppingListScreen / StoresScreen, and the
+  dialog already saves; HomeScreen rebuilds nested lists by hand instead of `updateGrocery`/`updateGroceryLocation`.
+- Duplicated composables: search + expand/collapse card (4×), finish-shopping confirmation (2×), bought-grocery
+  card (2×), top bar with burger menu (2×), Create*/Edit* dialog button rows, up/down reorder lambdas.
+- `EditCategoryDialog` ignores its `onCategoryUpdated`/`onSubCategory*` callbacks; `HomeScreen.dataRefreshTrigger`
+  and `BottomNavigationBar.selectedItem` are written but never read.
+- `FirebaseManager` entity ⇄ Firestore map conversion could become pure functions (would make sync testable).
 - Strings in `res/values{,-iw,-ru,-bg}/strings.xml`; keep all four in sync.
 - Theming: `ui/theme` (`SuperCartColors`, palettes selectable in Settings).
 
 ## Known issues (found during onboarding, intentionally not fixed yet)
+- **`confirmBoughtItems` / `confirmBoughtItemsForStore` lose updates**: when several sub-categories of the same
+  category contain bought items, only the last one is confirmed (each write rebuilds the category from a stale
+  snapshot). Pinned by "(bug)" tests in `DataManagerObjectTest`.
 - `Store.address` is not written to or read from Firestore (`storeToMap` / `documentToStore`) → lost on sync.
 - `storeSubCategoryOrders` is neither in backups nor synced to Firebase.
 - `updateGroceryLocation` and `unlinkStoreFromAllGroceries` don't bump `lastUpdate`, so those changes can be

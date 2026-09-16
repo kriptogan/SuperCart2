@@ -9,17 +9,6 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonDeserializer
-import com.google.gson.JsonElement
-import com.google.gson.JsonPrimitive
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
-import java.lang.reflect.Type
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
@@ -37,261 +26,125 @@ object DataStoreManager {
     private val GROUP_CODE_KEY = stringPreferencesKey("group_code")
     private val STORE_CATEGORY_ORDERS_KEY = stringPreferencesKey("store_category_orders")
     private val STORE_SUBCATEGORY_ORDERS_KEY = stringPreferencesKey("store_subcategory_orders")
-    
-    // LocalDate adapter for Gson
-    private class LocalDateAdapter : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
-        private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
-        
-        override fun serialize(src: LocalDate?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
-            return JsonPrimitive(src?.format(formatter))
+
+    private val gson: Gson by lazy { gsonBuilder().create() }
+
+    private inline fun <reified T> Preferences.readJson(key: Preferences.Key<String>): T? =
+        this[key]?.let { gson.fromJson<T>(it, object : TypeToken<T>() {}.type) }
+
+    // Store orders are optional extras: a corrupt value falls back to empty instead of failing the load
+    private inline fun <reified T : Map<*, *>> Preferences.readOrders(key: Preferences.Key<String>): T? =
+        try {
+            readJson<T>(key)
+        } catch (e: Exception) {
+            android.util.Log.e("DataStoreManager", "Error loading ${key.name}", e)
+            null
         }
-        
-        override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): LocalDate? {
-            return try {
-                json?.asString?.let { LocalDate.parse(it, formatter) }
-            } catch (e: Exception) {
-                android.util.Log.e("DataStoreManager", "Error deserializing LocalDate: ${json?.asString}", e)
-                null
-            }
-        }
-    }
-    
-    // LocalDateTime adapter for Gson
-    private class LocalDateTimeAdapter : JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
-        private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-        
-        override fun serialize(src: LocalDateTime?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
-            return JsonPrimitive(src?.format(formatter))
-        }
-        
-        override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): LocalDateTime {
-            return try {
-                json?.asString?.let { LocalDateTime.parse(it, formatter) }
-                    ?: LocalDateTime.now()
-            } catch (e: Exception) {
-                android.util.Log.e("DataStoreManager", "Error deserializing LocalDateTime: ${json?.asString}", e)
-                LocalDateTime.now()
-            }
-        }
-    }
-    
-    // Configured Gson instance with LocalDate and LocalDateTime support
-    private val gson: Gson by lazy {
-        GsonBuilder()
-            .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
-            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
-            .create()
-    }
-    
+
     // Global context reference for saving data from anywhere
     internal var globalContext: Context? = null
-    
+
     fun setGlobalContext(context: Context) {
         globalContext = context
     }
-    
-    suspend fun saveDataGlobally() {
-        globalContext?.let { context ->
-            saveData(context)
-        } ?: run {
-            android.util.Log.w("DataStoreManager", "Global context not set, cannot save data")
-        }
-    }
-    
-    suspend fun saveData(context: Context) {
-        try {
-            // Convert nested structure to flat lists
-            val (categories, subCategories, groceries) = DataConverter.flattenCategories(DataManagerObject.categories)
-            
-            // Get stores list
-            val stores = DataManagerObject.stores.toList()
-            val hiddenStoreIds = DataManagerObject.hiddenStoreIds.toList()
-            val storeCategoryOrders = DataManagerObject.storeCategoryOrders.toMap()
-            val storeSubCategoryOrders = DataManagerObject.storeSubCategoryOrders.toMap()
 
-            // Save each list separately
-            context.dataStore.edit { preferences ->
-                preferences[CATEGORIES_KEY] = gson.toJson(categories)
-                preferences[SUBCATEGORIES_KEY] = gson.toJson(subCategories)
-                preferences[GROCERIES_KEY] = gson.toJson(groceries)
-                preferences[STORES_KEY] = gson.toJson(stores)
-                preferences[HIDDEN_STORES_KEY] = gson.toJson(hiddenStoreIds)
-                preferences[STORE_CATEGORY_ORDERS_KEY] = gson.toJson(storeCategoryOrders)
-                preferences[STORE_SUBCATEGORY_ORDERS_KEY] = gson.toJson(storeSubCategoryOrders)
-            }
-            
-            android.util.Log.d("DataStoreManager", "Data saved successfully. Categories: ${categories.size}, SubCategories: ${subCategories.size}, Groceries: ${groceries.size}, Stores: ${stores.size}")
-        } catch (e: Exception) {
-            android.util.Log.e("DataStoreManager", "Error saving data", e)
-            throw e
+    suspend fun saveDataGlobally() {
+        globalContext?.let { saveData(it) }
+            ?: android.util.Log.w("DataStoreManager", "Global context not set, cannot save data")
+    }
+
+    suspend fun saveData(context: Context) {
+        val (categories, subCategories, groceries) = DataConverter.flattenCategories(DataManagerObject.categories)
+        val stores = DataManagerObject.stores.toList()
+        val hiddenStoreIds = DataManagerObject.hiddenStoreIds.toList()
+        val storeCategoryOrders = DataManagerObject.storeCategoryOrders.toMap()
+        val storeSubCategoryOrders = DataManagerObject.storeSubCategoryOrders.toMap()
+
+        context.dataStore.edit { preferences ->
+            preferences[CATEGORIES_KEY] = gson.toJson(categories)
+            preferences[SUBCATEGORIES_KEY] = gson.toJson(subCategories)
+            preferences[GROCERIES_KEY] = gson.toJson(groceries)
+            preferences[STORES_KEY] = gson.toJson(stores)
+            preferences[HIDDEN_STORES_KEY] = gson.toJson(hiddenStoreIds)
+            preferences[STORE_CATEGORY_ORDERS_KEY] = gson.toJson(storeCategoryOrders)
+            preferences[STORE_SUBCATEGORY_ORDERS_KEY] = gson.toJson(storeSubCategoryOrders)
         }
     }
-    
+
     suspend fun loadData(context: Context) {
         try {
-            android.util.Log.d("DataStoreManager", "Loading data from storage...")
             val preferences = context.dataStore.data.first()
-            
-            // Load each list with explicit type parameters
-            val categories = preferences[CATEGORIES_KEY]?.let {
-                gson.fromJson<List<Category>>(it, object : TypeToken<List<Category>>() {}.type)
-            } ?: emptyList()
-            
-            val subCategories = preferences[SUBCATEGORIES_KEY]?.let {
-                gson.fromJson<List<SubCategory>>(it, object : TypeToken<List<SubCategory>>() {}.type)
-            } ?: emptyList()
-            
-            val groceries = preferences[GROCERIES_KEY]?.let {
-                gson.fromJson<List<Grocery>>(it, object : TypeToken<List<Grocery>>() {}.type)
-            } ?: emptyList()
-            
-            val stores = preferences[STORES_KEY]?.let {
-                gson.fromJson<List<Store>>(it, object : TypeToken<List<Store>>() {}.type)
-            } ?: emptyList()
-            
-            val hiddenStoreIds = preferences[HIDDEN_STORES_KEY]?.let {
-                gson.fromJson<List<String>>(it, object : TypeToken<List<String>>() {}.type)
-            } ?: emptyList()
-            
-            // Load store category orders
-            val storeCategoryOrders = preferences[STORE_CATEGORY_ORDERS_KEY]?.let {
-                try {
-                    val type = object : TypeToken<Map<String, List<String>>>() {}.type
-                    gson.fromJson<Map<String, List<String>>>(it, type) ?: emptyMap()
-                } catch (e: Exception) {
-                    android.util.Log.e("DataStoreManager", "Error loading store category orders", e)
-                    emptyMap()
-                }
-            } ?: emptyMap()
 
-            // Load store sub-category orders
-            val storeSubCategoryOrders = preferences[STORE_SUBCATEGORY_ORDERS_KEY]?.let {
-                try {
-                    val type = object : TypeToken<Map<String, Map<String, List<String>>>>() {}.type
-                    gson.fromJson<Map<String, Map<String, List<String>>>>(it, type) ?: emptyMap()
-                } catch (e: Exception) {
-                    android.util.Log.e("DataStoreManager", "Error loading store sub-category orders", e)
-                    emptyMap()
-                }
-            } ?: emptyMap()
-            
-            // Validate relationships
+            val categories = preferences.readJson<List<Category>>(CATEGORIES_KEY) ?: emptyList()
+            val subCategories = preferences.readJson<List<SubCategory>>(SUBCATEGORIES_KEY) ?: emptyList()
+            val groceries = preferences.readJson<List<Grocery>>(GROCERIES_KEY) ?: emptyList()
+            val stores = preferences.readJson<List<Store>>(STORES_KEY) ?: emptyList()
+            val hiddenStoreIds = preferences.readJson<List<String>>(HIDDEN_STORES_KEY) ?: emptyList()
+            val storeCategoryOrders =
+                preferences.readOrders<Map<String, List<String>>>(STORE_CATEGORY_ORDERS_KEY) ?: emptyMap()
+            val storeSubCategoryOrders =
+                preferences.readOrders<Map<String, Map<String, List<String>>>>(STORE_SUBCATEGORY_ORDERS_KEY) ?: emptyMap()
+
             if (DataConverter.validateRelationships(categories, subCategories, groceries)) {
-                // Convert to nested structure
-                val nestedData = DataConverter.buildNestedStructure(categories, subCategories, groceries)
                 DataManagerObject.categories.clear()
-                DataManagerObject.categories.addAll(nestedData)
-                
-                // Load stores (filter out deleted ones)
+                DataManagerObject.categories.addAll(DataConverter.buildNestedStructure(categories, subCategories, groceries))
+
                 DataManagerObject.stores.clear()
                 DataManagerObject.stores.addAll(stores.filter { !it.deleted })
-                
-                // Load hidden store IDs
+
                 DataManagerObject.hiddenStoreIds.clear()
                 DataManagerObject.hiddenStoreIds.addAll(hiddenStoreIds)
-                
-                // Load store category orders
+
                 DataManagerObject.storeCategoryOrders.clear()
                 DataManagerObject.storeCategoryOrders.putAll(storeCategoryOrders)
 
-                // Load store sub-category orders
                 DataManagerObject.storeSubCategoryOrders.clear()
                 DataManagerObject.storeSubCategoryOrders.putAll(storeSubCategoryOrders)
-
-                android.util.Log.d("DataStoreManager", "Data loaded successfully. Categories: ${categories.size}, SubCategories: ${subCategories.size}, Groceries: ${groceries.size}, Stores: ${stores.size}, Store Category Orders: ${storeCategoryOrders.size}")
             } else {
                 android.util.Log.e("DataStoreManager", "Invalid data relationships detected")
-                DataInitializer.initializeDefaultData(context)
             }
-            
+
             // Initialize default data if no categories exist
-            if (DataManagerObject.categories.isEmpty()) {
-                android.util.Log.d("DataStoreManager", "No data found, initializing defaults...")
-                DataInitializer.initializeDefaultData(context)
-            }
+            DataInitializer.initializeDefaultData(context)
         } catch (e: Exception) {
             android.util.Log.e("DataStoreManager", "Error loading data", e)
             DataInitializer.initializeDefaultData(context)
         }
     }
-    
-    // Save store view mode preference
+
     suspend fun saveStoreViewMode(context: Context, isStoreView: Boolean) {
         try {
-            context.dataStore.edit { preferences ->
-                preferences[STORE_VIEW_MODE_KEY] = if (isStoreView) "STORE" else "CATEGORY"
-            }
-            android.util.Log.d("DataStoreManager", "Store view mode saved: ${if (isStoreView) "STORE" else "CATEGORY"}")
+            context.dataStore.edit { it[STORE_VIEW_MODE_KEY] = if (isStoreView) "STORE" else "CATEGORY" }
         } catch (e: Exception) {
             android.util.Log.e("DataStoreManager", "Error saving store view mode", e)
         }
     }
-    
-    // Load store view mode preference
-    suspend fun loadStoreViewMode(context: Context): Boolean {
-        return try {
-            val preferences = context.dataStore.data.first()
-            val mode = preferences[STORE_VIEW_MODE_KEY] ?: "CATEGORY"
-            android.util.Log.d("DataStoreManager", "Store view mode loaded: $mode")
-            mode == "STORE"
-        } catch (e: Exception) {
-            android.util.Log.e("DataStoreManager", "Error loading store view mode", e)
-            false // Default to category view
-        }
+
+    // Defaults to category view
+    suspend fun loadStoreViewMode(context: Context): Boolean = try {
+        context.dataStore.data.first()[STORE_VIEW_MODE_KEY] == "STORE"
+    } catch (e: Exception) {
+        android.util.Log.e("DataStoreManager", "Error loading store view mode", e)
+        false
     }
-    
+
     // ========== Group Code Management ==========
-    
-    /**
-     * Save the group code (UUID) to DataStore
-     */
+
     suspend fun saveGroupCode(context: Context, groupCode: String) {
-        try {
-            context.dataStore.edit { preferences ->
-                preferences[GROUP_CODE_KEY] = groupCode
-            }
-            android.util.Log.d("DataStoreManager", "✅ Group code saved: $groupCode")
-        } catch (e: Exception) {
-            android.util.Log.e("DataStoreManager", "❌ Error saving group code", e)
-            throw e
-        }
+        context.dataStore.edit { it[GROUP_CODE_KEY] = groupCode }
     }
-    
-    /**
-     * Load the group code from DataStore
-     * Returns null if no group code is set
-     */
-    suspend fun loadGroupCode(context: Context): String? {
-        return try {
-            val preferences = context.dataStore.data.first()
-            val groupCode = preferences[GROUP_CODE_KEY]
-            android.util.Log.d("DataStoreManager", "Group code loaded: ${groupCode ?: "None"}")
-            groupCode
-        } catch (e: Exception) {
-            android.util.Log.e("DataStoreManager", "❌ Error loading group code", e)
-            null
-        }
+
+    /** Returns null if no group code is set (or it can't be read). */
+    suspend fun loadGroupCode(context: Context): String? = try {
+        context.dataStore.data.first()[GROUP_CODE_KEY]
+    } catch (e: Exception) {
+        android.util.Log.e("DataStoreManager", "Error loading group code", e)
+        null
     }
-    
-    /**
-     * Clear the group code from DataStore (leave group)
-     */
+
     suspend fun clearGroupCode(context: Context) {
-        try {
-            context.dataStore.edit { preferences ->
-                preferences.remove(GROUP_CODE_KEY)
-            }
-            android.util.Log.d("DataStoreManager", "✅ Group code cleared")
-        } catch (e: Exception) {
-            android.util.Log.e("DataStoreManager", "❌ Error clearing group code", e)
-            throw e
-        }
+        context.dataStore.edit { it.remove(GROUP_CODE_KEY) }
     }
-    
-    /**
-     * Check if user is in a group
-     */
-    suspend fun hasGroupCode(context: Context): Boolean {
-        return loadGroupCode(context) != null
-    }
+
+    suspend fun hasGroupCode(context: Context): Boolean = loadGroupCode(context) != null
 }

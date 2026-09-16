@@ -63,12 +63,12 @@ import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.data.CategoryWithSubCategories
 import com.example.supercart2.data.SubCategoryWithGroceries
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.hasAlert
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
 import com.example.supercart2.utils.localizedCategoryDisplayName
 import com.example.supercart2.utils.localizedSubCategoryDisplayName
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 
 @Composable
@@ -329,22 +329,7 @@ private fun GroceryItem(
     }
 
     val hasAlert = remember(currentGrocery, isShoppingList, showAlerts) {
-        if (isShoppingList || !showAlerts) {
-            false
-        } else {
-            val today = LocalDate.now()
-            val tomorrow = today.plusDays(1)
-            val isExpiringSoon = currentGrocery.expirationDate?.let { expDate ->
-                expDate <= tomorrow
-            } ?: false
-            val needsToBuy = currentGrocery.averageBuyDays?.let { avgDays ->
-                currentGrocery.buyEvents.maxOrNull()?.let { lastBuyDate ->
-                    val daysSinceLastBuy = today.toEpochDay() - lastBuyDate.toEpochDay()
-                    daysSinceLastBuy >= avgDays
-                }
-            } ?: false
-            isExpiringSoon || needsToBuy
-        }
+        !isShoppingList && showAlerts && currentGrocery.hasAlert()
     }
 
     Row(

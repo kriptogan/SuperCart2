@@ -111,35 +111,6 @@ object FirebaseStorageManager {
     }
     
     /**
-     * Delete image from Firebase Storage
-     */
-    suspend fun deleteImage(uuid: String): Boolean {
-        return try {
-            val imageRef = storageRef.child("$IMAGES_PATH/$uuid.jpg")
-            imageRef.delete().await()
-            
-            android.util.Log.d("FirebaseStorageManager", "Deleted image from Firebase: $uuid")
-            true
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseStorageManager", "Error deleting image: $uuid", e)
-            false
-        }
-    }
-    
-    /**
-     * Check if image exists in Firebase Storage
-     */
-    suspend fun imageExists(uuid: String): Boolean {
-        return try {
-            val imageRef = storageRef.child("$IMAGES_PATH/$uuid.jpg")
-            imageRef.metadata.await()
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-    
-    /**
      * Batch upload all local images that aren't in Firebase yet
      * Returns count of successfully uploaded images
      */

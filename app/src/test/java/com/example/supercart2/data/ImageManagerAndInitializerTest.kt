@@ -59,13 +59,6 @@ class ImageManagerAndInitializerTest {
     }
 
     @Test
-    fun `getAllLocalImageUUIDs lists stored images`() {
-        ImageManager.getImageFile("a", context).writeBytes(byteArrayOf(1))
-        ImageManager.getImageFile("b", context).writeBytes(byteArrayOf(1))
-        assertEquals(setOf("a", "b"), ImageManager.getAllLocalImageUUIDs(context).toSet())
-    }
-
-    @Test
     fun `deleteGrocery removes the local image when a global context is set`() {
         DataManagerObject.categories.add(
             node(category("c1"), subNode(sub("s1", "c1"), grocery("g1", "c1", "s1").copy(imageUUID = "img")))
