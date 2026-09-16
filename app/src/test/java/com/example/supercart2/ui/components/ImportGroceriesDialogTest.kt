@@ -130,12 +130,60 @@ class ImportGroceriesDialogTest {
     }
 
     @Test
-    fun `a deleted grocery with the same name counts as existing (pinned)`() {
+    fun `a deleted grocery with the same name is ignored - a new one is created and listed`() {
         DataManagerObject.updateGrocery("g3") { it.copy(deleted = true) }
         import("g3")
         compose.onNodeWithText("Yes").performClick()
-        assertEquals(1, named("g3").size)
-        assertTrue(TestData.findGrocery("g3")!!.inShoppingList)
+        val created = named("g3").single { it.uuid != "g3" }
+        assertEquals("other" to "general", TestData.locationOf(created.uuid))
+        assertTrue(created.inShoppingList)
+        assertFalse(TestData.findGrocery("g3")!!.inShoppingList)
+    }
+
+    @Test
+    fun `groceries in a deleted sub-category or category are ignored`() {
+        DataManagerObject.categories.add(
+            node(category("dc", viewOrder = 5, deleted = true), subNode(sub("ds", "dc"), grocery("inDeletedCat", "dc", "ds")))
+        )
+        DataManagerObject.categories.add(
+            node(category("c9", viewOrder = 6), subNode(sub("ds9", "c9", deleted = true), grocery("inDeletedSub", "c9", "ds9")))
+        )
+        import("inDeletedCat\ninDeletedSub")
+        compose.onNodeWithText("Yes").performClick()
+        assertEquals(2, named("inDeletedCat").size)
+        assertEquals(2, named("inDeletedSub").size)
+        assertFalse(TestData.findGrocery("inDeletedCat")!!.inShoppingList)
+        assertFalse(TestData.findGrocery("inDeletedSub")!!.inShoppingList)
+        assertTrue(named("inDeletedCat").single { it.uuid != "inDeletedCat" }.inShoppingList)
+        assertTrue(named("inDeletedSub").single { it.uuid != "inDeletedSub" }.inShoppingList)
+    }
+
+    @Test
+    fun `a deleted Other category is not used - a new Other with General is created`() {
+        DataManagerObject.categories.removeAll { it.category.name == "Other" }
+        DataManagerObject.categories.add(
+            node(category("deadOther", viewOrder = 0, deleted = true, name = "Other"), subNode(sub("dg", "deadOther", name = "General")))
+        )
+        import("Milk")
+        val active = DataManagerObject.categories.single { it.category.name == "Other" && !it.category.deleted }
+        assertEquals(listOf("General"), active.subCategories.map { it.subCategory.name })
+        assertEquals(active.category.uuid to active.subCategories.single().subCategory.uuid,
+            TestData.locationOf(named("Milk").single().uuid))
+    }
+
+    @Test
+    fun `a deleted General sub-category is not used - a new General is added to Other`() {
+        DataManagerObject.categories.removeAll { it.category.name == "Other" }
+        DataManagerObject.categories.add(
+            node(category("other", name = "Other"), subNode(sub("deadGeneral", "other", deleted = true, name = "General")))
+        )
+        import("Milk")
+        val milk = named("Milk").single()
+        assertEquals("other", milk.categoryId)
+        val sub = DataManagerObject.categories.single { it.category.uuid == "other" }
+            .subCategories.single { it.subCategory.uuid == milk.subCategoryId }.subCategory
+        assertEquals("General", sub.name)
+        assertFalse(sub.deleted)
     }
 
     @Test

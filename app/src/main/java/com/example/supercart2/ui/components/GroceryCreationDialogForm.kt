@@ -73,12 +73,16 @@ private fun GroceryCreationDialogForm.loadDefaults(initialName: String, initialS
     first.subCategories.firstOrNull()?.subCategory?.let { subCategory = it }
 }
 
-/** Selects a category and its first sub-category (read from the raw tree, so possibly a deleted one). */
+/** Selects a category and its first non-deleted sub-category (none when all are deleted). */
 internal fun GroceryCreationDialogForm.selectCategory(selected: Category) {
     category = selected
-    subCategory = DataManagerObject.categories.find { it.category.uuid == selected.uuid }
-        ?.subCategories?.firstOrNull()?.subCategory
+    subCategory = groceryCreationDialogActiveSubCategories(selected.uuid).firstOrNull()
 }
+
+/** Non-deleted sub-categories of the category [categoryId], in data order. */
+internal fun groceryCreationDialogActiveSubCategories(categoryId: String): List<SubCategory> =
+    DataManagerObject.categories.find { it.category.uuid == categoryId }
+        ?.subCategories?.map { it.subCategory }?.filterNot { it.deleted } ?: emptyList()
 
 internal fun GroceryCreationDialogForm.selectNewLocation(newCategory: Category, newSubCategory: SubCategory) {
     category = newCategory
@@ -132,8 +136,8 @@ internal fun GroceryCreationDialogForm.removeImage(context: Context) {
 }
 
 /**
- * Compresses the picked image under a fresh UUID (so the image card recomposes), deleting the previous file first.
- * On failure the previous UUID is kept even though its file is already gone.
+ * Compresses the picked image under a fresh UUID (so the image card recomposes); the previous file is deleted only
+ * after the new one was saved. On failure the previous UUID and file are kept.
  */
 internal suspend fun GroceryCreationDialogForm.replaceImage(uri: Uri, context: Context) {
     isProcessingImage = true
@@ -154,7 +158,12 @@ private suspend fun GroceryCreationDialogForm.storeCompressedImageOrLog(uri: Uri
 
 private suspend fun GroceryCreationDialogForm.storeCompressedImage(uri: Uri, context: Context) {
     val newUUID = UUID.randomUUID().toString()
-    imageUUID?.let { ImageManager.deleteLocalImage(it, context) }
     val savedFile = ImageManager.compressAndSaveImage(uri, newUUID, context)
-    if (savedFile != null) imageUUID = newUUID else android.util.Log.e(TAG, "Failed to save image")
+    if (savedFile != null) switchToImage(newUUID, context) else android.util.Log.e(TAG, "Failed to save image")
+}
+
+/** Deletes the previous local image, then points the form at [newUUID]. */
+private fun GroceryCreationDialogForm.switchToImage(newUUID: String, context: Context) {
+    imageUUID?.let { ImageManager.deleteLocalImage(it, context) }
+    imageUUID = newUUID
 }

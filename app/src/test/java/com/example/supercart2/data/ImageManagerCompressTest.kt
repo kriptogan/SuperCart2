@@ -7,6 +7,9 @@ import android.graphics.Color
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.every
+import io.mockk.mockkConstructor
+import io.mockk.unmockkConstructor
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -19,6 +22,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.util.Random
 
 /** ImageManager.compressAndSaveImage: decode from a Uri, EXIF rotation, iterative JPEG compression. */
@@ -126,6 +131,44 @@ class ImageManagerCompressTest {
         val saved = ImageManager.compressAndSaveImage(Uri.fromFile(File(workDir, "nope.jpg")), "none", context)
         assertNull(saved)
         assertNull(ImageManager.getLocalImageFile("none", context))
+    }
+
+    private fun imagesDirNames(): List<String> =
+        File(context.cacheDir, "images").list()?.sorted() ?: emptyList()
+
+    @Test
+    fun `failed write keeps the existing image of the uuid and leaves no partial file`() = runTest {
+        val existing = ImageManager.getImageFile("keep", context).apply { writeText("old photo") }
+        val source = writeJpeg(bitmap(40, 30, noise = false), "keep-src.jpg")
+        mockkConstructor(FileOutputStream::class)
+        try {
+            every { anyConstructed<FileOutputStream>().write(any<ByteArray>()) } throws IOException("disk full")
+            assertNull(ImageManager.compressAndSaveImage(Uri.fromFile(source), "keep", context))
+        } finally {
+            unmockkConstructor(FileOutputStream::class)
+        }
+        assertEquals("old photo", existing.readText())
+        assertEquals(listOf("keep.jpg"), imagesDirNames())
+    }
+
+    @Test
+    fun `undecodable source keeps the existing image of the uuid`() = runTest {
+        val existing = ImageManager.getImageFile("keep2", context).apply { writeText("old photo") }
+        val text = File(workDir, "bad.jpg").apply { writeText("not an image") }
+        assertNull(ImageManager.compressAndSaveImage(Uri.fromFile(text), "keep2", context))
+        assertEquals("old photo", existing.readText())
+    }
+
+    @Test
+    fun `saving again under the same uuid replaces the existing image`() = runTest {
+        val existing = ImageManager.getImageFile("same", context).apply { writeText("old photo") }
+        val source = writeJpeg(bitmap(40, 30, noise = false), "same-src.jpg")
+
+        val saved = ImageManager.compressAndSaveImage(Uri.fromFile(source), "same", context)!!
+
+        assertEquals(existing, saved)
+        assertEquals(40, decode(saved).width)
+        assertEquals(listOf("same.jpg"), imagesDirNames())
     }
 
     @Test

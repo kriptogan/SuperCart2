@@ -121,7 +121,7 @@ private fun ImportGroceriesDialogState.importLines() {
         .forEach { importName(it, other.uuid, general.uuid) }
 }
 
-/** Names already used by any grocery (deleted ones included) are remembered; others are created. */
+/** Names already used by an active grocery are remembered; others are created. */
 private fun ImportGroceriesDialogState.importName(name: String, categoryId: String, subCategoryId: String) {
     if (groceryNameExists(name)) {
         existingNames.add(name)
@@ -137,19 +137,23 @@ private fun addGrocery(name: String, categoryId: String, subCategoryId: String):
     return grocery
 }
 
-private fun groceryNameExists(name: String): Boolean = DataManagerObject.categories.any { category ->
+/**
+ * True when a non-deleted grocery in a non-deleted category and sub-category has [name]
+ * (getSortedCategories() drops all deleted items).
+ */
+private fun groceryNameExists(name: String): Boolean = DataManagerObject.getSortedCategories().any { category ->
     category.subCategories.any { sub -> sub.groceries.any { it.name == name } }
 }
 
-/** The first category named "Other" (deleted or not), created when missing. */
+/** The first non-deleted category named "Other", created when missing. */
 private fun otherCategory(): Category =
-    DataManagerObject.categories.find { it.category.name == "Other" }?.category
+    DataManagerObject.categories.find { it.category.name == "Other" && !it.category.deleted }?.category
         ?: Category(name = "Other").also { DataManagerObject.addCategory(it) }
 
-/** The first "General" sub-category of [other], created when missing. */
+/** The first non-deleted "General" sub-category of [other], created when missing. */
 private fun generalSubCategory(other: Category): SubCategory =
     DataManagerObject.categories.find { it.category.uuid == other.uuid }
-        ?.subCategories?.find { it.subCategory.name == "General" }?.subCategory
+        ?.subCategories?.find { it.subCategory.name == "General" && !it.subCategory.deleted }?.subCategory
         ?: SubCategory(categoryId = other.uuid, name = "General")
             .also { DataManagerObject.addSubCategory(other.uuid, it) }
 
@@ -162,9 +166,9 @@ private fun ImportGroceriesDialogState.addAllToShoppingList(scope: CoroutineScop
     }
 }
 
-/** Adds the first grocery with [name] of every sub-category, unless it is already listed. */
+/** Adds the first active grocery with [name] of every active sub-category, unless it is already listed. */
 private fun addToShoppingListByName(name: String) {
-    DataManagerObject.categories.forEach { category ->
+    DataManagerObject.getSortedCategories().forEach { category ->
         category.subCategories.forEach { sub ->
             sub.groceries.find { it.name == name }?.takeIf { !it.inShoppingList }
                 ?.let { DataManagerObject.toggleShoppingListStatus(it.uuid) }
