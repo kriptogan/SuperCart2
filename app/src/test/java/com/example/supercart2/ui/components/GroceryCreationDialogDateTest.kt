@@ -120,13 +120,38 @@ class GroceryCreationDialogDateTest {
         text("No date selected").assertIsDisplayed()
     }
 
-    @Test
-    fun `in a zone east of UTC the picker round-trip shifts the date one day back (pinned)`() {
-        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Jerusalem"))
-        assertEquals(ZoneId.of("Asia/Jerusalem"), ZoneId.systemDefault())
+    private fun assertPickerRoundTripKeepsDate(zone: String) {
+        TimeZone.setDefault(TimeZone.getTimeZone(zone))
+        assertEquals(ZoneId.of(zone), ZoneId.systemDefault())
         showEditing(LocalDate.of(2030, 5, 1))
         openPickerAndConfirm()
-        text("Apr 30, 2030").assertIsDisplayed()
+        text("May 01, 2030").assertIsDisplayed()
+        save()
+        assertEquals(LocalDate.of(2030, 5, 1), savedDate())
+    }
+
+    @Test
+    fun `picker round-trip keeps the date east of UTC (Asia-Jerusalem)`() {
+        assertPickerRoundTripKeepsDate("Asia/Jerusalem")
+    }
+
+    @Test
+    fun `picker round-trip keeps the date in UTC`() {
+        assertPickerRoundTripKeepsDate("UTC")
+    }
+
+    @Test
+    fun `picker round-trip keeps the date west of UTC (America-Los_Angeles)`() {
+        assertPickerRoundTripKeepsDate("America/Los_Angeles")
+    }
+
+    @Test
+    fun `picker opens on the local today far east of UTC (Pacific-Kiritimati)`() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Pacific/Kiritimati"))
+        showEditing(null)
+        openPickerAndConfirm()
+        save()
+        assertEquals(LocalDate.now(), savedDate())
     }
 
     @Test

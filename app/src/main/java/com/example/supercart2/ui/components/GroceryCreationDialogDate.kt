@@ -18,7 +18,7 @@ import com.example.supercart2.ui.components.common.secondaryButtonColors
 import com.example.supercart2.ui.theme.SuperCartColors
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 /** Expiration dates outside 1900..2100 are treated as invalid. */
@@ -37,7 +37,7 @@ private fun formatDate(date: LocalDate): String = try {
     "Invalid date"
 }
 
-/** Picker start: the selected date when valid, today otherwise. */
+/** Picker start: the selected date when valid, today otherwise. The Material3 picker works in UTC millis. */
 private fun initialPickerMillis(date: LocalDate?): Long = try {
     startOfDayMillis(date?.takeIf { groceryCreationDialogIsValidDate(it) } ?: LocalDate.now())
 } catch (e: Exception) {
@@ -45,11 +45,11 @@ private fun initialPickerMillis(date: LocalDate?): Long = try {
 }
 
 private fun startOfDayMillis(date: LocalDate): Long =
-    date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
-/** Picked millis as a local date; null when conversion fails or the year is out of range. */
+/** Picked UTC millis as a date; null when conversion fails or the year is out of range. */
 private fun pickedDate(millis: Long): LocalDate? = try {
-    Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+    Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
         .takeIf { groceryCreationDialogIsValidDate(it) }
 } catch (e: Exception) {
     null
