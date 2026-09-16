@@ -249,7 +249,12 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
         DataManagerObject.hiddenStoreIds.add("localStore")
         DataManagerObject.storeSubCategoryOrders["localStore"] = mapOf("local" to listOf("localSub"))
         installRemoteTree()
-        fake.setOrders(mapOf("orders" to mapOf("A" to listOf("c1"), "B" to "notAList", "C" to listOf("x", 1))))
+        fake.setOrders(
+            mapOf(
+                "orders" to mapOf("A" to listOf("c1"), "B" to "notAList", "C" to listOf("x", 1)),
+                "subOrders" to mapOf("A" to mapOf("c1" to listOf("s1", 2), "c2" to "bad"), "B" to listOf("x"), "C" to emptyMap<String, Any>()),
+            ),
+        )
         val version = DataManagerObject.version
 
         FirebaseManager.downloadData()
@@ -260,7 +265,7 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
         assertEquals(listOf("A"), DataManagerObject.stores.map { it.uuid })
         assertEquals(mapOf("A" to listOf("c1"), "C" to listOf("x")), DataManagerObject.storeCategoryOrders)
         assertEquals(listOf("localStore"), DataManagerObject.hiddenStoreIds.toList())
-        assertEquals(mapOf("localStore" to mapOf("local" to listOf("localSub"))), DataManagerObject.storeSubCategoryOrders)
+        assertEquals(mapOf("A" to mapOf("c1" to listOf("s1")), "C" to emptyMap()), DataManagerObject.storeSubCategoryOrders)
         assertEquals(version + 1, DataManagerObject.version)
         coVerify(exactly = 1) { FirebaseStorageManager.batchDownloadImages(context) }
 
@@ -276,14 +281,17 @@ class FirebaseManagerDownloadTest : FirebaseManagerTestBase() {
             { fake.ordersTask = Tasks.forException(RuntimeException("no doc")) },
             { fake.setOrders(mapOf("orders" to listOf("A"))) },
             { fake.setOrders(mapOf("other" to 1)) },
+            { fake.setOrders(mapOf("orders" to listOf("A"), "subOrders" to listOf("A"))) },
         )
         for (setup in setups) {
             DataManagerObject.storeCategoryOrders["old"] = listOf("x")
+            DataManagerObject.storeSubCategoryOrders["old"] = mapOf("c" to listOf("s"))
             fake = FirestoreFake(db, GROUP)
             installRemoteTree()
             setup()
             FirebaseManager.downloadData()
             assertEquals(emptyMap<String, List<String>>(), DataManagerObject.storeCategoryOrders)
+            assertEquals(emptyMap<String, Map<String, List<String>>>(), DataManagerObject.storeSubCategoryOrders)
         }
     }
 

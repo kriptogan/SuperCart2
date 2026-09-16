@@ -141,17 +141,21 @@ class FirebaseManagerUploadTest : FirebaseManagerTestBase() {
     }
 
     @Test
-    fun `uploadData merges the store category orders into a single document, even when empty`() = runTest {
+    fun `uploadData merges the store category and sub-category orders into a single document, even when empty`() = runTest {
         FirebaseManager.uploadData()
         val empty = fake.writes.single()
         assertEquals("storeCategoryOrders/orders", empty.path)
-        assertEquals(mapOf("orders" to emptyMap<String, Any>()), empty.data)
+        assertEquals(mapOf("orders" to emptyMap<String, Any>(), "subOrders" to emptyMap<String, Any>()), empty.data)
         assertEquals(SetOptions.merge(), empty.options)
 
         fake = FirestoreFake(db, GROUP)
         DataManagerObject.storeCategoryOrders["A"] = listOf("c2", "c1")
+        DataManagerObject.storeSubCategoryOrders["A"] = mapOf("c2" to listOf("s2", "s1"))
         FirebaseManager.uploadData()
-        assertEquals(mapOf("orders" to mapOf("A" to listOf("c2", "c1"))), fake.writes.single().data)
+        assertEquals(
+            mapOf("orders" to mapOf("A" to listOf("c2", "c1")), "subOrders" to mapOf("A" to mapOf("c2" to listOf("s2", "s1")))),
+            fake.writes.single().data,
+        )
         assertEquals(1, fake.commits)
     }
 

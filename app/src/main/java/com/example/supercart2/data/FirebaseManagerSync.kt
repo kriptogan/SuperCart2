@@ -6,6 +6,7 @@ import com.example.supercart2.models.Grocery
 import com.example.supercart2.models.Store
 import com.example.supercart2.models.SubCategory
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.WriteBatch
 
 /**
@@ -43,27 +44,36 @@ internal class FirebaseManagerDownload(
     private val subCategories: List<SubCategory>,
     private val groceries: List<Grocery>,
     private val stores: List<Store>,
-    private val storeCategoryOrders: Map<String, List<String>>,
+    ordersDocument: DocumentSnapshot?,
 ) {
+    private val storeCategoryOrders = FirebaseManagerMappers.documentToStoreCategoryOrders(ordersDocument)
+    private val storeSubCategoryOrders = FirebaseManagerMappers.documentToStoreSubCategoryOrders(ordersDocument)
+
     fun summary(): String = "${categories.size} categories, ${subCategories.size} subcategories, " +
-        "${groceries.size} groceries, ${stores.size} stores, ${storeCategoryOrders.size} store category orders"
+        "${groceries.size} groceries, ${stores.size} stores, ${storeCategoryOrders.size} store category orders, " +
+        "${storeSubCategoryOrders.size} store sub-category orders"
 
     fun hasValidRelationships(): Boolean = DataConverter.validateRelationships(categories, subCategories, groceries)
 
     /**
-     * Replaces categories, stores and store category orders. Like DataStoreManager.loadData, deleted stores
+     * Replaces categories, stores and the per-store orders. Like DataStoreManager.loadData, deleted stores
      * are dropped, and buildNestedStructure drops deleted categories, sub-categories and groceries.
      */
     fun replaceLocalData() {
         val nested = DataConverter.buildNestedStructure(categories, subCategories, groceries)
         DataManagerObject.categories.replaceWith(nested)
         DataManagerObject.stores.replaceWith(stores.filter { !it.deleted })
-        DataManagerObject.storeCategoryOrders.clear()
-        DataManagerObject.storeCategoryOrders.putAll(storeCategoryOrders)
+        DataManagerObject.storeCategoryOrders.replaceWith(storeCategoryOrders)
+        DataManagerObject.storeSubCategoryOrders.replaceWith(storeSubCategoryOrders)
     }
 
     private fun <T> MutableList<T>.replaceWith(newItems: List<T>) {
         clear()
         addAll(newItems)
+    }
+
+    private fun <K, V> MutableMap<K, V>.replaceWith(newEntries: Map<K, V>) {
+        clear()
+        putAll(newEntries)
     }
 }

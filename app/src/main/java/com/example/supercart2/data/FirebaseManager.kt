@@ -70,9 +70,11 @@ object FirebaseManager {
         )
     }
 
-    /** All store category orders live in one document, merged into what Firebase already has. */
+    /** All store category and sub-category orders live in one document, merged into what Firebase already has. */
     private fun queueStoreCategoryOrders(batch: WriteBatch, groupCode: String) {
-        val data = Mappers.storeCategoryOrdersToMap(DataManagerObject.storeCategoryOrders)
+        val data = Mappers.storeCategoryOrdersToMap(
+            DataManagerObject.storeCategoryOrders, DataManagerObject.storeSubCategoryOrders,
+        )
         batch.set(ordersDocument(groupCode), data, SetOptions.merge())
     }
 
@@ -89,11 +91,13 @@ object FirebaseManager {
         transferImages("download") { FirebaseStorageManager.batchDownloadImages(context) }
     }
 
-    private suspend fun fetchGroup(groupCode: String) = FirebaseManagerDownload(
-        categories = fetchAll(groupCode, Codecs.categories), subCategories = fetchAll(groupCode, Codecs.subCategories),
-        groceries = fetchAll(groupCode, Codecs.groceries), stores = fetchAll(groupCode, Codecs.stores),
-        storeCategoryOrders = Mappers.documentToStoreCategoryOrders(fetchOrdersDocument(groupCode)),
-    )
+    private suspend fun fetchGroup(groupCode: String): FirebaseManagerDownload {
+        val categories = fetchAll(groupCode, Codecs.categories)
+        val subCategories = fetchAll(groupCode, Codecs.subCategories)
+        val groceries = fetchAll(groupCode, Codecs.groceries)
+        val stores = fetchAll(groupCode, Codecs.stores)
+        return FirebaseManagerDownload(categories, subCategories, groceries, stores, fetchOrdersDocument(groupCode))
+    }
 
     private suspend fun <T> fetchAll(groupCode: String, codec: FirebaseManagerCodec<T>): List<T> =
         getGroupCollection(groupCode, codec.collection).get().await().documents.map(codec.fromDocument)
