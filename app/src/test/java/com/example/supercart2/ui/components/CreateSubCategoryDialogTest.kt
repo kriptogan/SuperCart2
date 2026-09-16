@@ -45,10 +45,10 @@ class CreateSubCategoryDialogTest {
     }
 
     @Test
-    fun `pinned - confirm passes the untrimmed name and does not dismiss`() {
+    fun `confirm passes the trimmed name and does not dismiss`() {
         compose.onNodeWithText("Sub-Category Name").performTextInput("  Milk ")
         compose.onNodeWithContentDescription("Create Sub-Category").assertIsEnabled().performClick()
-        assertEquals(listOf("created:  Milk "), events)
+        assertEquals(listOf("created:Milk"), events)
     }
 
     @Test

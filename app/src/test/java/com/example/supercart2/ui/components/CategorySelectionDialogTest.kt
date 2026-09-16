@@ -100,7 +100,7 @@ class CategorySelectionDialogTest {
         assertEquals(4, added.category.viewOrder)
         assertEquals(listOf("General"), added.subCategories.map { it.subCategory.name })
         assertTrue(added.subCategories.single().groceries.isEmpty())
-        assertEquals("pinned: adding does not bump version", versionBefore, DataManagerObject.version)
+        assertEquals(versionBefore + 1, DataManagerObject.version)
         compose.onNodeWithText("Category Name").assertDoesNotExist()
         compose.onNodeWithText("Dairy").assertIsDisplayed()
     }

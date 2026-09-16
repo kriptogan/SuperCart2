@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.example.supercart2.data.CategoryWithSubCategories
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.data.SubCategoryWithGroceries
@@ -62,10 +61,9 @@ private fun CreateCategoryForSelection(
     }
 }
 
-/** Appends the category with its single sub-category (no version bump) and saves in the background. */
+/** Adds the category with its single sub-category (bumping the version) and saves in the background. */
 private fun addCategoryAndSave(category: Category, general: SubCategory, scope: CoroutineScope) {
     val generalNode = SubCategoryWithGroceries(subCategory = general, groceries = mutableListOf())
-    val categoryNode = CategoryWithSubCategories(category = category, subCategories = mutableListOf(generalNode))
-    DataManagerObject.categories.add(categoryNode)
+    DataManagerObject.addCategory(category, listOf(generalNode))
     scope.launch { DataStoreManager.saveDataGlobally() }
 }

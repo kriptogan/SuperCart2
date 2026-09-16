@@ -65,13 +65,13 @@ class SubCategorySelectionDialogTest {
     }
 
     @Test
-    fun `pinned - lists all sub-categories in data order, including deleted ones`() {
+    fun `lists non-deleted sub-categories in data order`() {
         show()
         compose.onNodeWithText("Select Sub-Category").assertIsDisplayed()
         val zeta = compose.onNodeWithText("Zeta").fetchSemanticsNode().boundsInRoot.top
         val general = compose.onNodeWithText("General").fetchSemanticsNode().boundsInRoot.top
-        val dropped = compose.onNodeWithText("Dropped").fetchSemanticsNode().boundsInRoot.top
-        assertTrue(zeta < general && general < dropped)
+        assertTrue(zeta < general)
+        compose.onNodeWithText("Dropped").assertDoesNotExist()
         compose.onNodeWithContentDescription("Close").assertIsDisplayed()
         compose.onNodeWithContentDescription("New Sub-Category").assertIsDisplayed()
     }
@@ -108,20 +108,21 @@ class SubCategorySelectionDialogTest {
     }
 
     @Test
-    fun `created sub-category (untrimmed, unprotected) is added before the callback and shown`() {
+    fun `created sub-category (trimmed, unprotected) is added before the callback and shown`() {
         show()
         val versionBefore = DataManagerObject.version
         compose.onNodeWithContentDescription("New Sub-Category").performClick()
         compose.onNodeWithText("Sub-Category Name").performTextInput(" Milk ")
         compose.onNodeWithContentDescription("Create Sub-Category").performClick()
 
-        assertEquals(listOf("created: Milk /inData=true"), events)
+        assertEquals(listOf("created:Milk/inData=true"), events)
         val s = created.single()
         assertEquals("c1", s.categoryId)
         assertFalse(s.protected)
         assertEquals(s.uuid, DataManagerObject.categories[0].subCategories.last().subCategory.uuid)
         assertEquals(versionBefore + 1, DataManagerObject.version)
         compose.onNodeWithText("Sub-Category Name").assertDoesNotExist()
-        compose.onNodeWithText(" Milk ").assertIsDisplayed()
+        assertEquals("Milk", s.name)
+        compose.onNodeWithText("Milk").assertIsDisplayed()
     }
 }

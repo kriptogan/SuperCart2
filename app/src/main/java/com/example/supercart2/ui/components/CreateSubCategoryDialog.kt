@@ -19,14 +19,14 @@ import com.example.supercart2.ui.components.common.superCartTextFieldColors
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartShapes
 
-/** Asks for a sub-category name. Confirm passes the untrimmed name and leaves dismissing to the caller. */
+/** Asks for a sub-category name. Confirm passes the trimmed name and leaves dismissing to the caller. */
 @Composable
 fun CreateSubCategoryDialog(
     onDismiss: () -> Unit,
     onSubCategoryCreated: (String) -> Unit
 ) {
     var subCategoryName by remember { mutableStateOf("") }
-    val create: () -> Unit = { if (subCategoryName.isNotBlank()) onSubCategoryCreated(subCategoryName) }
+    val create: () -> Unit = { if (subCategoryName.isNotBlank()) onSubCategoryCreated(subCategoryName.trim()) }
     CreateSubCategoryAlert(subCategoryName, { subCategoryName = it }, onDismiss, create)
 }
 
