@@ -1,5 +1,6 @@
 package com.example.supercart2.data
 
+import android.os.Looper
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.example.supercart2.TestData
@@ -14,10 +15,12 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.io.File
 
@@ -26,6 +29,11 @@ import java.io.File
 class ImageManagerAndInitializerTest {
 
     private lateinit var context: Context
+
+    // Run Compose snapshot notifications still queued on the main looper before Robolectric discards them;
+    // a lost one leaves later Compose tests unable to go idle (AppNotIdleException).
+    @After
+    fun flushMainLooper() = shadowOf(Looper.getMainLooper()).idle()
 
     @Before
     fun setUp() {

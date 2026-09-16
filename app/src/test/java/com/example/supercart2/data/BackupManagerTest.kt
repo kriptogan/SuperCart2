@@ -1,5 +1,6 @@
 package com.example.supercart2.data
 
+import android.os.Looper
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.example.supercart2.TestData
@@ -16,12 +17,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.io.File
 import java.time.LocalDate
@@ -38,6 +41,11 @@ class BackupManagerTest {
 
     private lateinit var context: Context
     private val dm = DataManagerObject
+
+    // Run Compose snapshot notifications still queued on the main looper before Robolectric discards them;
+    // a lost one leaves later Compose tests unable to go idle (AppNotIdleException).
+    @After
+    fun flushMainLooper() = shadowOf(Looper.getMainLooper()).idle()
 
     @Before
     fun setUp() {
@@ -192,5 +200,52 @@ class BackupManagerTest {
         File(dir, "other_4.zip").writeText("")
 
         assertEquals(listOf(newer, older), BackupManager.listBackupFiles())
+    }
+
+    // ---------- extra characterization pins ----------
+
+    @Test
+    fun `restore keeps in-memory sub-category orders, saves globally and skips image directory entries`() = runTest {
+        installData()
+        val file = BackupManager.createBackup(context)!!
+        val withDir = File(tmp.root, "withdir.zip")
+        ZipOutputStream(withDir.outputStream()).use { out ->
+            ZipFile(file).use { zip ->
+                out.putNextEntry(ZipEntry("data.json"))
+                zip.getInputStream(zip.getEntry("data.json")).copyTo(out)
+                out.closeEntry()
+            }
+            out.putNextEntry(ZipEntry("images/"))
+            out.closeEntry()
+            out.putNextEntry(ZipEntry("other/y.jpg"))
+            out.write(byteArrayOf(5))
+            out.closeEntry()
+        }
+        TestData.reset()
+        dm.storeSubCategoryOrders["Z"] = mapOf("c" to listOf("s"))
+        DataStoreManager.setGlobalContext(context)
+
+        assertTrue(BackupManager.restoreFromBackup(context, withDir))
+
+        assertEquals(mapOf("Z" to mapOf("c" to listOf("s"))), dm.storeSubCategoryOrders)
+        assertNull(ImageManager.getLocalImageFile("y", context))
+        TestData.reset()
+        DataStoreManager.loadData(context) // restore was persisted through saveDataGlobally
+        assertEquals(listOf("c1"), dm.categories.map { it.category.uuid })
+    }
+
+    @Test
+    fun `createBackup skips images whose local file is missing`() = runTest {
+        installData() // no image files written
+        val file = BackupManager.createBackup(context)!!
+        ZipFile(file).use { zip -> assertEquals(listOf("data.json"), zip.entries().toList().map { it.name }) }
+    }
+
+    @Test
+    fun `non-zip extension is restored as legacy json`() = runTest {
+        installData()
+        val zip = BackupManager.createBackup(context)!!
+        val renamed = File(tmp.root, "backup.bak").apply { writeBytes(zip.readBytes()) }
+        assertFalse(BackupManager.restoreFromBackup(context, renamed))
     }
 }

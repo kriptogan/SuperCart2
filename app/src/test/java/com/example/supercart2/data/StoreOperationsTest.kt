@@ -12,6 +12,7 @@ import com.example.supercart2.TestData.subNode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -187,6 +188,45 @@ class StoreOperationsTest {
     fun `groupGroceriesByStore with nothing linked returns only the unlinked group or nothing`() {
         TestData.reset()
         assertEquals(emptyList<StoreWithCategoriesAlias>(), dm.groupGroceriesByStore(emptyList()))
+    }
+    // ---------- extra characterization pins ----------
+
+    @Test
+    fun `store helpers with unknown ids change nothing`() {
+        val v = dm.version
+        dm.updateStore("nope") { it.copy(name = "x") }
+        dm.swapStoreOrder("A", "nope")
+        assertEquals(v, dm.version)
+        assertEquals(listOf("B", "A"), dm.getSortedStores().map { it.uuid })
+    }
+
+    @Test
+    fun `unlinkStoreFromAllGroceries edits grocery lists in place and bumps version`() {
+        val node = dm.categories[0]
+        val list = node.subCategories[0].groceries
+        val v = dm.version
+        dm.unlinkStoreFromAllGroceries("A")
+        assertSame(node, dm.categories[0])
+        assertSame(list, dm.categories[0].subCategories[0].groceries)
+        assertTrue(dm.version > v)
+    }
+
+    @Test
+    fun `groupGroceriesByStore ignores per-store sub-category orders`() {
+        dm.setStoreSubCategoryOrders("A", mapOf("c2" to listOf("s4", "s3")))
+        dm.addGrocery(grocery("g7", "c2", "s3", listOf("A")))
+        val a = dm.groupGroceriesByStore(dm.getSortedCategories()).single { it.store?.uuid == "A" }
+        assertEquals(listOf("s3", "s4"), a.categories[1].subCategories.map { it.subCategory.uuid })
+    }
+
+    @Test
+    fun `unlinked group is sorted by viewOrder even for unsorted input, custom order ids are used once`() {
+        dm.updateGrocery("g5") { it.copy(storeIds = emptyList()) }
+        val input = dm.getSortedCategories().reversed()
+        assertEquals(listOf("c1", "c2"), dm.groupGroceriesByStore(input).last().categories.map { it.category.uuid })
+
+        dm.setStoreCategoryOrder("B", listOf("c2", "c2", "c1"))
+        assertEquals(listOf("c2", "c1", "c3"), dm.getSortedCategoriesForStore("B").map { it.category.uuid })
     }
 }
 

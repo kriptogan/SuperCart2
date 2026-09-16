@@ -1,5 +1,6 @@
 package com.example.supercart2.data
 
+import android.os.Looper
 import android.content.Context
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.test.core.app.ApplicationProvider
@@ -12,10 +13,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.util.UUID
 
@@ -25,6 +28,11 @@ import java.util.UUID
 class PreferencesManagersTest {
 
     private lateinit var context: Context
+
+    // Run Compose snapshot notifications still queued on the main looper before Robolectric discards them;
+    // a lost one leaves later Compose tests unable to go idle (AppNotIdleException).
+    @After
+    fun flushMainLooper() = shadowOf(Looper.getMainLooper()).idle()
 
     @Before
     fun setUp() = runTest {
@@ -131,5 +139,14 @@ class PreferencesManagersTest {
 
         LanguageManager.setLanguage(context, AppLanguage.ENGLISH)
         assertEquals(AppLanguage.ENGLISH, LanguageManager.getCurrentLanguage(context))
+    }
+
+    @Test
+    fun `Hebrew applyLanguage sets RTL layout direction and the default locale`() {
+        val localized = LanguageManager.applyLanguage(context, AppLanguage.HEBREW)
+        assertEquals(android.view.View.LAYOUT_DIRECTION_RTL, localized.resources.configuration.layoutDirection)
+        assertEquals(java.util.Locale("iw"), java.util.Locale.getDefault())
+        LanguageManager.applyLanguage(context, AppLanguage.ENGLISH)
+        assertEquals(android.view.View.LAYOUT_DIRECTION_LTR, context.resources.configuration.layoutDirection)
     }
 }

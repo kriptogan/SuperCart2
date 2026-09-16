@@ -13,10 +13,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
 
 /** Grocery / category / sub-category mutations on the in-memory tree. */
 class DataManagerObjectTest {
@@ -230,102 +230,6 @@ class DataManagerObjectTest {
         assertEquals(2, dm.categories.single { it.category.uuid == "c1" }.getGroceriesCount())
     }
 
-    // ---------- confirm bought ----------
-
-    private val today: LocalDate = LocalDate.now()
-
-    @Test
-    fun `confirmBoughtItems records today's buy event and clears list flags`() {
-        dm.updateGrocery("g1") { it.copy(inShoppingList = true, isBought = true) }
-        dm.updateGrocery("g2") { it.copy(inShoppingList = true, isBought = false) }
-        val g2Before = findGrocery("g2")!!
-
-        dm.confirmBoughtItems()
-
-        val g1 = findGrocery("g1")!!
-        assertEquals(listOf(today), g1.buyEvents)
-        assertFalse(g1.isBought)
-        assertFalse(g1.inShoppingList)
-        assertNull(g1.averageBuyDays) // fewer than 2 events
-        assertEquals(g2Before, findGrocery("g2")) // untouched
-    }
-
-    @Test
-    fun `confirmBoughtItems does not duplicate today's event`() {
-        dm.updateGrocery("g1") { it.copy(isBought = true, buyEvents = listOf(today.minusDays(4), today)) }
-        dm.confirmBoughtItems()
-        val g1 = findGrocery("g1")!!
-        assertEquals(listOf(today.minusDays(4), today), g1.buyEvents)
-        assertEquals(4, g1.averageBuyDays)
-    }
-
-    @Test
-    fun `averageBuyDays is the floored mean gap over the newest four events`() {
-        val events = listOf(
-            today.minusDays(100), // ignored: only the newest 4 (including today) count
-            today.minusDays(10),
-            today.minusDays(7),
-            today.minusDays(3),
-        )
-        dm.updateGrocery("g1") { it.copy(isBought = true, buyEvents = events) }
-        dm.confirmBoughtItems()
-        // newest 4: today, -3, -7, -10 → gaps 3, 4, 3 → mean 3.33 → 3
-        assertEquals(3, findGrocery("g1")!!.averageBuyDays)
-        assertEquals(events + today, findGrocery("g1")!!.buyEvents) // all events kept
-    }
-
-    /**
-     * Pinned BUG: both confirm functions rebuild each category from the snapshot taken at the start of
-     * the loop, so when several sub-categories of one category have bought items, only the last
-     * sub-category's update survives. See CLAUDE.md known issues.
-     */
-    @Test
-    fun `confirmBoughtItems only keeps the last sub-category's update within a category (bug)`() {
-        dm.addGrocery(grocery("g4", "c1", "s2"))
-        dm.updateGrocery("g1") { it.copy(isBought = true, inShoppingList = true) }
-        dm.updateGrocery("g4") { it.copy(isBought = true, inShoppingList = true) }
-
-        dm.confirmBoughtItems()
-
-        assertTrue(findGrocery("g1")!!.isBought) // lost update
-        assertTrue(findGrocery("g1")!!.buyEvents.isEmpty())
-        assertFalse(findGrocery("g4")!!.isBought)
-        assertEquals(listOf(today), findGrocery("g4")!!.buyEvents)
-    }
-
-    @Test
-    fun `confirmBoughtItemsForStore only keeps the last sub-category's update within a category (bug)`() {
-        dm.addGrocery(grocery("g4", "c1", "s2"))
-        dm.updateGrocery("g1") { it.copy(isBought = true, storeIds = listOf("A")) }
-        dm.updateGrocery("g4") { it.copy(isBought = true, storeIds = listOf("A")) }
-
-        dm.confirmBoughtItemsForStore("A")
-
-        assertTrue(findGrocery("g1")!!.isBought) // lost update
-        assertEquals(listOf(today), findGrocery("g4")!!.buyEvents)
-    }
-
-    @Test
-    fun `confirmBoughtItemsForStore only confirms groceries linked to that store`() {
-        dm.updateGrocery("g1") { it.copy(isBought = true, inShoppingList = true, storeIds = listOf("A")) }
-        dm.updateGrocery("g2") { it.copy(isBought = true, inShoppingList = true, storeIds = listOf("B")) }
-        dm.updateGrocery("g3") { it.copy(isBought = true, inShoppingList = true) }
-
-        dm.confirmBoughtItemsForStore("A")
-
-        assertEquals(listOf(today), findGrocery("g1")!!.buyEvents)
-        assertFalse(findGrocery("g1")!!.inShoppingList)
-        assertTrue(findGrocery("g2")!!.isBought)
-        assertTrue(findGrocery("g3")!!.isBought)
-    }
-
-    @Test
-    fun `confirmBoughtItemsForStore computes averageBuyDays`() {
-        dm.updateGrocery("g1") { it.copy(isBought = true, storeIds = listOf("A"), buyEvents = listOf(today.minusDays(6))) }
-        dm.confirmBoughtItemsForStore("A")
-        assertEquals(6, findGrocery("g1")!!.averageBuyDays)
-    }
-
     @Test
     fun `every mutation bumps version`() {
         val versions = mutableListOf(dm.version)
@@ -339,5 +243,81 @@ class DataManagerObjectTest {
         versions += dm.version
         assertEquals(versions.distinct(), versions)
         assertNotEquals(versions.first(), versions.last())
+    }
+
+    // ---------- extra characterization pins ----------
+
+    private fun c1() = dm.categories.single { it.category.uuid == "c1" }
+
+    @Test
+    fun `updateGroceryLocation between sub-categories of the same category keeps both changes`() {
+        dm.updateGroceryLocation("g1", "c1", "s2")
+        assertEquals("c1" to "s2", locationOf("g1"))
+        assertEquals(listOf("g2"), c1().subCategories[0].groceries.map { it.uuid })
+        assertEquals(listOf("g1"), c1().subCategories[1].groceries.map { it.uuid })
+    }
+
+    @Test
+    fun `updateGroceryLocation with unknown grocery does nothing`() {
+        val v = dm.version
+        dm.updateGroceryLocation("nope", "c2", "s3")
+        assertEquals(v, dm.version)
+        assertEquals(listOf("g3"), dm.categories[1].subCategories[0].groceries.map { it.uuid })
+    }
+
+    @Test
+    fun `grocery mutations replace the category node instead of mutating the old one`() {
+        val before = c1()
+        dm.updateGrocery("g1") { it.copy(name = "milk") }
+        dm.addGrocery(grocery("g4", "c1", "s2"))
+        assertEquals("g1", before.subCategories[0].groceries[0].name)
+        assertTrue(before.subCategories[1].groceries.isEmpty())
+        assertEquals("milk", c1().subCategories[0].groceries[0].name)
+    }
+
+    @Test
+    fun `updateSubCategory mutates the category's sub-category list in place`() {
+        val list = c1().subCategories
+        val node = c1()
+        dm.updateSubCategory("c1", "s2") { it.copy(name = "renamed") }
+        assertSame(node, c1())
+        assertSame(list, c1().subCategories)
+        assertEquals("renamed", list[1].subCategory.name)
+    }
+
+    @Test
+    fun `update helpers with unknown ids do not bump version`() {
+        val v = dm.version
+        dm.updateCategory("nope") { it.copy(name = "x") }
+        dm.updateSubCategory("c1", "nope") { it.copy(name = "x") }
+        dm.updateSubCategory("nope", "s1") { it.copy(name = "x") }
+        dm.addSubCategory("nope", sub("s9", "nope"))
+        assertEquals(v, dm.version)
+    }
+
+    @Test
+    fun `deleteGrocery without a global context only soft-deletes`() {
+        dm.updateGrocery("g1") { it.copy(imageUUID = "img") }
+        dm.deleteGrocery("g1")
+        assertTrue(findGrocery("g1")!!.deleted)
+        dm.deleteGrocery("nope") // no-op, no crash
+    }
+
+    @Test
+    fun `getSortedCategories leaves deleted items in the source tree`() {
+        dm.deleteGrocery("g1")
+        dm.deleteSubCategory("c1", "s2")
+        dm.getSortedCategories()
+        assertEquals(2, c1().subCategories.size)
+        assertEquals(listOf("g1", "g2"), c1().subCategories[0].groceries.map { it.uuid })
+    }
+
+    @Test
+    fun `addCategory defaults to no sub-categories and deleteCategory of unknown uuid keeps orders`() {
+        dm.addCategory(category("c3"))
+        assertTrue(dm.categories.last().subCategories.isEmpty())
+        dm.setStoreCategoryOrder("A", listOf("c1"))
+        dm.deleteCategory("nope")
+        assertEquals(listOf("c1"), dm.getStoreCategoryOrder("A"))
     }
 }

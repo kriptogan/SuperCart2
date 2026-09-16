@@ -1,5 +1,6 @@
 package com.example.supercart2.data
 
+import android.os.Looper
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.example.supercart2.TestData
@@ -9,15 +10,20 @@ import com.example.supercart2.TestData.node
 import com.example.supercart2.TestData.store
 import com.example.supercart2.TestData.sub
 import com.example.supercart2.TestData.subNode
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -28,6 +34,11 @@ class DataStoreManagerTest {
 
     private lateinit var context: Context
     private val dm = DataManagerObject
+
+    // Run Compose snapshot notifications still queued on the main looper before Robolectric discards them;
+    // a lost one leaves later Compose tests unable to go idle (AppNotIdleException).
+    @After
+    fun flushMainLooper() = shadowOf(Looper.getMainLooper()).idle()
 
     @Before
     fun setUp() = runTest {
@@ -157,5 +168,102 @@ class DataStoreManagerTest {
         DataStoreManager.saveData(context)
         assertEquals("abc", DataStoreManager.loadGroupCode(context))
         assertTrue(DataStoreManager.loadStoreViewMode(context))
+    }
+
+    // ---------- extra characterization pins ----------
+
+    /** The private `Context.dataStore` extension from DataStoreManager.kt, reached by reflection. */
+    @Suppress("UNCHECKED_CAST")
+    private fun rawStore(): androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences> =
+        Class.forName("com.example.supercart2.data.DataStoreManagerKt").declaredMethods
+            .first { it.name.contains("getDataStore") }
+            .apply { isAccessible = true }
+            .invoke(null, context) as androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences>
+
+    private suspend fun writeRaw(key: String, value: String) {
+        rawStore().edit { it[stringPreferencesKey(key)] = value }
+    }
+
+    private suspend fun readRaw(key: String): String? = rawStore().data.first()[stringPreferencesKey(key)]
+
+    @Test
+    fun `data is stored as JSON under the flat keys`() = runTest {
+        installRichData()
+        DataStoreManager.saveData(context)
+        assertTrue(readRaw("categories_flat")!!.contains("\"c2\"")) // deleted category persisted
+        assertTrue(readRaw("subcategories_flat")!!.contains("\"s3\""))
+        assertTrue(readRaw("groceries_flat")!!.contains("\"2024-02-29\""))
+        assertTrue(readRaw("stores_flat")!!.contains("\"B\""))
+        assertEquals("[\"A\"]", readRaw("hidden_stores"))
+        assertEquals("{\"A\":[\"c1\"]}", readRaw("store_category_orders"))
+        assertEquals("{\"A\":{\"c1\":[\"s1\"]}}", readRaw("store_subcategory_orders"))
+    }
+
+    @Test
+    fun `corrupt store orders fall back to empty while the rest loads`() = runTest {
+        installRichData()
+        DataStoreManager.saveData(context)
+        writeRaw("store_category_orders", "{broken")
+        writeRaw("store_subcategory_orders", "[1,2]")
+
+        TestData.reset()
+        DataStoreManager.loadData(context)
+
+        assertEquals(listOf("c1"), dm.categories.map { it.category.uuid })
+        assertEquals(listOf("A"), dm.hiddenStoreIds.toList())
+        assertTrue(dm.storeCategoryOrders.isEmpty())
+        assertTrue(dm.storeSubCategoryOrders.isEmpty())
+    }
+
+    @Test
+    fun `corrupt main data falls back to defaults`() = runTest {
+        installRichData()
+        DataStoreManager.saveData(context)
+        writeRaw("groceries_flat", "{not a list")
+
+        TestData.reset()
+        DataStoreManager.loadData(context)
+
+        assertEquals(listOf("Other", "Vegetables", "Fruits"), dm.categories.map { it.category.name })
+        assertTrue(dm.stores.isEmpty())
+    }
+
+    @Test
+    fun `invalid relationships leave stores, hidden ids and orders untouched`() = runTest {
+        dm.categories.add(node(category("c2"), subNode(sub("s2", "not-c2"))))
+        dm.stores.add(store("S"))
+        DataStoreManager.saveData(context)
+        TestData.reset()
+        dm.stores.add(store("memory"))
+
+        DataStoreManager.loadData(context)
+
+        assertEquals(listOf("memory"), dm.stores.map { it.uuid })
+    }
+
+    @Test
+    fun `view mode is stored as STORE or CATEGORY and anything else reads as category view`() = runTest {
+        DataStoreManager.saveStoreViewMode(context, true)
+        assertEquals("STORE", readRaw("store_view_mode"))
+        DataStoreManager.saveStoreViewMode(context, false)
+        assertEquals("CATEGORY", readRaw("store_view_mode"))
+        writeRaw("store_view_mode", "store")
+        assertFalse(DataStoreManager.loadStoreViewMode(context))
+    }
+
+    @Test
+    fun `load replaces existing in-memory data`() = runTest {
+        dm.categories.add(node(category("c1"), subNode(sub("s1", "c1"))))
+        dm.storeCategoryOrders["A"] = listOf("c1")
+        DataStoreManager.saveData(context)
+        dm.categories.add(node(category("extra")))
+        dm.hiddenStoreIds.add("X")
+        dm.storeCategoryOrders["B"] = listOf("x")
+
+        DataStoreManager.loadData(context)
+
+        assertEquals(listOf("c1"), dm.categories.map { it.category.uuid })
+        assertTrue(dm.hiddenStoreIds.isEmpty())
+        assertEquals(mapOf("A" to listOf("c1")), dm.storeCategoryOrders)
     }
 }
