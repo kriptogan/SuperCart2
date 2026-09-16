@@ -187,7 +187,7 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `pinned - filter stays active when the last alert disappears, falling back to the full tree`() {
+    fun `filter turns off when the last alert disappears and does not re-apply on a new alert`() {
         makeG3Alert()
         launch()
         compose.onNodeWithContentDescription("Alerts").performClick()
@@ -196,11 +196,12 @@ class HomeScreenTest {
         compose.onNodeWithContentDescription("Alerts").assertDoesNotExist()
         assertShown("c1", "c2")
         compose.onNodeWithContentDescription("Collapse All").performClick()
-        compose.onNodeWithContentDescription("Collapse All").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Expand All").assertIsDisplayed()
 
         DataManagerObject.updateGrocery("g1") { it.copy(expirationDate = LocalDate.now()) }
         compose.waitForIdle()
-        assertShown("c1", "g1")
-        assertAbsent("c2")
+        compose.onNodeWithContentDescription("Alerts").assertIsDisplayed()
+        assertShown("c1", "c2")
+        assertAbsent("g1")
     }
 }

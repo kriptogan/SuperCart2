@@ -54,8 +54,9 @@ fun HomeScreen(onNavigateToStoreEdit: (String) -> Unit = {}) {
 
 @Composable
 private fun HomeScreenEffects(state: HomeScreenState, showAlerts: Boolean) {
-    // Disable the alert filter when alerts are turned off
-    LaunchedEffect(showAlerts) { if (!showAlerts && state.isAlertFilterActive) state.isAlertFilterActive = false }
+    // Disable the alert filter when alerts are turned off or the last alert item disappears
+    val hasAlertItems = state.hasAlertItems(showAlerts)
+    LaunchedEffect(hasAlertItems) { if (!hasAlertItems && state.isAlertFilterActive) state.isAlertFilterActive = false }
     // An active search expands everything; clearing it collapses everything
     val searchQuery = state.searchQuery
     LaunchedEffect(searchQuery) { state.isAllExpanded = searchQuery.isNotBlank() }
