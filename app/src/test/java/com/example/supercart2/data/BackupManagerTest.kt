@@ -90,6 +90,7 @@ class BackupManagerTest {
             val json = zip.getInputStream(zip.getEntry("data.json")).readBytes().toString(Charsets.UTF_8)
             assertTrue(json.contains("\"g2\"")) // deleted groceries are kept in data
             assertTrue(json.contains("\"expirationDate\": \"2024-06-01\""))
+            assertTrue(json.contains("\"storeSubCategoryOrders\""))
         }
         assertEquals(listOf(file), BackupManager.listBackupFiles())
     }
@@ -115,14 +116,14 @@ class BackupManagerTest {
         assertTrue(dm.stores.single().lastUpdate.isAfter(OLD))
         assertEquals(listOf("A"), dm.hiddenStoreIds.toList())
         assertEquals(mapOf("A" to listOf("c1")), dm.storeCategoryOrders)
-        // Pinned: sub-category orders are not part of backups
-        assertTrue(dm.storeSubCategoryOrders.isEmpty())
+        assertEquals(mapOf("A" to mapOf("c1" to listOf("s1"))), dm.storeSubCategoryOrders)
         assertTrue(dm.version > v)
         assertEquals(listOf<Byte>(1, 2, 3), ImageManager.getLocalImageFile("img1", context)!!.readBytes().toList())
     }
 
     @Test
     fun `restore accepts legacy json files`() = runTest {
+        dm.storeSubCategoryOrders["Z"] = mapOf("c" to listOf("s"))
         val json = File(tmp.root, "supercart_backup_1.json")
         json.writeText(
             """
@@ -145,21 +146,23 @@ class BackupManagerTest {
         assertNull(g.expirationDate)
         assertFalse(g.inShoppingList)
         assertTrue(g.lastUpdate.isAfter(OLD)) // unparseable date tolerated, then re-stamped
+        assertTrue(dm.storeSubCategoryOrders.isEmpty()) // backup without sub-category orders
     }
 
     @Test
-    fun `restore fails when a grocery lacks non-null list fields`() = runTest {
-        // Pinned: Gson bypasses Kotlin defaults, leaving storeIds/buyEvents null; the re-stamping
-        // copy() then throws on the non-null parameter and the whole restore is rejected.
+    fun `restore accepts groceries and stores lacking list and address fields`() = runTest {
         val json = File(tmp.root, "old.json")
         json.writeText(
             """{"categories":[{"uuid":"c1","name":"Cat","lastUpdate":"2020-01-01T00:00:00"}],
                "subCategories":[{"uuid":"s1","categoryId":"c1","name":"Sub","lastUpdate":"2020-01-01T00:00:00"}],
                "groceries":[{"uuid":"g1","name":"Milk","categoryId":"c1","subCategoryId":"s1","lastUpdate":"2020-01-01T00:00:00"}],
-               "stores":[],"hiddenStoreIds":[],"storeCategoryOrders":{}}"""
+               "stores":[{"uuid":"A","name":"Shop"}],"hiddenStoreIds":[],"storeCategoryOrders":{}}"""
         )
-        assertFalse(BackupManager.restoreFromBackup(context, json))
-        assertTrue(dm.categories.isEmpty())
+        assertTrue(BackupManager.restoreFromBackup(context, json))
+        val g = dm.categories.single().subCategories.single().groceries.single()
+        assertEquals(emptyList<String>(), g.storeIds)
+        assertEquals(emptyList<LocalDate>(), g.buyEvents)
+        assertEquals("", dm.stores.single().address)
     }
 
     @Test
@@ -172,6 +175,27 @@ class BackupManagerTest {
         )
         assertFalse(BackupManager.restoreFromBackup(context, json))
         assertEquals(listOf("c1"), dm.categories.map { it.category.uuid })
+        assertCurrentStoresAndOrdersUntouched()
+    }
+
+    private fun assertCurrentStoresAndOrdersUntouched() {
+        assertEquals(listOf("A", "B"), dm.stores.map { it.uuid })
+        assertEquals(listOf("A"), dm.hiddenStoreIds.toList())
+        assertEquals(mapOf("A" to listOf("c1")), dm.storeCategoryOrders)
+        assertEquals(mapOf("A" to mapOf("c1" to listOf("s1"))), dm.storeSubCategoryOrders)
+    }
+
+    @Test
+    fun `restore with an entity missing a required field fails without touching current data`() = runTest {
+        installData()
+        val json = File(tmp.root, "noname.json")
+        json.writeText(
+            """{"categories":[{"uuid":"n1","name":"New"}],"subCategories":[],
+               "groceries":[],"stores":[{"uuid":"S"}],"hiddenStoreIds":null,"storeCategoryOrders":{}}"""
+        )
+        assertFalse(BackupManager.restoreFromBackup(context, json))
+        assertEquals(listOf("c1"), dm.categories.map { it.category.uuid })
+        assertCurrentStoresAndOrdersUntouched()
     }
 
     @Test
@@ -205,7 +229,7 @@ class BackupManagerTest {
     // ---------- extra characterization pins ----------
 
     @Test
-    fun `restore keeps in-memory sub-category orders, saves globally and skips image directory entries`() = runTest {
+    fun `restore replaces sub-category orders from the backup, saves globally and skips image directories`() = runTest {
         installData()
         val file = BackupManager.createBackup(context)!!
         val withDir = File(tmp.root, "withdir.zip")
@@ -227,11 +251,12 @@ class BackupManagerTest {
 
         assertTrue(BackupManager.restoreFromBackup(context, withDir))
 
-        assertEquals(mapOf("Z" to mapOf("c" to listOf("s"))), dm.storeSubCategoryOrders)
+        assertEquals(mapOf("A" to mapOf("c1" to listOf("s1"))), dm.storeSubCategoryOrders)
         assertNull(ImageManager.getLocalImageFile("y", context))
         TestData.reset()
         DataStoreManager.loadData(context) // restore was persisted through saveDataGlobally
         assertEquals(listOf("c1"), dm.categories.map { it.category.uuid })
+        assertEquals(mapOf("A" to mapOf("c1" to listOf("s1"))), dm.storeSubCategoryOrders)
     }
 
     @Test
@@ -250,17 +275,18 @@ class BackupManagerTest {
     }
 
     @Test
-    fun `restore of json without hiddenStoreIds fails half-way after replacing categories (pinned)`() = runTest {
+    fun `restore of json without hiddenStoreIds or store orders replaces everything with empty values`() = runTest {
         installData()
         val json = File(tmp.root, "partial.json")
         json.writeText(
             """{"categories":[{"uuid":"n1","name":"New","lastUpdate":"2020-01-01T00:00:00"}],
-               "subCategories":[],"groceries":[],"stores":[],"storeCategoryOrders":{}}"""
+               "subCategories":[],"groceries":[],"stores":[]}"""
         )
-        assertFalse(BackupManager.restoreFromBackup(context, json))
+        assertTrue(BackupManager.restoreFromBackup(context, json))
         assertEquals(listOf("n1"), dm.categories.map { it.category.uuid })
         assertTrue(dm.stores.isEmpty())
-        assertTrue(dm.hiddenStoreIds.isEmpty()) // cleared before the null list failed
-        assertEquals(mapOf("A" to listOf("c1")), dm.storeCategoryOrders) // never reached
+        assertTrue(dm.hiddenStoreIds.isEmpty())
+        assertTrue(dm.storeCategoryOrders.isEmpty())
+        assertTrue(dm.storeSubCategoryOrders.isEmpty())
     }
 }

@@ -38,6 +38,7 @@ object BackupManager {
         val stores: List<Store>,
         val hiddenStoreIds: List<String>,
         val storeCategoryOrders: Map<String, List<String>>,
+        val storeSubCategoryOrders: Map<String, Map<String, List<String>>> = emptyMap(),
         val backupDate: String = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     )
 
@@ -65,13 +66,13 @@ object BackupManager {
         return File(downloadsDir, "$BACKUP_FILENAME_PREFIX${System.currentTimeMillis()}$BACKUP_FILE_EXTENSION")
     }
 
-    // All in-memory data, including deleted items (sub-category orders are not part of backups)
+    // All in-memory data, including deleted items
     private fun currentBackupData(): BackupData {
-        val (categories, subCategories, groceries) =
-            DataConverter.flattenCategories(DataManagerObject.categories, includeDeleted = true)
+        val dm = DataManagerObject
+        val (categories, subCategories, groceries) = DataConverter.flattenCategories(dm.categories, includeDeleted = true)
         return BackupData(
-            categories, subCategories, groceries, DataManagerObject.stores.toList(),
-            DataManagerObject.hiddenStoreIds.toList(), DataManagerObject.storeCategoryOrders.toMap(),
+            categories, subCategories, groceries, dm.stores.toList(), dm.hiddenStoreIds.toList(),
+            dm.storeCategoryOrders.toMap(), dm.storeSubCategoryOrders.toMap(),
         )
     }
 
@@ -134,38 +135,43 @@ object BackupManager {
     /**
      * Validates and applies a BackupData snapshot to DataManagerObject + DataStore.
      * Shared by both restore paths. Every lastUpdate is re-stamped so the restore wins the next upload.
+     * Atomic: everything is normalized and validated before any in-memory data is replaced.
      */
     @Suppress("UNUSED_PARAMETER")
     private suspend fun applyBackupData(context: Context, backupData: BackupData) {
-        val data = RestampedData(backupData, LocalDateTime.now())
+        val data = RestoredData(backupData, LocalDateTime.now())
         requireValidRelationships(data)
-        DataManagerObject.replaceCategoriesAndStores(data.categories, data.subCategories, data.groceries, data.stores)
-        replaceHiddenStoresAndOrders(backupData)
+        data.replaceInMemory()
         DataStoreManager.saveDataGlobally()
         DataManagerObject.updateData()
     }
 
-    private fun requireValidRelationships(data: RestampedData) =
+    private fun requireValidRelationships(data: RestoredData) =
         require(DataConverter.validateRelationships(data.categories, data.subCategories, data.groceries)) {
             "Invalid data relationships in backup file"
         }
 
-    // Sub-category orders are not part of backups and stay untouched. Values are not null-checked up front:
-    // Gson may leave them null, which fails half-way (as before), after the lists were cleared.
-    private fun replaceHiddenStoresAndOrders(backupData: BackupData) {
-        DataManagerObject.hiddenStoreIds.clear()
-        DataManagerObject.hiddenStoreIds.addAll(backupData.hiddenStoreIds)
-        DataManagerObject.storeCategoryOrders.clear()
-        DataManagerObject.storeCategoryOrders.putAll(backupData.storeCategoryOrders)
+    /**
+     * The backup normalized (Gson leaves missing fields null) with every lastUpdate set to [now].
+     * Construction throws when the category lists or a required entity field are missing.
+     * Missing stores, hidden store ids and per-store orders become empty (older backups lack some of them).
+     */
+    private class RestoredData(backupData: BackupData, now: LocalDateTime) {
+        val categories = backupData.categories.required("categories").map { it.normalized().copy(lastUpdate = now) }
+        val subCategories = backupData.subCategories.required("subCategories").map { it.normalized().copy(lastUpdate = now) }
+        val groceries = backupData.groceries.required("groceries").map { it.normalized().copy(lastUpdate = now) }
+        val stores = backupData.stores.orEmpty().map { it.normalized().copy(lastUpdate = now) }
+        val hiddenStoreIds = backupData.hiddenStoreIds.orEmpty()
+        val storeCategoryOrders = backupData.storeCategoryOrders.orEmpty()
+        val storeSubCategoryOrders = backupData.storeSubCategoryOrders.orEmpty()
+
+        fun replaceInMemory() {
+            DataManagerObject.replaceCategoriesAndStores(categories, subCategories, groceries, stores)
+            replaceOrders(hiddenStoreIds, storeCategoryOrders, storeSubCategoryOrders)
+        }
     }
 
-    /** The backup lists with every lastUpdate set to [now] (BackupData.copy is avoided: Gson may leave fields null). */
-    private class RestampedData(backupData: BackupData, now: LocalDateTime) {
-        val categories = backupData.categories.map { it.copy(lastUpdate = now) }
-        val subCategories = backupData.subCategories.map { it.copy(lastUpdate = now) }
-        val groceries = backupData.groceries.map { it.copy(lastUpdate = now) }
-        val stores = backupData.stores.map { it.copy(lastUpdate = now) }
-    }
+    private fun <T> List<T>?.required(name: String): List<T> = this ?: throw IllegalArgumentException("Backup has no $name")
 
     // ─────────────────────────────────────────────────────────────────────────
     // Helpers

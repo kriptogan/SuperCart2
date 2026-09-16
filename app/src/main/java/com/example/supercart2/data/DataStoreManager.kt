@@ -19,16 +19,24 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 private typealias CategoryOrders = Map<String, List<String>>
 private typealias SubCategoryOrders = Map<String, Map<String, List<String>>>
 
-/** Everything read by loadData, fully parsed before any in-memory state is replaced. */
+/**
+ * Everything read by loadData, fully parsed before any in-memory state is replaced.
+ * Entities are normalized: fields missing from older saves get their defaults instead of null.
+ */
 private class StoredData(
-    val categories: List<Category>,
-    val subCategories: List<SubCategory>,
-    val groceries: List<Grocery>,
-    val stores: List<Store>,
+    categories: List<Category>,
+    subCategories: List<SubCategory>,
+    groceries: List<Grocery>,
+    stores: List<Store>,
     val hiddenStoreIds: List<String>,
     val storeCategoryOrders: CategoryOrders,
     val storeSubCategoryOrders: SubCategoryOrders,
-)
+) {
+    val categories = categories.map { it.normalized() }
+    val subCategories = subCategories.map { it.normalized() }
+    val groceries = groceries.map { it.normalized() }
+    val stores = stores.map { it.normalized() }
+}
 
 object DataStoreManager {
     private val CATEGORIES_KEY = stringPreferencesKey("categories_flat")
@@ -174,8 +182,8 @@ internal fun DataManagerObject.replaceCategoriesAndStores(
     this.stores.replaceWith(stores.filter { !it.deleted })
 }
 
-/** Replaces hidden store ids and per-store orders in memory. */
-private fun replaceOrders(
+/** Replaces hidden store ids and per-store orders in memory. Shared by loadData and BackupManager restore. */
+internal fun replaceOrders(
     hiddenStoreIds: List<String>,
     categoryOrders: Map<String, List<String>>,
     subCategoryOrders: Map<String, Map<String, List<String>>>,

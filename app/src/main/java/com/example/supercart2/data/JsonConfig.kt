@@ -1,5 +1,9 @@
 package com.example.supercart2.data
 
+import com.example.supercart2.models.Category
+import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Store
+import com.example.supercart2.models.SubCategory
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
@@ -20,7 +24,27 @@ internal fun gsonBuilder(): GsonBuilder = GsonBuilder()
     .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter)
     .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter)
 
-private object LocalDateAdapter : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
+// Gson bypasses Kotlin defaults: properties missing from the JSON are null even when declared non-null.
+// The normalized() copies below restore the defaults after deserializing. A missing required field
+// (e.g. uuid or name) still makes copy() throw, which callers treat as invalid data.
+
+@Suppress("USELESS_ELVIS")
+internal fun Category.normalized(): Category = copy(lastUpdate = lastUpdate ?: LocalDateTime.now())
+
+@Suppress("USELESS_ELVIS")
+internal fun SubCategory.normalized(): SubCategory = copy(lastUpdate = lastUpdate ?: LocalDateTime.now())
+
+@Suppress("USELESS_ELVIS")
+internal fun Grocery.normalized(): Grocery = copy(
+    storeIds = storeIds ?: emptyList(),
+    buyEvents = buyEvents ?: emptyList(),
+    lastUpdate = lastUpdate ?: LocalDateTime.now(),
+)
+
+@Suppress("USELESS_ELVIS")
+internal fun Store.normalized(): Store = copy(address = address ?: "", lastUpdate = lastUpdate ?: LocalDateTime.now())
+
+private object LocalDateAdapter: JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     override fun serialize(src: LocalDate?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement =
