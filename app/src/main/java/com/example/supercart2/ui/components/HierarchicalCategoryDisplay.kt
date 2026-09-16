@@ -244,7 +244,7 @@ private fun SubCategoryGroceries(groceries: List<Grocery>, options: Hierarchical
 
 @Composable
 private fun GroceryWithGap(grocery: Grocery, options: HierarchicalCategoryDisplayOptions) {
-    HierarchicalCategoryDisplayGroceryItem(grocery, onEdit = { options.onEditGrocery(grocery) }, options = options)
+    HierarchicalCategoryDisplayGroceryItem(grocery, options = options)
     Spacer(modifier = Modifier.height(4.dp))
 }
 
