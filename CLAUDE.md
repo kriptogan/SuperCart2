@@ -34,15 +34,24 @@ export JAVA_HOME="/d/Android/Android Studio/jbr"
 ./gradlew assembleDebug
 ```
 
+```bash
+bash tools/check-size-rules.sh               # size rules from .claude/coding-rules.md (must print OK)
+```
+
+- ~490 unit tests, full run ≈ 4 min. Every test class runs in its own JVM (`forkEvery = 1` in
+  `app/build.gradle.kts`): the app state lives in process-wide singletons that otherwise leak between classes and
+  make Compose tests hang with `AppNotIdleException`. Don't remove it.
 - `testOptions.unitTests.isReturnDefaultValues = true`, so `android.util.Log` is a no-op in plain JVM tests.
-- Tests touching `Context`/DataStore/files use Robolectric (`@RunWith(RobolectricTestRunner::class)`, `@Config(sdk = [34])`).
-- `DataManagerObject` is a global singleton: every test must reset it (see `TestData.reset()` in `app/src/test`).
-- Anything that touches `FirebaseManager` initialises `FirebaseFirestore.getInstance()` in the object
-  initialiser and cannot run in unit tests. `FirebaseStorageManager` likewise. They are untested.
-- `app/src/androidTest` only contains the template test; there are no Compose UI tests.
-- DataStore must stay ≥ 1.1: 1.0.0 cannot overwrite its file on Windows, which breaks Robolectric tests there.
-- Tests marked "Pinned" assert current behaviour that looks like a bug (see Known issues). If you fix the bug,
-  update the test in the same change, deliberately.
+- Robolectric: `@RunWith(RobolectricTestRunner::class)`, `@Config(sdk = [34])`. Compose UI tests use
+  `createComposeRule()` and English strings; tall screens/dialogs need `qualifiers = "h1200dp"` (a width qualifier
+  hangs). Reset state with `TestData.reset()` in `@Before`.
+- Firebase: mock `FirebaseFirestore.getInstance()` with `mockkStatic` **before** `FirebaseManager` is first touched,
+  then stub with `mockkObject`; see `data/FirebaseManagerFakes.kt`.
+- Windows quirks: DataStore must stay ≥ 1.1 (1.0.0 can't overwrite its file); `FileProvider.getUriForFile` needs
+  stubbing; Coil may keep image files open, so don't assert deletion right after display.
+- `app/src/androidTest` only contains the template test (all UI tests run on the JVM via Robolectric).
+- Tests marked "Pinned" or "(bug)" assert current behaviour that looks like a bug (see Known issues). If you fix
+  the bug, update the test in the same change, deliberately.
 
 ## Architecture
 
@@ -106,34 +115,43 @@ BurgerMenu / group dialogs ─► FirebaseManager.uploadData()/downloadData(), G
 - "Alert" = expiration date ≤ tomorrow, or days since last buy ≥ `averageBuyDays` → use `Grocery.hasAlert()`
   (`models/GroceryAlerts.kt`).
 - To filter the category tree by a grocery predicate use `List<CategoryWithSubCategories>.filterGroceries { }`
-  (drops emptied sub-categories/categories). Several screens still hand-roll this (ShoppingListScreen,
-  StoresScreen, HomeScreen search) — see "Simplification backlog".
+  (drops emptied sub-categories/categories).
 - Gson for persistence/backups comes from `gsonBuilder()` in `data/JsonConfig.kt`.
-
-## Simplification backlog (UI code has no tests — cover it before changing behaviour)
-- Hand-rolled tree filters: `ShoppingListScreen` to-buy/bought, `StoresScreen` per-store to-buy/bought,
-  `HomeScreen.filterAndExpandData` (returns `mutableStateListOf` lists, so check before swapping in `filterGroceries`).
-- `onGroceryCreated` handlers duplicated across HomeScreen / ShoppingListScreen / StoresScreen, and the
-  dialog already saves; HomeScreen rebuilds nested lists by hand instead of `updateGrocery`/`updateGroceryLocation`.
-- Duplicated composables: search + expand/collapse card (4×), finish-shopping confirmation (2×), bought-grocery
-  card (2×), top bar with burger menu (2×), Create*/Edit* dialog button rows, up/down reorder lambdas.
-- `EditCategoryDialog` ignores its `onCategoryUpdated`/`onSubCategory*` callbacks; `HomeScreen.dataRefreshTrigger`
-  and `BottomNavigationBar.selectedItem` are written but never read.
-- `FirebaseManager` entity ⇄ Firestore map conversion could become pure functions (would make sync testable).
+- Shared dialog pieces (title, text-field colors, cancel/confirm buttons) live in `ui/components/common/DialogKit.kt`.
+- Large files are split by concern with the source name as prefix (e.g. `StoresScreenStoreDetail.kt`,
+  `DataManagerObjectStores.kt`, `FirebaseManagerMappers.kt`); screens keep UI state in `*State.kt` holders.
 - Strings in `res/values{,-iw,-ru,-bg}/strings.xml`; keep all four in sync.
 - Theming: `ui/theme` (`SuperCartColors`, palettes selectable in Settings).
+
+## Simplification backlog
+- `onGroceryCreated` handlers in HomeScreen / ShoppingListScreen / StoresScreen are dead code:
+  `GroceryCreationDialog` saves by itself and never calls the callback.
+- Duplicated composables across screens: search + expand/collapse row, finish-shopping confirmation,
+  bought-grocery card, top bar with burger menu.
+- `EditCategoryDialog` ignores its `onCategoryUpdated`/`onSubCategory*` callbacks; `BottomNavigationBar.selectedItem`
+  is written but never read; `searchQuery` is accepted but unused by the category/store display composables.
 
 ## Known issues (found during onboarding, intentionally not fixed yet)
 - **`confirmBoughtItems` / `confirmBoughtItemsForStore` lose updates**: when several sub-categories of the same
   category contain bought items, only the last one is confirmed (each write rebuilds the category from a stale
-  snapshot). Pinned by "(bug)" tests in `DataManagerObjectTest`.
-- `Store.address` is not written to or read from Firestore (`storeToMap` / `documentToStore`) → lost on sync.
-- `storeSubCategoryOrders` is neither in backups nor synced to Firebase.
+  snapshot). Pinned by "(bug)" tests in `DataManagerObjectConfirmBoughtTest`.
+- **Date picker saves the previous day** east of UTC (e.g. Israel) in `GroceryCreationDialog`.
+- **Category rename in `EditCategoryDialog` is not persisted** (no `saveDataGlobally()`), lost on restart.
+- **Sync:** `Store.address` is not written to or read from Firestore → lost on sync. `storeSubCategoryOrders` is
+  neither in backups nor synced. One malformed Firestore document makes `uploadData` throw before writing.
+  `downloadData` drops deleted categories/sub-categories/groceries from memory but keeps deleted stores.
 - `updateGroceryLocation` and `unlinkStoreFromAllGroceries` don't bump `lastUpdate`, so those changes can be
   skipped by upload conflict resolution.
-- `downloadData` keeps deleted stores in memory, while `loadData`/restore drop them (display filters them anyway).
-- Gson ignores Kotlin default values: JSON missing a field (older saves) yields `null` in non-null properties.
-  A backup whose groceries lack `storeIds`/`buyEvents` is rejected entirely by restore (the re-stamping
-  `copy()` throws). Pinned in `BackupManagerTest`.
-- Grocery saves run 2–3 times per edit (dialog saves, then parent's `onGroceryCreated` saves again).
-- Legacy file backups use `Environment.getExternalStoragePublicDirectory` (deprecated; scoped storage).
+- **Backups:** Gson ignores Kotlin default values, so JSON missing a field (older saves) yields `null` in non-null
+  properties. A backup whose groceries lack `storeIds`/`buyEvents` is rejected by restore; one without
+  `hiddenStoreIds` fails half-way (data partly replaced). Legacy file backups use the deprecated
+  `Environment.getExternalStoragePublicDirectory`.
+- **Deleted items leak into UI:** the sub-category picker and `EditCategoryDialog` list deleted sub-categories;
+  choosing a category can pre-select a deleted sub-category; import treats deleted groceries as existing (and can
+  put new ones into a deleted "Other"); the store list counts groceries of deleted categories.
+- **Images:** a failed compression still deletes the old photo while the grocery keeps its `imageUUID`.
+- **Store screens:** hidden stores still appear in the store picker; the per-store reorder dialog hides
+  sub-categories missing from a saved custom order and says "No stores yet" when there are no categories.
+- **UI text:** "left group" toast shows "Group Code"; backup success message is colored as an error; several
+  strings are hard-coded English (Settings labels, selection dialogs, group errors, some button descriptions),
+  and 21 string keys have no iw/ru/bg translation.
