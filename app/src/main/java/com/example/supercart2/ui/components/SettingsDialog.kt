@@ -142,19 +142,18 @@ private fun SettingsDialogAlertsSwitch(checked: Boolean, onCheckedChange: (Boole
 @Composable
 private fun SettingsDialogBackupSection(state: SettingsDialogState) {
     SettingsDialogSection("Backup & Restore") {
-        state.showBackupMessage?.let { SettingsDialogStatusMessage(it) }
-        state.showRestoreMessage?.let { SettingsDialogStatusMessage(it) }
+        state.backupStatus?.let { SettingsDialogStatusMessage(it) }
+        state.restoreStatus?.let { SettingsDialogStatusMessage(it) }
         SettingsDialogBackupButtons(onBackup = state::createBackup, onRestore = { state.showRestoreDialog = true })
     }
 }
 
-/** Green when the message mentions "success", error color otherwise. */
+/** Green for a successful operation, error color otherwise. */
 @Composable
-private fun SettingsDialogStatusMessage(message: String) {
-    val success = message.contains("success", ignoreCase = true)
-    val color = if (success) SuperCartColors.primaryGreen else MaterialTheme.colorScheme.error
+private fun SettingsDialogStatusMessage(status: SettingsDialogStatus) {
+    val color = if (status.success) SuperCartColors.primaryGreen else MaterialTheme.colorScheme.error
     val modifier = Modifier.padding(bottom = SuperCartSpacing.xs)
-    Text(text = message, style = MaterialTheme.typography.bodySmall, color = color, modifier = modifier)
+    Text(text = status.text, style = MaterialTheme.typography.bodySmall, color = color, modifier = modifier)
 }
 
 @Composable
@@ -179,8 +178,5 @@ private fun RowScope.SettingsDialogHalfButton(
 
 @Composable
 private fun SettingsDialogRestorePicker(state: SettingsDialogState) {
-    BackupRestoreDialog(
-        onDismiss = { state.showRestoreDialog = false },
-        onRestoreComplete = { _, message -> state.showRestoreMessage = message; state.showRestoreDialog = false },
-    )
+    BackupRestoreDialog(onDismiss = { state.showRestoreDialog = false }, onRestoreComplete = state::onRestoreComplete)
 }
