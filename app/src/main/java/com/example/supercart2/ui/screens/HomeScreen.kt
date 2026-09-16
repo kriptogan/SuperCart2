@@ -23,7 +23,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,16 +39,14 @@ import com.example.supercart2.ui.components.SettingsDialog
 import com.example.supercart2.ui.components.StoresManagementDialog
 import com.example.supercart2.ui.theme.SuperCartColors
 import com.example.supercart2.ui.theme.SuperCartSpacing
-import kotlinx.coroutines.CoroutineScope
 
 @Composable
 fun HomeScreen(onNavigateToStoreEdit: (String) -> Unit = {}) {
     val state = remember { HomeScreenState() }
-    val scope = rememberCoroutineScope()
     val showAlerts by SettingsManager.showAlerts.collectAsState(initial = true)
     HomeScreenEffects(state, showAlerts)
     HomeScreenContent(state, showAlerts, onNavigateToStoreEdit)
-    HomeScreenDialogs(state, scope, onNavigateToStoreEdit)
+    HomeScreenDialogs(state, onNavigateToStoreEdit)
 }
 
 @Composable
@@ -145,21 +142,21 @@ private fun HomeScreenCategoryList(state: HomeScreenState, showAlerts: Boolean, 
 }
 
 @Composable
-private fun HomeScreenDialogs(state: HomeScreenState, scope: CoroutineScope, onNavigateToStoreEdit: (String) -> Unit) {
+private fun HomeScreenDialogs(state: HomeScreenState, onNavigateToStoreEdit: (String) -> Unit) {
     when (state.openDialog) {
         HomeScreenDialog.CATEGORIES -> CategoriesManagementDialog(onDismiss = state::closeDialog)
         HomeScreenDialog.STORES -> HomeScreenStoresDialog(state, onNavigateToStoreEdit)
         HomeScreenDialog.GROUP -> GroupManagementDialog(onDismiss = state::closeDialog)
-        else -> HomeScreenOtherDialogs(state, scope)
+        else -> HomeScreenOtherDialogs(state)
     }
 }
 
 @Composable
-private fun HomeScreenOtherDialogs(state: HomeScreenState, scope: CoroutineScope) {
+private fun HomeScreenOtherDialogs(state: HomeScreenState) {
     when (state.openDialog) {
         HomeScreenDialog.SETTINGS -> SettingsDialog(onDismiss = state::closeDialog)
         HomeScreenDialog.IMPORT -> ImportGroceriesDialog(state::closeDialog, onImportComplete = state::closeDialog)
-        HomeScreenDialog.GROCERY -> HomeScreenGroceryDialog(state, scope)
+        HomeScreenDialog.GROCERY -> HomeScreenGroceryDialog(state)
         else -> Unit
     }
 }
@@ -173,11 +170,10 @@ private fun HomeScreenStoresDialog(state: HomeScreenState, onNavigateToStoreEdit
 }
 
 @Composable
-private fun HomeScreenGroceryDialog(state: HomeScreenState, scope: CoroutineScope) {
+private fun HomeScreenGroceryDialog(state: HomeScreenState) {
     val groceryToEdit = state.groceryToEdit
     GroceryCreationDialog(
         groceryToEdit = groceryToEdit, initialGroceryName = if (groceryToEdit != null) "" else state.searchQuery,
         onDismiss = state::dismissGroceryDialog,
-        onGroceryCreated = { homeScreenApplyGroceryResult(state.groceryToEdit, it, scope); state.closeDialog() },
     )
 }

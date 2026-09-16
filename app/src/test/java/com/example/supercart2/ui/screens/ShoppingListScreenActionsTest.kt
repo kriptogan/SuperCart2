@@ -53,35 +53,4 @@ class ShoppingListScreenActionsTest {
         assertFalse(state.showFinishConfirmation)
         coVerify(exactly = 1) { DataStoreManager.saveDataGlobally() }
     }
-
-    @Test
-    fun `onGroceryCreated in create mode adds the grocery, saves twice and closes the dialog`() {
-        state.createGrocery()
-        val eggs = TestData.grocery("eggs", "c2", "s3", inShoppingList = true)
-        ShoppingListScreenActions.onGroceryCreated(state, eggs, scope)
-        assertEquals("c2" to "s3", TestData.locationOf("eggs"))
-        assertFalse(state.showGroceryCreation)
-        coVerify(exactly = 2) { DataStoreManager.saveDataGlobally() }
-    }
-
-    @Test
-    fun `onGroceryCreated in edit mode updates in place and keeps the edit state`() {
-        state.editGrocery(TestData.findGrocery("g1")!!)
-        ShoppingListScreenActions.onGroceryCreated(state, TestData.findGrocery("g1")!!.copy(name = "new"), scope)
-        assertEquals("new", TestData.findGrocery("g1")!!.name)
-        assertEquals("c1" to "s1", TestData.locationOf("g1"))
-        assertFalse(state.showGroceryCreation)
-        assertTrue(state.isEditMode) // not reset, unlike onDismiss
-        coVerify(exactly = 2) { DataStoreManager.saveDataGlobally() }
-    }
-
-    @Test
-    fun `onGroceryCreated in edit mode moves the grocery when its sub-category changed`() {
-        val g1 = TestData.findGrocery("g1")!!
-        state.editGrocery(g1)
-        ShoppingListScreenActions.onGroceryCreated(state, g1.copy(categoryId = "c2", subCategoryId = "s3"), scope)
-        assertEquals("c2" to "s3", TestData.locationOf("g1"))
-        assertEquals(1, DataManagerObject.categories.flatMap { it.subCategories }.flatMap { it.groceries }
-            .count { it.uuid == "g1" })
-    }
 }

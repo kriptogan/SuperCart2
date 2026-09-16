@@ -45,7 +45,7 @@ class GroceryCreationDialogDateTest {
     private fun showEditing(date: LocalDate?) {
         DataManagerObject.updateGrocery("g1") { it.copy(expirationDate = date) }
         val grocery = TestData.findGrocery("g1")!!
-        compose.setContent { GroceryCreationDialog(onDismiss = {}, onGroceryCreated = {}, groceryToEdit = grocery) }
+        compose.setContent { GroceryCreationDialog(onDismiss = {}, groceryToEdit = grocery) }
     }
 
     private fun text(value: String) = compose.onNodeWithText(value).performScrollTo()
@@ -156,7 +156,7 @@ class GroceryCreationDialogDateTest {
 
     @Test
     fun `created grocery gets the picked date`() {
-        compose.setContent { GroceryCreationDialog(onDismiss = {}, onGroceryCreated = {}, initialGroceryName = "Milk") }
+        compose.setContent { GroceryCreationDialog(onDismiss = {}, initialGroceryName = "Milk") }
         openPickerAndConfirm()
         compose.onNodeWithContentDescription("Create Grocery").performClick()
         val added = DataManagerObject.categories.flatMap { it.subCategories }.flatMap { it.groceries }

@@ -39,12 +39,11 @@ import kotlinx.coroutines.launch
 
 /**
  * Add/edit grocery dialog. Saves (and deletes) through DataManagerObject + DataStore itself and then calls
- * [onDismiss]; [onGroceryCreated] is currently never invoked.
+ * [onDismiss].
  */
 @Composable
 fun GroceryCreationDialog(
     onDismiss: () -> Unit,
-    onGroceryCreated: (Grocery) -> Unit,
     groceryToEdit: Grocery? = null,
     initialGroceryName: String = "",
     addToShoppingList: Boolean = false,

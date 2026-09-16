@@ -40,7 +40,6 @@ class GroceryCreationDialogTest {
     val compose = createComposeRule()
 
     private var dismissed = 0
-    private val created = mutableListOf<Grocery>()
 
     @Before
     fun setUp() {
@@ -50,7 +49,7 @@ class GroceryCreationDialogTest {
     private fun show(name: String = "", addToShoppingList: Boolean = false, storeId: String? = null) {
         compose.setContent {
             GroceryCreationDialog(
-                onDismiss = { dismissed++ }, onGroceryCreated = { created += it },
+                onDismiss = { dismissed++ },
                 initialGroceryName = name, addToShoppingList = addToShoppingList, initialStoreId = storeId,
             )
         }
@@ -102,7 +101,7 @@ class GroceryCreationDialogTest {
     }
 
     @Test
-    fun `create adds a trimmed grocery to the selected location, dismisses but never calls onGroceryCreated`() {
+    fun `create adds a trimmed grocery to the selected location and dismisses`() {
         show(name = "  Milk ")
         compose.onNodeWithContentDescription("Create Grocery").assertIsEnabled().performClick()
 
@@ -115,7 +114,6 @@ class GroceryCreationDialogTest {
         assertNull(added.imageUUID)
         assertTrue(added.storeIds.isEmpty())
         assertEquals(1, dismissed)
-        assertTrue("Pinned: the dialog never invokes onGroceryCreated", created.isEmpty())
     }
 
     @Test

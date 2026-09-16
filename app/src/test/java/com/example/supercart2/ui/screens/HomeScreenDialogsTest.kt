@@ -110,7 +110,7 @@ class HomeScreenDialogsTest {
     }
 
     @Test
-    fun `creating a grocery adds it exactly once (the dialog never calls onGroceryCreated)`() {
+    fun `creating a grocery adds it exactly once`() {
         compose.onNodeWithContentDescription("Add New Grocery").performClick()
         compose.onNodeWithText("Grocery Name").performTextInput("Bread")
         compose.onNodeWithContentDescription("Create Grocery").performClick()

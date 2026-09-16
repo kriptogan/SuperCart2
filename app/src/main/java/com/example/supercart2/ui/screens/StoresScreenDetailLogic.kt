@@ -3,7 +3,6 @@ package com.example.supercart2.ui.screens
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.supercart2.data.CategoryWithSubCategories
-import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.data.filterGroceries
 import com.example.supercart2.models.Grocery
 import com.example.supercart2.models.Store
@@ -50,12 +49,4 @@ internal fun storesScreenHeaderTopPadding(mode: StoreMode, boughtCount: Int): Dp
     mode == StoreMode.Edit -> 100.dp
     boughtCount > 0 -> 248.dp
     else -> 196.dp
-}
-
-/** Replaces [original] by [updated], moving it first when its category or sub-category changed. */
-internal fun storesScreenApplyGroceryEdit(original: Grocery, updated: Grocery) {
-    if (original.categoryId != updated.categoryId || original.subCategoryId != updated.subCategoryId) {
-        DataManagerObject.updateGroceryLocation(original.uuid, updated.categoryId, updated.subCategoryId)
-    }
-    DataManagerObject.updateGrocery(original.uuid) { updated }
 }

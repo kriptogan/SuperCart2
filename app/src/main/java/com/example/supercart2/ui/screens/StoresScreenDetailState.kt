@@ -53,14 +53,6 @@ internal class StoresScreenDetailState(private val scope: CoroutineScope) {
         groceryToEdit = null
     }
 
-    fun onGroceryCreated(newGrocery: Grocery) {
-        val original = groceryToEdit
-        if (isGroceryEditMode && original != null) storesScreenApplyGroceryEdit(original, newGrocery)
-        else DataManagerObject.addGrocery(newGrocery)
-        save()
-        closeGroceryDialog()
-    }
-
     /**
      * Saves the trimmed name and address, then shows [savedText]. Ignored when the name is blank or the store is
      * unknown or deleted.

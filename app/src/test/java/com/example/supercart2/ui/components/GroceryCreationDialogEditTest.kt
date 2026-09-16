@@ -34,7 +34,6 @@ class GroceryCreationDialogEditTest {
     val compose = createComposeRule()
 
     private var dismissed = 0
-    private val created = mutableListOf<Grocery>()
     private val buyEvents = listOf(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 8))
 
     @Before
@@ -53,7 +52,7 @@ class GroceryCreationDialogEditTest {
     private fun show(grocery: Grocery = edited()) {
         compose.setContent {
             GroceryCreationDialog(
-                onDismiss = { dismissed++ }, onGroceryCreated = { created += it }, groceryToEdit = grocery,
+                onDismiss = { dismissed++ }, groceryToEdit = grocery,
             )
         }
     }
@@ -86,7 +85,6 @@ class GroceryCreationDialogEditTest {
         assertFalse(after.lastUpdate.isBefore(before.lastUpdate))
         assertEquals("c1" to "s1", TestData.locationOf("g1"))
         assertEquals(1, dismissed)
-        assertTrue(created.isEmpty())
     }
 
     @Test
@@ -171,6 +169,5 @@ class GroceryCreationDialogEditTest {
         assertTrue(edited().deleted)
         assertEquals(1, dismissed)
         compose.onNodeWithText("Are you sure you want to delete 'g1'?").assertDoesNotExist()
-        assertTrue(created.isEmpty())
     }
 }

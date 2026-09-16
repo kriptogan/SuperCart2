@@ -78,7 +78,7 @@ class GroceryCreationDialogImageTest {
         val grocery = TestData.findGrocery("g1")!!
         compose.setContent {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides registryOwner) {
-                GroceryCreationDialog(onDismiss = { dismissed++ }, onGroceryCreated = {}, groceryToEdit = grocery)
+                GroceryCreationDialog(onDismiss = { dismissed++ }, groceryToEdit = grocery)
             }
         }
     }
@@ -210,7 +210,7 @@ class GroceryCreationDialogImageTest {
         }
         compose.setContent {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides registryOwner) {
-                GroceryCreationDialog(onDismiss = {}, onGroceryCreated = {}, initialGroceryName = "Milk")
+                GroceryCreationDialog(onDismiss = {}, initialGroceryName = "Milk")
             }
         }
         pickFromGallery()

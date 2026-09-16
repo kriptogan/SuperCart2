@@ -2,10 +2,8 @@ package com.example.supercart2.ui.screens
 
 import com.example.supercart2.TestData
 import com.example.supercart2.TestData.findGrocery
-import com.example.supercart2.TestData.locationOf
 import com.example.supercart2.data.DataManagerObject
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.COSTCO
-import com.example.supercart2.ui.screens.StoresScreenTestFixtures.bakery
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.costco
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.dairy
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.install
@@ -52,25 +50,6 @@ class StoresScreenDetailStateTest {
         state.loadStore(null)
         assertEquals("", state.editStoreName)
         assertEquals("", state.editStoreAddress)
-    }
-
-    @Test
-    fun `created grocery is added when not editing`() {
-        install()
-        state.openGroceryCreation()
-        state.onGroceryCreated(dairy("Milk", COSTCO))
-        assertEquals("Dairy" to "DairySub", locationOf("Milk"))
-        assertFalse(state.showGroceryCreation)
-    }
-
-    @Test
-    fun `edited grocery replaces the original and moves it when its category changed`() {
-        install(dairy("Milk", COSTCO))
-        state.openGroceryEdit(findGrocery("Milk")!!)
-        state.onGroceryCreated(bakery("Milk", COSTCO).copy(name = "Milk bread"))
-        assertEquals("Bakery" to "BakerySub", locationOf("Milk"))
-        assertEquals("Milk bread", findGrocery("Milk")!!.name)
-        assertNull(state.groceryToEdit)
     }
 
     @Test
