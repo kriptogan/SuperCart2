@@ -248,4 +248,19 @@ class BackupManagerTest {
         val renamed = File(tmp.root, "backup.bak").apply { writeBytes(zip.readBytes()) }
         assertFalse(BackupManager.restoreFromBackup(context, renamed))
     }
+
+    @Test
+    fun `restore of json without hiddenStoreIds fails half-way after replacing categories (pinned)`() = runTest {
+        installData()
+        val json = File(tmp.root, "partial.json")
+        json.writeText(
+            """{"categories":[{"uuid":"n1","name":"New","lastUpdate":"2020-01-01T00:00:00"}],
+               "subCategories":[],"groceries":[],"stores":[],"storeCategoryOrders":{}}"""
+        )
+        assertFalse(BackupManager.restoreFromBackup(context, json))
+        assertEquals(listOf("n1"), dm.categories.map { it.category.uuid })
+        assertTrue(dm.stores.isEmpty())
+        assertTrue(dm.hiddenStoreIds.isEmpty()) // cleared before the null list failed
+        assertEquals(mapOf("A" to listOf("c1")), dm.storeCategoryOrders) // never reached
+    }
 }
