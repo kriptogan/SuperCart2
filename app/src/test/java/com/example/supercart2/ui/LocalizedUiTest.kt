@@ -11,6 +11,8 @@ import com.example.supercart2.data.BackupManager
 import com.example.supercart2.data.SettingsManager
 import com.example.supercart2.ui.components.JoinGroupDialog
 import com.example.supercart2.ui.components.SettingsDialog
+import com.example.supercart2.ui.screens.MealsScreen
+import com.example.supercart2.ui.screens.MealsScreenTestFixtures
 import com.example.supercart2.ui.screens.StoresScreen
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.COSTCO
 import com.example.supercart2.ui.screens.StoresScreenTestFixtures.dairy
@@ -76,6 +78,22 @@ class LocalizedUiTest {
         compose.onNodeWithText("Просмотр продуктов").assertIsDisplayed()
         compose.onNodeWithText("Выбрать магазин").performClick()
         compose.onNodeWithText("Товаров: 1").assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "iw-h1200dp")
+    fun `meals list is in Hebrew`() {
+        MealsScreenTestFixtures.install(
+            groceries = listOf(MealsScreenTestFixtures.food("Tomato")),
+            meals = listOf(MealsScreenTestFixtures.meal("m", "Shakshuka", MealsScreenTestFixtures.ingredient("Tomato"))),
+        )
+        compose.setContent { MealsScreen() }
+        compose.onNodeWithText("ארוחות").assertIsDisplayed()
+        compose.onNodeWithText("1 מרכיבים").assertIsDisplayed()
+        compose.onNodeWithContentDescription("צור ארוחה").assertIsDisplayed()
+        compose.onNodeWithContentDescription("ערוך ארוחה").assertIsDisplayed()
+        compose.onNodeWithText("Shakshuka").performClick()
+        compose.onNodeWithText("הוסף 1 לרשימת הקניות").assertIsDisplayed()
     }
 
     @Test
