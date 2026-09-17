@@ -20,6 +20,7 @@ object TestData {
         DataManagerObject.categories.clear()
         DataManagerObject.stores.clear()
         DataManagerObject.hiddenStoreIds.clear()
+        DataManagerObject.meals.clear()
         DataManagerObject.storeCategoryOrders.clear()
         DataManagerObject.storeSubCategoryOrders.clear()
     }

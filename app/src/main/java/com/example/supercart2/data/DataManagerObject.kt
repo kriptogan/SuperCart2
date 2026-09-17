@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Meal
 import com.example.supercart2.models.Store
 import com.example.supercart2.ui.components.StoreWithCategories
 import java.time.LocalDate
@@ -21,6 +22,9 @@ object DataManagerObject {
     val categories: SnapshotStateList<CategoryWithSubCategories> = mutableStateListOf()
     val stores: SnapshotStateList<Store> = mutableStateListOf()
     val hiddenStoreIds: SnapshotStateList<String> = mutableStateListOf()
+
+    // Meals (including soft-deleted ones, so deletions can sync)
+    val meals: SnapshotStateList<Meal> = mutableStateListOf()
 
     // Store-specific category ordering: Map<StoreUUID, List<CategoryUUID>>
     var storeCategoryOrders: MutableMap<String, List<String>> = mutableMapOf()
