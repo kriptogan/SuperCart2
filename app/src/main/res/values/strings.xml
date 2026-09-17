@@ -293,4 +293,23 @@
 
     <!-- Group sharing -->
     <string name="group_code_copied">Group code copied!</string>
+
+    <!-- Meals -->
+    <string name="nav_meals">Meals</string>
+    <string name="create_meal">Create meal</string>
+    <string name="new_meal">New meal</string>
+    <string name="edit_meal">Edit meal</string>
+    <string name="delete_meal">Delete meal</string>
+    <string name="no_meals_yet">No meals yet</string>
+    <string name="meal_ingredients_count">%d ingredients</string>
+    <string name="meal_name">Meal name</string>
+    <string name="quantity">Quantity</string>
+    <string name="add_ingredients">Add ingredients</string>
+    <string name="remove_ingredient">Remove ingredient</string>
+    <string name="no_ingredients_yet">No ingredients yet</string>
+    <string name="already_in_list">Already in list</string>
+    <string name="add_count_to_shopping_list">Add %d to shopping list</string>
+    <string name="items_added_to_shopping_list">%d items added to the shopping list</string>
+    <string name="select_ingredients">Select ingredients</string>
+    <string name="new_grocery">New grocery</string>
 </resources>
