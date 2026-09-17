@@ -2,6 +2,8 @@ package com.example.supercart2.data
 
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Meal
+import com.example.supercart2.models.MealIngredient
 import com.example.supercart2.models.Store
 import com.example.supercart2.models.SubCategory
 import com.google.firebase.Timestamp
@@ -42,6 +44,10 @@ internal object FirebaseManagerCodecs {
     val stores = FirebaseManagerCodec(
         FirebaseManager.STORES_COLLECTION, "store", Store::uuid, Store::name, Store::lastUpdate,
         FirebaseManagerMappers::storeToMap, FirebaseManagerMappers::documentToStore,
+    )
+    val meals = FirebaseManagerCodec(
+        FirebaseManager.MEALS_COLLECTION, "meal", Meal::uuid, Meal::name, Meal::lastUpdate,
+        FirebaseManagerMappers::mealToMap, FirebaseManagerMappers::documentToMeal,
     )
 }
 
@@ -84,6 +90,14 @@ internal object FirebaseManagerMappers {
         "lastUpdate" to formatDateTime(store.lastUpdate), "deleted" to store.deleted,
     )
 
+    fun mealToMap(meal: Meal): Map<String, Any?> = mapOf(
+        "uuid" to meal.uuid, "name" to meal.name, "ingredients" to meal.ingredients.map(::ingredientToMap),
+        "lastUpdate" to formatDateTime(meal.lastUpdate), "deleted" to meal.deleted,
+    )
+
+    private fun ingredientToMap(ingredient: MealIngredient): Map<String, Any?> =
+        mapOf("groceryId" to ingredient.groceryId, "quantity" to ingredient.quantity)
+
     /** `orders` (storeId -> categoryIds) and `subOrders` (storeId -> categoryId -> subCategoryIds). */
     fun storeCategoryOrdersToMap(
         orders: Map<String, List<String>>,
@@ -100,6 +114,12 @@ internal object FirebaseManagerMappers {
     fun documentToGrocery(doc: DocumentSnapshot): Grocery = FirebaseManagerDocument(doc, "Grocery").toGrocery()
 
     fun documentToStore(doc: DocumentSnapshot): Store = FirebaseManagerDocument(doc, "Store").toStore()
+
+    fun documentToMeal(doc: DocumentSnapshot): Meal = FirebaseManagerDocument(doc, "Meal").toMeal()
+
+    private fun FirebaseManagerDocument.toMeal() = Meal(
+        uuid = id, name = required("name"), lastUpdate = dateTime("lastUpdate"), deleted = flag("deleted"),
+    )
 
     private fun FirebaseManagerDocument.toCategory() = Category(
         uuid = id, name = required("name"), default = flag("default"), viewOrder = int("viewOrder") ?: 0,

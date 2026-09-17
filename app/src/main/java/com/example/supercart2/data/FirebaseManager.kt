@@ -23,6 +23,7 @@ object FirebaseManager {
     const val SUBCATEGORIES_COLLECTION = "subcategories"
     const val GROCERIES_COLLECTION = "groceries"
     const val STORES_COLLECTION = "stores"
+    const val MEALS_COLLECTION = "meals"
     const val STORE_CATEGORY_ORDERS_COLLECTION = "storeCategoryOrders"
 
     private const val TAG = "FirebaseManager"
@@ -66,10 +67,10 @@ object FirebaseManager {
      */
     private suspend fun localUploads(groupCode: String): List<FirebaseManagerUpload<*>> {
         val (categories, subCategories, groceries) = DataConverter.flattenCategories(DataManagerObject.categories)
-        val stores = DataManagerObject.stores.toList()
         return listOf(
             upload(groupCode, Codecs.categories, categories), upload(groupCode, Codecs.subCategories, subCategories),
-            upload(groupCode, Codecs.groceries, groceries), upload(groupCode, Codecs.stores, stores),
+            upload(groupCode, Codecs.groceries, groceries), upload(groupCode, Codecs.stores, DataManagerObject.stores.toList()),
+            upload(groupCode, Codecs.meals, DataManagerObject.meals.toList()),
         )
     }
 
