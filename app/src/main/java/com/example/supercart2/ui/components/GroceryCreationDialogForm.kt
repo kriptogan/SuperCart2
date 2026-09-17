@@ -43,6 +43,18 @@ internal class GroceryCreationDialogPopups {
     var datePicker by mutableStateOf(false)
     var deleteConfirmation by mutableStateOf(false)
     var imageSource by mutableStateOf(false)
+    var fullScreenImage by mutableStateOf(false)
+
+    /** A stored photo opens full screen; without one (or when its file is missing) the image source picker opens. */
+    fun openImage(hasStoredImage: Boolean) {
+        if (hasStoredImage) fullScreenImage = true else imageSource = true
+    }
+
+    /** Closes the full-screen viewer and opens the image source picker to replace the photo. */
+    fun changeImage() {
+        fullScreenImage = false
+        imageSource = true
+    }
 }
 
 /** Fills the form from the edited grocery, or with create-mode defaults. */
@@ -141,6 +153,10 @@ internal fun groceryCreationDialogDelete(grocery: Grocery, scope: CoroutineScope
     DataManagerObject.deleteGrocery(grocery.uuid)
     scope.launch { DataStoreManager.saveDataGlobally() }
 }
+
+/** The local file of the current photo, or null when there is no photo or its file is missing. */
+internal fun GroceryCreationDialogForm.storedImageFile(context: Context): java.io.File? =
+    imageUUID?.let { ImageManager.getLocalImageFile(it, context) }
 
 internal fun GroceryCreationDialogForm.removeImage(context: Context) {
     imageUUID?.let { ImageManager.deleteLocalImage(it, context) }

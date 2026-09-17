@@ -127,11 +127,18 @@ private fun DeleteIconButton(onClick: () -> Unit) {
 @Composable
 private fun FormContent(form: GroceryCreationDialogForm, popups: GroceryCreationDialogPopups) {
     Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-        GroceryCreationDialogImageCard(form, onClick = { popups.imageSource = true })
+        ImageCard(form, popups)
         GroceryCreationDialogNameField(form)
         GroceryCreationDialogLocationFields(form, popups)
         GroceryCreationDialogStoreAndDateFields(form, popups)
     }
+}
+
+/** Tapping a stored photo opens it full screen; otherwise the image source picker opens. */
+@Composable
+private fun ImageCard(form: GroceryCreationDialogForm, popups: GroceryCreationDialogPopups) {
+    val context = LocalContext.current
+    GroceryCreationDialogImageCard(form, onClick = { popups.openImage(form.storedImageFile(context) != null) })
 }
 
 /** Cancel (left) and save (right). */
@@ -160,6 +167,13 @@ private fun SecondaryDialogs(
     form.category?.let { if (popups.subCategory) SubCategoryPicker(form, it, popups, scope) }
     if (popups.stores) StoreSelectionDialog(form.storeIds, { popups.stores = false }, { form.storeIds = it })
     if (popups.imageSource) ImagePicker(form, popups, scope)
+    if (popups.fullScreenImage) FullScreenImage(form, popups)
+}
+
+@Composable
+private fun FullScreenImage(form: GroceryCreationDialogForm, popups: GroceryCreationDialogPopups) {
+    val file = form.storedImageFile(LocalContext.current) ?: return
+    GroceryCreationDialogFullScreenImage(file, { popups.fullScreenImage = false }, onChangeImage = popups::changeImage)
 }
 
 @Composable

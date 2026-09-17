@@ -64,6 +64,8 @@
     <string name="select_stores_optional">Select Stores (Optional)</string>
     <string name="remove_image">Remove Image</string>
     <string name="grocery_image">Grocery Image</string>
+    <string name="full_screen_image">Full screen image</string>
+    <string name="change_image">Change Image</string>
     <string name="select_category">Select Category</string>
     <string name="select_sub_category">Select Sub-Category</string>
     <string name="stores_selected">%d stores selected</string>

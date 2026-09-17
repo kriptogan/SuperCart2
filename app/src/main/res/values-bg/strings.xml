@@ -64,6 +64,8 @@
     <string name="select_stores_optional">Избор на магазини (незадължително)</string>
     <string name="remove_image">Премахване на изображение</string>
     <string name="grocery_image">Изображение на продукт</string>
+    <string name="full_screen_image">Изображение на цял екран</string>
+    <string name="change_image">Смяна на изображение</string>
     <string name="select_category">Избор на категория</string>
     <string name="select_sub_category">Избор на подкатегория</string>
     <string name="stores_selected">Избрани магазини: %d</string>

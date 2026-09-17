@@ -92,6 +92,13 @@ class GroceryCreationDialogImageTest {
         compose.onNodeWithText("Choose from Gallery").performClick()
     }
 
+    /** A stored photo opens full screen on tap; replacing it goes through the viewer's "Change Image". */
+    private fun replaceStoredImageFromGallery() {
+        compose.onNodeWithContentDescription("Grocery Image").performScrollTo().performClick()
+        compose.onNodeWithText("Change Image").performClick()
+        compose.onNodeWithText("Choose from Gallery").performClick()
+    }
+
     @Test
     fun `existing local image is shown with a remove button`() {
         imageFile("img1").writeText("jpeg")
@@ -152,8 +159,7 @@ class GroceryCreationDialogImageTest {
         imageFile("img2").writeText("jpeg")
         coEvery { ImageManager.compressAndSaveImage(any(), any(), any()) } returns null
         showEditing("img2")
-        compose.onNodeWithContentDescription("Grocery Image").performScrollTo().performClick()
-        compose.onNodeWithText("Choose from Gallery").performClick()
+        replaceStoredImageFromGallery()
 
         compose.waitForIdle()
         coVerify(exactly = 0) { ImageManager.deleteLocalImage(any(), any()) }
@@ -168,8 +174,7 @@ class GroceryCreationDialogImageTest {
         imageFile("img3").writeText("jpeg")
         coEvery { ImageManager.compressAndSaveImage(any(), any(), any()) } throws IllegalStateException("boom")
         showEditing("img3")
-        compose.onNodeWithContentDescription("Grocery Image").performScrollTo().performClick()
-        compose.onNodeWithText("Choose from Gallery").performClick()
+        replaceStoredImageFromGallery()
 
         compose.waitForIdle()
         coVerify(exactly = 0) { ImageManager.deleteLocalImage(any(), any()) }

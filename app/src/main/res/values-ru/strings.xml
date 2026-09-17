@@ -64,6 +64,8 @@
     <string name="select_stores_optional">Выбрать магазины (необязательно)</string>
     <string name="remove_image">Удалить изображение</string>
     <string name="grocery_image">Изображение продукта</string>
+    <string name="full_screen_image">Изображение на весь экран</string>
+    <string name="change_image">Изменить изображение</string>
     <string name="select_category">Выбрать категорию</string>
     <string name="select_sub_category">Выбрать подкатегорию</string>
     <string name="stores_selected">Выбрано магазинов: %d</string>

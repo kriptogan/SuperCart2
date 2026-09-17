@@ -64,6 +64,8 @@
     <string name="select_stores_optional">בחר חנויות (אופציונלי)</string>
     <string name="remove_image">הסר תמונה</string>
     <string name="grocery_image">תמונת מוצר</string>
+    <string name="full_screen_image">תמונה במסך מלא</string>
+    <string name="change_image">החלף תמונה</string>
     <string name="select_category">בחר קטגוריה</string>
     <string name="select_sub_category">בחר תת-קטגוריה</string>
     <string name="stores_selected">%d חנויות נבחרו</string>
