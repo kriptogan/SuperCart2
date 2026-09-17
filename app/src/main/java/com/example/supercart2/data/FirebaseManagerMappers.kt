@@ -118,8 +118,15 @@ internal object FirebaseManagerMappers {
     fun documentToMeal(doc: DocumentSnapshot): Meal = FirebaseManagerDocument(doc, "Meal").toMeal()
 
     private fun FirebaseManagerDocument.toMeal() = Meal(
-        uuid = id, name = required("name"), lastUpdate = dateTime("lastUpdate"), deleted = flag("deleted"),
+        uuid = id, name = required("name"), ingredients = maps("ingredients").mapNotNull(::ingredientOrNull),
+        lastUpdate = dateTime("lastUpdate"), deleted = flag("deleted"),
     )
+
+    /** An ingredient needs a String groceryId; a missing or non-String quantity becomes "". */
+    private fun ingredientOrNull(entry: Map<*, *>): MealIngredient? {
+        val groceryId = entry["groceryId"] as? String ?: return null
+        return MealIngredient(groceryId, entry["quantity"] as? String ?: "")
+    }
 
     private fun FirebaseManagerDocument.toCategory() = Category(
         uuid = id, name = required("name"), default = flag("default"), viewOrder = int("viewOrder") ?: 0,
@@ -214,6 +221,9 @@ internal class FirebaseManagerDocument(private val doc: DocumentSnapshot, privat
     fun int(key: String): Int? = (data[key] as? Number)?.toInt()
 
     fun strings(key: String): List<String> = (data[key] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+
+    /** The map entries of a list field; non-map entries are dropped, a missing or non-list field is empty. */
+    fun maps(key: String): List<Map<*, *>> = (data[key] as? List<*>)?.filterIsInstance<Map<*, *>>() ?: emptyList()
 
     fun dateTime(key: String): LocalDateTime = FirebaseManagerMappers.toLocalDateTime(data[key])
 

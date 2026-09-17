@@ -103,7 +103,8 @@ object FirebaseManager {
         val subCategories = fetchAll(groupCode, Codecs.subCategories)
         val groceries = fetchAll(groupCode, Codecs.groceries)
         val stores = fetchAll(groupCode, Codecs.stores)
-        return FirebaseManagerDownload(categories, subCategories, groceries, stores, fetchOrdersDocument(groupCode))
+        val meals = fetchAll(groupCode, Codecs.meals)
+        return FirebaseManagerDownload(categories, subCategories, groceries, stores, meals, fetchOrdersDocument(groupCode))
     }
 
     /** Fetch failures are thrown; malformed documents are logged and skipped. */
