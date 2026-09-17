@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Add/edit grocery dialog. Saves (and deletes) through DataManagerObject + DataStore itself and then calls
- * [onDismiss].
+ * [onDismiss]. When a new grocery was created, [onGroceryCreated] receives it just before [onDismiss].
  */
 @Composable
 fun GroceryCreationDialog(
@@ -47,23 +47,24 @@ fun GroceryCreationDialog(
     groceryToEdit: Grocery? = null,
     initialGroceryName: String = "",
     addToShoppingList: Boolean = false,
-    initialStoreId: String? = null
+    initialStoreId: String? = null,
+    onGroceryCreated: (Grocery) -> Unit = {},
 ) {
     val form = remember { GroceryCreationDialogForm() }
     val popups = remember { GroceryCreationDialogPopups() }
     LaunchedEffect(groceryToEdit, initialGroceryName) { form.load(groceryToEdit, initialGroceryName, initialStoreId) }
-    GroceryWindows(form, popups, groceryToEdit, addToShoppingList, onDismiss)
+    GroceryWindows(form, popups, groceryToEdit, addToShoppingList, onDismiss, onGroceryCreated)
 }
 
 /** Delete confirmation, main dialog and the secondary pickers, in that composition order. */
 @Composable
 private fun GroceryWindows(
     form: GroceryCreationDialogForm, popups: GroceryCreationDialogPopups, groceryToEdit: Grocery?,
-    addToShoppingList: Boolean, onDismiss: () -> Unit,
+    addToShoppingList: Boolean, onDismiss: () -> Unit, onGroceryCreated: (Grocery) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     DeleteConfirmationIfRequested(groceryToEdit, popups, scope, onDismiss)
-    val onSave = { saveAndDismiss(form, groceryToEdit, addToShoppingList, scope, onDismiss) }
+    val onSave = { saveAndDismiss(form, groceryToEdit, addToShoppingList, scope, onDismiss, onGroceryCreated) }
     GroceryAlert(form, popups, isEdit = groceryToEdit != null, onDismiss = onDismiss, onSave = onSave)
     SecondaryDialogs(form, popups, scope)
 }
@@ -79,10 +80,10 @@ private fun DeleteConfirmationIfRequested(
 
 private fun saveAndDismiss(
     form: GroceryCreationDialogForm, groceryToEdit: Grocery?, addToShoppingList: Boolean,
-    scope: CoroutineScope, onDismiss: () -> Unit,
+    scope: CoroutineScope, onDismiss: () -> Unit, onGroceryCreated: (Grocery) -> Unit,
 ) {
     if (!form.canSave) return
-    form.save(groceryToEdit, addToShoppingList, scope)
+    form.save(groceryToEdit, addToShoppingList, scope)?.let(onGroceryCreated)
     onDismiss()
 }
 

@@ -88,6 +88,20 @@ class GroceryCreationDialogEditTest {
     }
 
     @Test
+    fun `saving or deleting an edited grocery never calls onGroceryCreated`() {
+        var created = 0
+        val grocery = edited()
+        compose.setContent {
+            GroceryCreationDialog(onDismiss = { dismissed++ }, groceryToEdit = grocery, onGroceryCreated = { created++ })
+        }
+        compose.onNodeWithContentDescription("Save Changes").performClick()
+        compose.onNodeWithContentDescription("Delete Grocery").performClick()
+        compose.onNodeWithContentDescription("Delete").performClick()
+        assertEquals(2, dismissed)
+        assertEquals(0, created)
+    }
+
+    @Test
     fun `renaming trims the name`() {
         show()
         text("g1").performTextClearance()

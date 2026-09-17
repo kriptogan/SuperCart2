@@ -12,6 +12,7 @@ import com.google.gson.reflect.TypeToken
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Meal
 import com.example.supercart2.models.Store
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "supercart_data")
@@ -28,6 +29,7 @@ private class StoredData(
     subCategories: List<SubCategory>,
     groceries: List<Grocery>,
     stores: List<Store>,
+    meals: List<Meal>,
     val hiddenStoreIds: List<String>,
     val storeCategoryOrders: CategoryOrders,
     val storeSubCategoryOrders: SubCategoryOrders,
@@ -36,6 +38,14 @@ private class StoredData(
     val subCategories = subCategories.map { it.normalized() }
     val groceries = groceries.map { it.normalized() }
     val stores = stores.map { it.normalized() }
+    val meals = meals.map { it.normalized() }
+
+    // Deleted meals are kept (unlike stores) so their deletion can still sync
+    fun replaceInMemory() {
+        DataManagerObject.replaceCategoriesAndStores(categories, subCategories, groceries, stores)
+        replaceOrders(hiddenStoreIds, storeCategoryOrders, storeSubCategoryOrders)
+        replaceMeals(meals)
+    }
 }
 
 object DataStoreManager {
@@ -48,6 +58,7 @@ object DataStoreManager {
     private val GROUP_CODE_KEY = stringPreferencesKey("group_code")
     private val STORE_CATEGORY_ORDERS_KEY = stringPreferencesKey("store_category_orders")
     private val STORE_SUBCATEGORY_ORDERS_KEY = stringPreferencesKey("store_subcategory_orders")
+    private val MEALS_KEY = stringPreferencesKey("meals")
 
     private val gson: Gson by lazy { gsonBuilder().create() }
 
@@ -93,7 +104,7 @@ object DataStoreManager {
     }
 
     private fun storeValues(): Map<Preferences.Key<String>, Any> = mapOf(
-        STORES_KEY to DataManagerObject.stores.toList(),
+        STORES_KEY to DataManagerObject.stores.toList(), MEALS_KEY to DataManagerObject.meals.toList(),
         HIDDEN_STORES_KEY to DataManagerObject.hiddenStoreIds.toList(),
         STORE_CATEGORY_ORDERS_KEY to DataManagerObject.storeCategoryOrders.toMap(),
         STORE_SUBCATEGORY_ORDERS_KEY to DataManagerObject.storeSubCategoryOrders.toMap(),
@@ -116,7 +127,7 @@ object DataStoreManager {
 
     private fun Preferences.toStoredData() = StoredData(
         readList(CATEGORIES_KEY), readList(SUBCATEGORIES_KEY), readList(GROCERIES_KEY),
-        readList(STORES_KEY), readList(HIDDEN_STORES_KEY),
+        readList(STORES_KEY), readList(MEALS_KEY), readList(HIDDEN_STORES_KEY),
         readOrders<CategoryOrders>(STORE_CATEGORY_ORDERS_KEY) ?: emptyMap(),
         readOrders<SubCategoryOrders>(STORE_SUBCATEGORY_ORDERS_KEY) ?: emptyMap(),
     )
@@ -127,8 +138,7 @@ object DataStoreManager {
             android.util.Log.e("DataStoreManager", "Invalid data relationships detected")
             return
         }
-        DataManagerObject.replaceCategoriesAndStores(data.categories, data.subCategories, data.groceries, data.stores)
-        replaceOrders(data.hiddenStoreIds, data.storeCategoryOrders, data.storeSubCategoryOrders)
+        data.replaceInMemory()
     }
 
     suspend fun saveStoreViewMode(context: Context, isStoreView: Boolean) {
@@ -192,6 +202,9 @@ internal fun replaceOrders(
     DataManagerObject.storeCategoryOrders.replaceWith(categoryOrders)
     DataManagerObject.storeSubCategoryOrders.replaceWith(subCategoryOrders)
 }
+
+/** Replaces the in-memory meals (deleted ones included). Shared by loadData and BackupManager restore. */
+internal fun replaceMeals(meals: List<Meal>) = DataManagerObject.meals.replaceWith(meals)
 
 private fun <T> MutableList<T>.replaceWith(items: Collection<T>) {
     clear()

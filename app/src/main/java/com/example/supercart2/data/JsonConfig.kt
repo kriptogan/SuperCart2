@@ -2,6 +2,8 @@ package com.example.supercart2.data
 
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Meal
+import com.example.supercart2.models.MealIngredient
 import com.example.supercart2.models.Store
 import com.example.supercart2.models.SubCategory
 import com.google.gson.GsonBuilder
@@ -43,6 +45,17 @@ internal fun Grocery.normalized(): Grocery = copy(
 
 @Suppress("USELESS_ELVIS")
 internal fun Store.normalized(): Store = copy(address = address ?: "", lastUpdate = lastUpdate ?: LocalDateTime.now())
+
+/** Ingredients without a groceryId (or null entries) are dropped. */
+@Suppress("USELESS_ELVIS", "UNNECESSARY_SAFE_CALL")
+internal fun Meal.normalized(): Meal = copy(
+    ingredients = (ingredients ?: emptyList()).mapNotNull { it?.normalizedOrNull() },
+    lastUpdate = lastUpdate ?: LocalDateTime.now(),
+)
+
+@Suppress("USELESS_ELVIS", "SENSELESS_COMPARISON")
+private fun MealIngredient.normalizedOrNull(): MealIngredient? =
+    if (groceryId == null) null else copy(quantity = quantity ?: "")
 
 private object LocalDateAdapter: JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE

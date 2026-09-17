@@ -116,6 +116,35 @@ class GroceryCreationDialogTest {
         assertEquals(1, dismissed)
     }
 
+    private val events = mutableListOf<String>()
+    private val created = mutableListOf<Grocery>()
+
+    private fun showTracking(name: String) {
+        compose.setContent {
+            GroceryCreationDialog(
+                onDismiss = { events += "dismiss" }, initialGroceryName = name,
+                onGroceryCreated = { created += it; events += "created" },
+            )
+        }
+    }
+
+    @Test
+    fun `create passes the stored grocery to onGroceryCreated before dismissing`() {
+        showTracking(name = " Milk ")
+        compose.onNodeWithContentDescription("Create Grocery").performClick()
+        assertEquals(listOf(newGroceries().single()), created)
+        assertEquals("Milk", created.single().name)
+        assertEquals(listOf("created", "dismiss"), events)
+    }
+
+    @Test
+    fun `cancel does not call onGroceryCreated`() {
+        showTracking(name = "Milk")
+        compose.onNodeWithContentDescription("Cancel").performClick()
+        assertTrue(created.isEmpty())
+        assertEquals(listOf("dismiss"), events)
+    }
+
     @Test
     fun `new grocery is appended after the existing groceries of the sub-category`() {
         show(name = "Milk")
