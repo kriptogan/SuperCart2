@@ -11,6 +11,7 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.example.supercart2.data.DataManagerObject
@@ -72,6 +73,14 @@ class MainActivityTest {
 
         navItem("Home").performClick()
         navItem("Home").assertIsSelected()
+    }
+
+    @Test
+    fun `clicking Meals selects it and shows the meals screen`() {
+        navItem("Meals").performClick()
+        navItem("Meals").assertIsSelected()
+        navItem("Stores").assertIsNotSelected()
+        compose.onNodeWithText("No meals yet").assertIsDisplayed()
     }
 
     @Test

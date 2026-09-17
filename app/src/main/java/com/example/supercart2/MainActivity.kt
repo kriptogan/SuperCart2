@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.supercart2.ui.components.BottomNavigationBar
 import com.example.supercart2.ui.screens.HomeScreen
+import com.example.supercart2.ui.screens.MealsScreen
 import com.example.supercart2.ui.screens.StoresScreen
 import com.example.supercart2.ui.theme.SuperCart2Theme
 import com.example.supercart2.ui.theme.SuperCartColors
@@ -120,6 +121,7 @@ private fun CurrentRouteScreen(state: MainAppState) {
     when (state.currentRoute) {
         "home" -> HomeScreen(onNavigateToStoreEdit = state::navigateToStoreEdit)
         "stores" -> StoresScreen(state.pendingEditStoreId, onEditModeStoreConsumed = state::consumePendingEditStore)
+        "meals" -> MealsScreen()
     }
 }
 
