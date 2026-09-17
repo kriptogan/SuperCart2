@@ -89,13 +89,25 @@ internal fun GroceryCreationDialogForm.selectNewLocation(newCategory: Category, 
     subCategory = newSubCategory
 }
 
-/** Updates [groceryToEdit] or adds a new grocery, then persists. Requires [GroceryCreationDialogForm.canSave]. */
+/**
+ * Updates [groceryToEdit] or adds a new grocery, then persists. Requires [GroceryCreationDialogForm.canSave].
+ * Returns the created grocery, or null when editing.
+ */
 internal fun GroceryCreationDialogForm.save(
     groceryToEdit: Grocery?, addToShoppingList: Boolean, scope: CoroutineScope,
-) {
-    if (groceryToEdit != null) return updateExisting(groceryToEdit, scope)
-    DataManagerObject.addGrocery(newGrocery(addToShoppingList))
+): Grocery? {
+    if (groceryToEdit != null) {
+        updateExisting(groceryToEdit, scope)
+        return null
+    }
+    return addNew(addToShoppingList, scope)
+}
+
+private fun GroceryCreationDialogForm.addNew(addToShoppingList: Boolean, scope: CoroutineScope): Grocery {
+    val created = newGrocery(addToShoppingList)
+    DataManagerObject.addGrocery(created)
     scope.launch { DataStoreManager.saveDataGlobally() }
+    return created
 }
 
 private fun GroceryCreationDialogForm.updateExisting(original: Grocery, scope: CoroutineScope) {
