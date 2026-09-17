@@ -10,6 +10,8 @@ import com.example.supercart2.TestData.node
 import com.example.supercart2.TestData.store
 import com.example.supercart2.TestData.sub
 import com.example.supercart2.TestData.subNode
+import com.example.supercart2.models.Meal
+import com.example.supercart2.models.MealIngredient
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
@@ -268,6 +270,57 @@ class DataStoreManagerTest {
         assertEquals("CATEGORY", readRaw("store_view_mode"))
         writeRaw("store_view_mode", "store")
         assertFalse(DataStoreManager.loadStoreViewMode(context))
+    }
+
+    // ---------- meals ----------
+
+    @Test
+    fun `meals round-trip, including deleted ones, under the meals key`() = runTest {
+        installRichData()
+        val soup = Meal("m1", "Soup", listOf(MealIngredient("g1", "2"), MealIngredient("g2")), TestData.OLD)
+        val gone = Meal("m2", "Gone", emptyList(), TestData.OLD, deleted = true)
+        dm.meals.addAll(listOf(soup, gone))
+        DataStoreManager.saveData(context)
+        assertTrue(readRaw("meals")!!.contains("\"Soup\""))
+
+        TestData.reset()
+        DataStoreManager.loadData(context)
+
+        assertEquals(listOf(soup, gone), dm.meals.toList())
+    }
+
+    @Test
+    fun `saves without the meals key load with no meals and replace in-memory meals`() = runTest {
+        installRichData()
+        DataStoreManager.saveData(context)
+        rawStore().edit { it.remove(stringPreferencesKey("meals")) }
+        dm.meals.add(Meal("old", "Old"))
+
+        DataStoreManager.loadData(context)
+
+        assertTrue(dm.meals.isEmpty())
+        assertEquals(listOf("c1"), dm.categories.map { it.category.uuid })
+    }
+
+    @Test
+    fun `meals missing fields are normalized and ingredients without grocery are dropped`() = runTest {
+        installRichData()
+        DataStoreManager.saveData(context)
+        writeRaw(
+            "meals",
+            """[{"uuid":"m1","name":"Bare"},
+               {"uuid":"m2","name":"Some","ingredients":[{"groceryId":"g1"},{"quantity":"3"},{"groceryId":"g2","quantity":"1 kg"}]}]"""
+        )
+
+        TestData.reset()
+        DataStoreManager.loadData(context)
+
+        val (bare, some) = dm.meals.toList()
+        @Suppress("SENSELESS_COMPARISON") assertTrue(bare.ingredients != null && bare.lastUpdate != null)
+        assertEquals(emptyList<MealIngredient>(), bare.ingredients)
+        assertFalse(bare.deleted)
+        assertEquals(listOf(MealIngredient("g1", ""), MealIngredient("g2", "1 kg")), some.ingredients)
+        @Suppress("SENSELESS_COMPARISON") assertTrue(some.ingredients.first().quantity != null)
     }
 
     @Test
