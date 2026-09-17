@@ -9,6 +9,7 @@ import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
 import com.example.supercart2.models.Meal
+import com.example.supercart2.models.MealIngredient
 import com.example.supercart2.models.Store
 import com.example.supercart2.ui.components.StoreWithCategories
 import java.time.LocalDate
@@ -16,7 +17,7 @@ import java.time.LocalDateTime
 
 /**
  * The app state. Tree mutations are implemented by the helpers in DataManagerObjectGroceries.kt,
- * DataManagerObjectCategories.kt, DataManagerObjectConfirmBought.kt and DataManagerObjectStores.kt.
+ * DataManagerObjectCategories.kt, DataManagerObjectConfirmBought.kt, DataManagerObjectStores.kt and DataManagerObjectMeals.kt.
  */
 object DataManagerObject {
     val categories: SnapshotStateList<CategoryWithSubCategories> = mutableStateListOf()
@@ -200,6 +201,36 @@ object DataManagerObject {
     }
 
     fun isStoreHidden(storeUuid: String): Boolean = storeUuid in hiddenStoreIds
+
+    // ========== Meals ==========
+
+    /** Non-deleted meals sorted by name (case-insensitive). */
+    fun getSortedMeals(): List<Meal> = meals.sortedVisibleMeals()
+
+    fun addMeal(meal: Meal) {
+        meals.add(meal)
+        updateData()
+    }
+
+    fun updateMeal(uuid: String, update: (Meal) -> Meal) {
+        if (meals.replaceMeal(uuid, update)) updateData()
+    }
+
+    fun deleteMeal(uuid: String) {
+        // Soft delete - mark as deleted instead of removing
+        updateMeal(uuid) { it.copy(deleted = true) }
+    }
+
+    /** The meal's ingredients with their current groceries, skipping groceries that are missing or not visible. */
+    fun mealIngredientRows(meal: Meal): List<Pair<Grocery, MealIngredient>> =
+        ingredientRows(meal, getSortedCategories().visibleGroceriesByUuid())
+
+    /** Puts the visible groceries among [groceryIds] that are not on the shopping list on it; returns how many. */
+    fun addGroceriesToShoppingList(groceryIds: Collection<String>): Int {
+        val added = getSortedCategories().visibleGroceriesByUuid().unlistedIds(groceryIds)
+        added.forEach { id -> updateGrocery(id) { it.copy(inShoppingList = true) } }
+        return added.size
+    }
 
     // ========== Per-store ordering ==========
 
