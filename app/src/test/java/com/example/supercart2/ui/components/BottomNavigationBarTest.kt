@@ -46,6 +46,19 @@ class BottomNavigationBarTest {
     }
 
     @Test
+    fun `shows Meals after Stores, selected by its route, and reports it when clicked`() {
+        show("meals")
+        compose.onNodeWithText("Meals").assertIsDisplayed().assertIsSelected()
+        compose.onNodeWithContentDescription("Meals", useUnmergedTree = true).assertExists()
+        val stores = compose.onNodeWithText("Stores").fetchSemanticsNode().boundsInRoot
+        val meals = compose.onNodeWithText("Meals").fetchSemanticsNode().boundsInRoot
+        assert(stores.left < meals.left)
+        compose.onNodeWithText("Stores").performClick()
+        compose.onNodeWithText("Meals").performClick()
+        assertEquals(listOf("stores", "meals"), routes)
+    }
+
+    @Test
     fun `selection follows currentRoute`() {
         show("home")
         compose.onNodeWithText("Home").assertIsSelected()

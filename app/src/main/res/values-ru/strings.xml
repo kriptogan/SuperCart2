@@ -293,4 +293,23 @@
 
     <!-- Group sharing -->
     <string name="group_code_copied">Код группы скопирован!</string>
+
+    <!-- Meals -->
+    <string name="nav_meals">Блюда</string>
+    <string name="create_meal">Создать блюдо</string>
+    <string name="new_meal">Новое блюдо</string>
+    <string name="edit_meal">Изменить блюдо</string>
+    <string name="delete_meal">Удалить блюдо</string>
+    <string name="no_meals_yet">Блюд пока нет</string>
+    <string name="meal_ingredients_count">Ингредиентов: %d</string>
+    <string name="meal_name">Название блюда</string>
+    <string name="quantity">Количество</string>
+    <string name="add_ingredients">Добавить ингредиенты</string>
+    <string name="remove_ingredient">Удалить ингредиент</string>
+    <string name="no_ingredients_yet">Ингредиентов пока нет</string>
+    <string name="already_in_list">Уже в списке</string>
+    <string name="add_count_to_shopping_list">Добавить в список покупок: %d</string>
+    <string name="items_added_to_shopping_list">Добавлено в список покупок: %d</string>
+    <string name="select_ingredients">Выберите ингредиенты</string>
+    <string name="new_grocery">Новый продукт</string>
 </resources>

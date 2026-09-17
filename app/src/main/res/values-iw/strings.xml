@@ -293,4 +293,23 @@
 
     <!-- Group sharing -->
     <string name="group_code_copied">קוד הקבוצה הועתק!</string>
+
+    <!-- Meals -->
+    <string name="nav_meals">ארוחות</string>
+    <string name="create_meal">צור ארוחה</string>
+    <string name="new_meal">ארוחה חדשה</string>
+    <string name="edit_meal">ערוך ארוחה</string>
+    <string name="delete_meal">מחק ארוחה</string>
+    <string name="no_meals_yet">אין ארוחות עדיין</string>
+    <string name="meal_ingredients_count">%d מרכיבים</string>
+    <string name="meal_name">שם הארוחה</string>
+    <string name="quantity">כמות</string>
+    <string name="add_ingredients">הוסף מרכיבים</string>
+    <string name="remove_ingredient">הסר מרכיב</string>
+    <string name="no_ingredients_yet">אין מרכיבים עדיין</string>
+    <string name="already_in_list">כבר ברשימה</string>
+    <string name="add_count_to_shopping_list">הוסף %d לרשימת הקניות</string>
+    <string name="items_added_to_shopping_list">%d פריטים נוספו לרשימת הקניות</string>
+    <string name="select_ingredients">בחר מרכיבים</string>
+    <string name="new_grocery">מוצר חדש</string>
 </resources>

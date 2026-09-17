@@ -44,6 +44,7 @@ data class NavigationItem(
 private val bottomNavigationItems = listOf(
     NavigationItem(route = "home", titleRes = R.string.nav_home, icon = R.drawable.ic_home),
     NavigationItem(route = "stores", titleRes = R.string.nav_stores, icon = R.drawable.ic_store),
+    NavigationItem(route = "meals", titleRes = R.string.nav_meals, icon = R.drawable.ic_meal),
 )
 
 /** One item per route; a click first records the item index, then reports its route. */
