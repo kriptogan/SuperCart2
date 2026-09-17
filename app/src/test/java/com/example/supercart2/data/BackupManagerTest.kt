@@ -11,6 +11,8 @@ import com.example.supercart2.TestData.node
 import com.example.supercart2.TestData.store
 import com.example.supercart2.TestData.sub
 import com.example.supercart2.TestData.subNode
+import com.example.supercart2.models.Meal
+import com.example.supercart2.models.MealIngredient
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -272,6 +274,49 @@ class BackupManagerTest {
         val zip = BackupManager.createBackup(context)!!
         val renamed = File(tmp.root, "backup.bak").apply { writeBytes(zip.readBytes()) }
         assertFalse(BackupManager.restoreFromBackup(context, renamed))
+    }
+
+    // ---------- meals ----------
+
+    @Test
+    fun `backup then restore round-trips meals including deleted ones, stamping lastUpdate`() = runTest {
+        installData()
+        val soup = Meal("m1", "Soup", listOf(MealIngredient("g1", "2")), OLD)
+        dm.meals.addAll(listOf(soup, Meal("m2", "Gone", emptyList(), OLD, deleted = true)))
+        val file = BackupManager.createBackup(context)!!
+        TestData.reset()
+
+        assertTrue(BackupManager.restoreFromBackup(context, file))
+
+        assertEquals(listOf("m1", "m2"), dm.meals.map { it.uuid })
+        assertEquals(soup, dm.meals[0].copy(lastUpdate = OLD))
+        assertTrue(dm.meals[1].deleted)
+        assertTrue(dm.meals.all { it.lastUpdate.isAfter(OLD) })
+    }
+
+    @Test
+    fun `restore normalizes meals and old backups without meals restore with none`() = runTest {
+        dm.meals.add(Meal("old", "Old"))
+        val base = """"categories":[{"uuid":"c1","name":"Cat"}],"subCategories":[],"groceries":[]"""
+        val old = File(tmp.root, "old.json").apply { writeText("{$base}") }
+        assertTrue(BackupManager.restoreFromBackup(context, old))
+        assertTrue(dm.meals.isEmpty())
+
+        val withMeals = File(tmp.root, "meals.json")
+        withMeals.writeText("""{$base,"meals":[{"uuid":"m1","name":"Bare","ingredients":[{"groceryId":"g"},{"quantity":"1"}]}]}""")
+        assertTrue(BackupManager.restoreFromBackup(context, withMeals))
+        assertEquals(listOf(MealIngredient("g", "")), dm.meals.single().ingredients)
+    }
+
+    @Test
+    fun `failed restore leaves current meals untouched`() = runTest {
+        installData()
+        dm.meals.add(Meal("keep", "Keep"))
+        val json = File(tmp.root, "bad.json")
+        json.writeText("""{"categories":[],"subCategories":[],"groceries":[],"meals":[{"uuid":"m1"}]}""")
+        assertFalse(BackupManager.restoreFromBackup(context, json))
+        assertEquals(listOf("keep"), dm.meals.map { it.uuid })
+        assertEquals(listOf("c1"), dm.categories.map { it.category.uuid })
     }
 
     @Test

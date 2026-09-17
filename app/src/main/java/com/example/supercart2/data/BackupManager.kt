@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.SubCategory
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Meal
 import com.example.supercart2.models.Store
 import java.io.File
 import java.io.FileInputStream
@@ -39,6 +40,7 @@ object BackupManager {
         val hiddenStoreIds: List<String>,
         val storeCategoryOrders: Map<String, List<String>>,
         val storeSubCategoryOrders: Map<String, Map<String, List<String>>> = emptyMap(),
+        val meals: List<Meal> = emptyList(),
         val backupDate: String = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     )
 
@@ -72,7 +74,7 @@ object BackupManager {
         val (categories, subCategories, groceries) = DataConverter.flattenCategories(dm.categories, includeDeleted = true)
         return BackupData(
             categories, subCategories, groceries, dm.stores.toList(), dm.hiddenStoreIds.toList(),
-            dm.storeCategoryOrders.toMap(), dm.storeSubCategoryOrders.toMap(),
+            dm.storeCategoryOrders.toMap(), dm.storeSubCategoryOrders.toMap(), dm.meals.toList(),
         )
     }
 
@@ -154,7 +156,7 @@ object BackupManager {
     /**
      * The backup normalized (Gson leaves missing fields null) with every lastUpdate set to [now].
      * Construction throws when the category lists or a required entity field are missing.
-     * Missing stores, hidden store ids and per-store orders become empty (older backups lack some of them).
+     * Missing stores, hidden store ids, per-store orders and meals become empty (older backups lack some of them).
      */
     private class RestoredData(backupData: BackupData, now: LocalDateTime) {
         val categories = backupData.categories.required("categories").map { it.normalized().copy(lastUpdate = now) }
@@ -164,10 +166,12 @@ object BackupManager {
         val hiddenStoreIds = backupData.hiddenStoreIds.orEmpty()
         val storeCategoryOrders = backupData.storeCategoryOrders.orEmpty()
         val storeSubCategoryOrders = backupData.storeSubCategoryOrders.orEmpty()
+        val meals = backupData.meals.orEmpty().map { it.normalized().copy(lastUpdate = now) }
 
         fun replaceInMemory() {
             DataManagerObject.replaceCategoriesAndStores(categories, subCategories, groceries, stores)
             replaceOrders(hiddenStoreIds, storeCategoryOrders, storeSubCategoryOrders)
+            replaceMeals(meals)
         }
     }
 
