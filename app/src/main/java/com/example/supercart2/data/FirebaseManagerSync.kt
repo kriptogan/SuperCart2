@@ -3,6 +3,7 @@ package com.example.supercart2.data
 import android.util.Log
 import com.example.supercart2.models.Category
 import com.example.supercart2.models.Grocery
+import com.example.supercart2.models.Meal
 import com.example.supercart2.models.Store
 import com.example.supercart2.models.SubCategory
 import com.google.firebase.firestore.CollectionReference
@@ -47,6 +48,7 @@ internal class FirebaseManagerDownload(
     subCategories: List<SubCategory>,
     groceries: List<Grocery>,
     private val stores: List<Store>,
+    private val meals: List<Meal>,
     ordersDocument: DocumentSnapshot?,
 ) {
     private val categoryIds = categories.map { it.uuid }.toSet()
@@ -58,7 +60,8 @@ internal class FirebaseManagerDownload(
     private val storeSubCategoryOrders = FirebaseManagerMappers.documentToStoreSubCategoryOrders(ordersDocument)
 
     fun summary(): String = "${categories.size} categories, ${subCategories.size} subcategories, " +
-        "${groceries.size} groceries, ${stores.size} stores, ${storeCategoryOrders.size} store category orders, " +
+        "${groceries.size} groceries, ${stores.size} stores, ${meals.size} meals, " +
+        "${storeCategoryOrders.size} store category orders, " +
         "${storeSubCategoryOrders.size} store sub-category orders"
 
     private fun <T> List<T>.keepLinked(label: String, isLinked: (T) -> Boolean): List<T> {
@@ -68,13 +71,15 @@ internal class FirebaseManagerDownload(
     }
 
     /**
-     * Replaces categories, stores and the per-store orders. Like DataStoreManager.loadData, deleted stores
+     * Replaces categories, stores, meals and the per-store orders. Like DataStoreManager.loadData, deleted stores
      * are dropped, and buildNestedStructure drops deleted categories, sub-categories and groceries.
+     * Meals are kept as downloaded: deleted meals stay (so deletions sync) and unknown grocery ids are kept.
      */
     fun replaceLocalData() {
         val nested = DataConverter.buildNestedStructure(categories, subCategories, groceries)
         DataManagerObject.categories.replaceWith(nested)
         DataManagerObject.stores.replaceWith(stores.filter { !it.deleted })
+        DataManagerObject.meals.replaceWith(meals)
         DataManagerObject.storeCategoryOrders.replaceWith(storeCategoryOrders)
         DataManagerObject.storeSubCategoryOrders.replaceWith(storeSubCategoryOrders)
     }
