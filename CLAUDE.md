@@ -9,6 +9,8 @@ turns it into a shopping list that can be viewed per category or per store.
 Make grocery shopping easier to plan and share:
 - **Know what to buy** — alerts for items that are expiring or due to be bought again (based on the average
   interval between past purchases).
+- **Cook without forgetting anything** — save meals as ingredient lists and add the missing ones to the shopping
+  list in one tap.
 - **Plan the trip** — see the shopping list per store, hide stores you won't visit, and walk each store in
   your own category/sub-category order.
 - **Shop together** — share the same data with family members through a group code synced via Firebase.
@@ -38,7 +40,7 @@ export JAVA_HOME="/d/Android/Android Studio/jbr"
 bash tools/check-size-rules.sh               # size rules from .claude/coding-rules.md (must print OK)
 ```
 
-- ~570 unit tests, full run ≈ 5–10 min. Every test class runs in its own JVM (`forkEvery = 1` in
+- ~660 unit tests, full run ≈ 10 min. Every test class runs in its own JVM (`forkEvery = 1` in
   `app/build.gradle.kts`): the app state lives in process-wide singletons that otherwise leak between classes and
   make Compose tests hang with `AppNotIdleException`. Don't remove it.
 - `testOptions.unitTests.isReturnDefaultValues = true`, so `android.util.Log` is a no-op in plain JVM tests.
@@ -56,10 +58,11 @@ bash tools/check-size-rules.sh               # size rules from .claude/coding-ru
 ## Architecture
 
 ```
-MainActivity ── MainApp (route state "home" | "stores", BottomNavigationBar)
+MainActivity ── MainApp (route state "home" | "stores" | "meals", BottomNavigationBar)
    ├─ HomeScreen            full catalogue, search, "alerts" filter, BurgerMenu → management dialogs
-   └─ StoresScreen          own sub-screen state machine: landing → select store → store detail (Buying | Edit)
-        └─ ShoppingListScreen   reachable only from Stores → "View groceries"
+   ├─ StoresScreen          own sub-screen state machine: landing → select store → store detail (Buying | Edit)
+   │    └─ ShoppingListScreen   reachable only from Stores → "View groceries"
+   └─ MealsScreen           sub-screens: List → Prepare(meal checklist → shopping list) / Edit(+ ingredient picker)
 
 ui/components/*Dialog.kt ──► DataManagerObject (in-memory state, mutations)
                          └─► DataStoreManager.saveDataGlobally() (persist)   ← callers must remember to call this
@@ -68,8 +71,9 @@ BurgerMenu / group dialogs ─► FirebaseManager.uploadData()/downloadData(), G
 
 ### Data model (`models/`)
 `Category` → `SubCategory` (`categoryId`) → `Grocery` (`categoryId`, `subCategoryId`, `storeIds`).
-`Store` is independent; groceries link to stores by `storeIds`. Every entity has `uuid`, `lastUpdate`,
-`deleted`.
+`Store` is independent; groceries link to stores by `storeIds`. `Meal` (`models/Meal.kt`) has a name and
+`ingredients: List<MealIngredient(groceryId, quantity)>` referencing groceries. Every entity has `uuid`,
+`lastUpdate`, `deleted`.
 
 - **Soft delete everywhere.** Deletes set `deleted = true`; items stay in memory/DataStore/Firebase so
   deletions can sync. UI reads through `getSortedCategories()` / `getSortedStores()`, which filter them out.
@@ -94,6 +98,9 @@ BurgerMenu / group dialogs ─► FirebaseManager.uploadData()/downloadData(), G
   - `getSortedCategoriesForStore` / `groupGroceriesByStore`: custom per-store order first, remaining items
     by global `viewOrder`. Hidden stores are omitted; groceries with no store go into a `store = null` group.
   - `deleteStore`: unlinks from groceries, soft-deletes, removes hidden flag and both per-store orders.
+  - Meals (`DataManagerObjectMeals.kt`): `meals` keeps soft-deleted meals (so deletes sync); `getSortedMeals()`
+    (visible, by name), `mealIngredientRows(meal)` hides missing/deleted groceries, `addGroceriesToShoppingList(ids)`
+    only lists unlisted visible groceries (never toggles items off) and returns the count.
 - **`DataConverter`** — nested tree ⇄ flat lists, plus `validateRelationships` (all parent IDs exist).
 - **`DataStoreManager`** — Gson (with LocalDate/LocalDateTime ISO adapters) into the `supercart_data`
   Preferences DataStore, one key per flat list. `loadData` validates relationships, drops deleted stores,
@@ -137,6 +144,10 @@ BurgerMenu / group dialogs ─► FirebaseManager.uploadData()/downloadData(), G
 - Firestore: `storeCategoryOrders/orders` holds `orders` (category orders) and `subOrders` (sub-category orders).
   Malformed documents are skipped (logged); download drops orphaned sub-categories/groceries and deleted stores.
   Only images of fully visible groceries are synced.
+- Meals: DataStore key `meals`, `BackupData.meals`, Firestore collection `meals` (ingredients as a list of
+  `{groceryId, quantity}` maps). Deleted meals are kept everywhere; meals referencing unknown groceries are kept
+  (the UI hides those ingredients).
+- `GroceryCreationDialog(onGroceryCreated = …)` reports a newly created grocery (not edits) right before dismissing.
 - Reordering (`swapCategoryOrder` / `swapStoreOrder`) renumbers visible items 1..n so ties always move.
 - Any mutation that must sync has to stamp `lastUpdate`.
 
@@ -145,3 +156,5 @@ BurgerMenu / group dialogs ─► FirebaseManager.uploadData()/downloadData(), G
 - Backups use the deprecated `Environment.getExternalStoragePublicDirectory` (works; migrating to MediaStore/SAF is
   a larger change).
 - `CreateCategoryDialog` counts deleted categories when choosing the next `viewOrder` (harmless gaps).
+- Count strings like "%d ingredients" have no plural forms ("1 ingredients"); `StringResourcesTest` only checks
+  `<string>` entries, so switching to `<plurals>` needs that test extended.
