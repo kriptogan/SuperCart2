@@ -5,10 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.supercart2.data.DataManagerObject
-import com.example.supercart2.data.DataStoreManager
 import com.example.supercart2.models.Meal
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 /** What a meal card on the Meals list shows. */
 internal data class MealCardData(val uuid: String, val name: String, val ingredientCount: Int)
@@ -16,11 +14,6 @@ internal data class MealCardData(val uuid: String, val name: String, val ingredi
 /** Visible meals sorted by name, each with the number of its ingredients whose grocery is visible. */
 internal fun mealsScreenCards(): List<MealCardData> = DataManagerObject.getSortedMeals().map { meal ->
     MealCardData(meal.uuid, meal.name, DataManagerObject.mealIngredientRows(meal).size)
-}
-
-/** Persists the current data in [this] scope; call after every mutation of the Meals screens. */
-internal fun CoroutineScope.mealsScreenSave() {
-    launch { DataStoreManager.saveDataGlobally() }
 }
 
 /** UI state of the Meals list: the meal waiting for delete confirmation. Saves run in [scope]. */
