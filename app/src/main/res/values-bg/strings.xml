@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">SuperCart2</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Начало</string>
+    <string name="nav_shopping_list">Списък за пазаруване</string>
+    <string name="nav_categories">Категории</string>
+    
+    <!-- Menu -->
+    <string name="menu">Меню</string>
+    <string name="menu_categories_management">Управление на категории</string>
+    <string name="menu_manage_stores">Управление на магазини</string>
+    <string name="menu_family_group">Споделяне на група</string>
+    <string name="menu_import_groceries">Импорт на продукти</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="menu_upload_cloud">Качване в облак</string>
+    <string name="menu_download_cloud">Изтегляне от облак</string>
+    <string name="menu_sync_data">Синхронизация на данни</string>
+    <string name="menu_language">Език</string>
+    <string name="requires_family_group">Изисква семейна група</string>
+    <string name="please_create_or_join_group">Моля, първо създайте или се присъединете към семейна група</string>
+    
+    <!-- Categories -->
+    <string name="create_category">Създаване на категория</string>
+    <string name="edit_category">Редактиране на категория</string>
+    <string name="delete_category">Изтриване на категория</string>
+    <string name="category_name">Име на категория</string>
+    
+    <!-- Sub-Categories -->
+    <string name="create_subcategory">Създаване на подкатегория</string>
+    <string name="edit_subcategory">Редактиране на подкатегория</string>
+    <string name="delete_subcategory">Изтриване на подкатегория</string>
+    <string name="subcategory_name">Име на подкатегория</string>
+    <string name="create_new_subcategory">Създаване на нова подкатегория</string>
+    <string name="add_sub_category">Добавяне на подкатегория</string>
+    <string name="category_protected_cannot_delete">⚠️ Тази категория е защитена и не може да бъде изтрита.</string>
+    <string name="subcategory_protected_cannot_delete">⚠️ Тази подкатегория е защитена и не може да бъде изтрита.</string>
+    <string name="delete_category_confirmation">Сигурни ли сте, че искате да изтриете \'%s\'? Това ще изтрие и всички подкатегории и свързани продукти.</string>
+    <string name="delete_subcategory_confirmation">Сигурни ли сте, че искате да изтриете \'%s\'? Това ще изтрие и всички свързани продукти.</string>
+    <string name="category_protected">Категорията е защитена</string>
+    <string name="subcategory_protected">Подкатегорията е защитена</string>
+    <string name="protected_label">(Защитено)</string>
+    
+    <!-- Groceries -->
+    <string name="add_to_shopping_list">Добавяне към списък за пазаруване</string>
+    <string name="mark_as_bought">Маркирай като купено</string>
+    <string name="edit_grocery">Редактиране на продукт</string>
+    <string name="delete_grocery">Изтриване на продукт</string>
+    <string name="grocery_name">Име на продукт</string>
+    <string name="expiration_date">Срок на годност</string>
+    <string name="remove_from_shopping_list">Премахване от списък за пазаруване</string>
+    <string name="edit_item">Редактиране на артикул</string>
+    <string name="view_buy_history">Преглед на история на покупки</string>
+    <string name="create_new_grocery">Създаване на нов продукт</string>
+    <string name="delete_grocery_confirmation">Сигурни ли сте, че искате да изтриете \'%s\'?</string>
+    <string name="processing_image">Обработка на изображение...</string>
+    <string name="add_image_prompt">Добавяне на изображение</string>
+    <string name="tap_to_upload">Докоснете за качване</string>
+    <string name="category">Категория</string>
+    <string name="sub_category">Подкатегория</string>
+    <string name="stores">Магазини</string>
+    <string name="select_stores_optional">Избор на магазини (незадължително)</string>
+    <string name="remove_image">Премахване на изображение</string>
+    <string name="grocery_image">Изображение на продукт</string>
+    <string name="full_screen_image">Изображение на цял екран</string>
+    <string name="change_image">Смяна на изображение</string>
+    <string name="select_category">Избор на категория</string>
+    <string name="select_sub_category">Избор на подкатегория</string>
+    <string name="stores_selected">Избрани магазини: %d</string>
+    
+    <!-- Stores -->    
+    <!-- Stores -->
+    <string name="manage_stores">Управление на магазини</string>
+    <string name="stores_management">Управление на магазини</string>
+    <string name="create_store">Създаване на магазин</string>
+    <string name="create_new_store">Създаване на нов магазин</string>
+    <string name="edit_store">Редактиране на магазин</string>
+    <string name="update_store">Актуализиране на магазин</string>
+    <string name="delete_store">Изтриване на магазин</string>
+    <string name="delete_store_confirmation">Сигурни ли сте, че искате да изтриете \'%s\'? Това ще отмени връзката на всички продукти с този магазин.</string>
+    <string name="store_name">Име на магазин</string>
+    <string name="link_to_store">Свързване с магазин</string>
+    <string name="select_stores">Избор на магазини</string>
+    <string name="no_stores_yet">Все още няма магазини</string>
+    <string name="move_up">Премести нагоре</string>
+    <string name="move_down">Премести надолу</string>
+    <string name="reorder_categories">Пренареждане на категории</string>
+    <string name="reorder_categories_for_store">Пренареждане на категории за %s</string>
+    <string name="save_order">Запази ред</string>
+    <string name="edit_mode">Режим на редактиране</string>
+    <string name="store_address">Адрес на магазина</string>
+    <string name="store_info">Информация за магазина</string>
+    
+    <!-- Group Sharing -->
+    <string name="family_group">Семейна група</string>
+    <string name="create_group">Създаване на нова група</string>
+    <string name="create_family_group">Създаване на семейна група</string>
+    <string name="join_group">Присъединяване към съществуваща група</string>
+    <string name="join_family_group">Присъединяване към семейна група</string>
+    <string name="leave_group">Напускане на група</string>
+    <string name="group_code">Код на група</string>
+    <string name="copy_code">Копиране на код</string>
+    <string name="enter_group_code">Въведете код на група</string>
+    <string name="youre_in_group">Вие сте в семейна група!</string>
+    <string name="share_groceries_message">Споделяйте продукти със семейни членове!</string>
+    <string name="local_data_will_be_replaced">⚠️ Внимание: Вашите локални данни ще бъдат заменени с данните на групата.</string>
+    <string name="local_data_kept">Вашите локални данни ще останат, но синхронизацията с групата ще спре.</string>
+    <string name="leave_group_question">Напускане на група?</string>
+    <string name="group_not_found">Групата не е намерена или невалиден код</string>
+    <string name="failed_to_join">Неуспешно присъединяване: %s</string>
+    <string name="failed_to_create">Неуспешно създаване на група: %s</string>
+    <string name="copy">Копиране</string>
+    <string name="leave_action">Напускане</string>
+    
+    <!-- Color palette -->
+    <string name="color_palette">Цветова палитра</string>
+    <string name="palette_green">Зелен</string>
+    <string name="palette_orange">Оранжев</string>
+    <string name="palette_purple">Лилав</string>
+    <string name="palette_blue">Син</string>
+    <string name="palette_pink">Розов</string>
+
+    <!-- Actions -->
+    <string name="ok">Добре</string>
+    <string name="cancel">Отказ</string>
+    <string name="save">Запазване</string>
+    <string name="delete">Изтриване</string>
+    <string name="edit">Редактиране</string>
+    <string name="create">Създаване</string>
+    <string name="save_changes">Запази промените</string>
+    <string name="confirm">Потвърждаване</string>
+    <string name="yes">Да</string>
+    <string name="no">Не</string>
+    <string name="close">Затваряне</string>
+    <string name="done">Готово</string>
+    <string name="clear">Изчистване</string>
+    <string name="import_action">Импортиране</string>
+    <string name="leave">Напускане</string>
+    
+    <!-- Confirmations -->
+    <string name="are_you_sure">Сигурни ли сте?</string>
+    <string name="delete_confirmation">Сигурни ли сте, че искате да изтриете този артикул?</string>
+    <string name="leave_group_confirmation">Сигурни ли сте, че искате да напуснете групата?</string>
+    
+    <!-- Messages -->
+    <string name="uploading_to_cloud">Качване в облак</string>
+    <string name="downloading_from_cloud">Изтегляне от облак</string>
+    <string name="please_wait_upload">Моля, изчакайте докато данните ви се качват...</string>
+    <string name="please_wait_download">Моля, изчакайте докато данните ви се изтеглят...</string>
+    <string name="upload_successful">Качването е успешно</string>
+    <string name="download_successful">Изтеглянето е успешно</string>
+    <string name="upload_success_message">Вашите данни бяха успешно качени в облака.</string>
+    <string name="download_success_message">Вашите данни бяха успешно изтеглени от облака.</string>
+    <string name="upload_failed">Качването се провали: %s</string>
+    <string name="download_failed">Изтеглянето се провали: %s</string>
+    <string name="sync_successful">Синхронизацията е успешна</string>
+    <string name="sync_success_message">Вашите данни са синхронизирани с облака.</string>
+    <string name="sync_failed">Синхронизацията се провали: %s</string>
+    <string name="error">Грешка</string>
+    <string name="group_created">Групата е създадена успешно</string>
+    <string name="group_joined">Успешно се присъединихте към групата</string>
+    <string name="code_copied">Кодът е копиран в клипборда</string>
+    
+    <!-- View Modes -->
+    <string name="category_view">Изглед по категории</string>
+    <string name="store_view">Изглед по магазини</string>
+    <string name="not_linked_to_store">Не е свързано с магазин</string>
+    
+    <!-- Shopping List -->
+    <string name="things_to_buy">За закупуване</string>
+    <string name="already_bought">Вече купено</string>
+    <string name="no_items_to_buy">Няма артикули за закупуване</string>
+    <string name="no_bought_items">Няма закупени артикули</string>
+    <string name="finish_shopping">Приключи пазаруването</string>
+    <string name="finish_shopping_button">Приключи пазаруването (%d артикула)</string>
+    <string name="finish_shopping_confirmation_intro">Сигурни ли сте, че искате да приключите пазаруването? Това ще:</string>
+    <string name="finish_shopping_bullet_history">• Добави днешната дата към историята на закупуване на всички закупени артикули</string>
+    <string name="finish_shopping_bullet_remove">• Премахне всички закупени артикули от списъка за пазаруване</string>
+    <string name="switch_to_store_view">Премини към изглед по магазини</string>
+    <string name="switch_to_category_view">Премини към изглед по категории</string>
+    <string name="show_hide_stores_hidden">Показване/Скриване на магазини (%d скрити)</string>
+    <string name="add_new_grocery">Добави нов продукт</string>
+    <string name="clear_search">Изчисти търсенето</string>
+    <string name="collapse_all">Свий всички</string>
+    <string name="expand_all">Разгъни всички</string>
+    <string name="remove_from_list">Премахни от списъка</string>
+    
+    <!-- Search -->
+    <string name="search">Търсене</string>
+    <string name="search_hint">Търсене на продукти...</string>
+    
+    <!-- Language Selection -->
+    <string name="select_language">Избор на език</string>
+    
+    <!-- Images -->
+    <string name="select_image_source">Избор на източник на изображение</string>
+    <string name="choose_from_gallery">Избор от галерия</string>
+    <string name="take_photo">Направи снимка</string>
+    <string name="camera_permission_required">Необходимо е разрешение за камерата</string>
+    <string name="add_image">Добавяне на изображение</string>
+    
+    <!-- Import -->
+    <string name="import_groceries">Импорт на продукти</string>
+    <string name="add_to_shopping_list_question">Добавяне към списък за пазаруване?</string>
+    <string name="should_add_to_shopping_list">Да добавим ли артикулите към списъка за пазаруване?</string>
+    <string name="enter_grocery_names">Въведете имена на продукти (по един на ред):</string>
+    <string name="show_hide_stores">Показване/Скриване на магазини</string>
+    <string name="sub_categories">Подкатегории</string>
+    <string name="create_new_category">Създаване на нова категория</string>
+    <string name="general">Общи</string>
+    <!-- Default category/subcategory display names (translated) -->
+    <string name="default_category_other">Други</string>
+    <string name="default_category_vegetables">Зеленчуци</string>
+    <string name="default_category_fruits">Плодове</string>
+    <string name="items">артикула</string>
+    <string name="more">повече</string>
+    <string name="no_groceries_yet">Все още няма продукти</string>
+    <string name="categories_management">Управление на категории</string>
+    <string name="sub_categories_count">Подкатегории: %d</string>
+    <string name="groceries_count">Продукти: %d</string>
+    <string name="no_stores_available">Няма налични магазини.</string>
+    <string name="unchecked_stores_hidden">Неотметнати магазини ще бъдат скрити от изгледа на магазина.</string>
+    <string name="no_stores_available_create">Няма налични магазини. Създайте първия си магазин, за да започнете.</string>
+    <string name="left_group_success">Напуснахте семейната група</string>
+
+    <!-- Export / Import -->
+    <string name="menu_export_import">Експорт / импорт на данни</string>
+    <string name="export_to_file">Експорт във файл</string>
+    <string name="export_to_file_description">Запазване на резервно копие в папка „Изтегляния“</string>
+    <string name="import_from_file">Импорт от файл</string>
+    <string name="import_from_file_description">Възстановяване на данни от резервно копие</string>
+    <string name="exporting_data">Експортиране на данни</string>
+    <string name="please_wait_export">Моля, изчакайте докато данните ви се експортират…</string>
+    <string name="export_successful">Експортирането е успешно</string>
+    <string name="export_success_message">Вашите данни бяха запазени в папка „Изтегляния“.</string>
+    <string name="export_failed">Експортирането се провали: %s</string>
+
+    <string name="back">Назад</string>
+
+    <!-- Stores Tab -->
+    <string name="nav_stores">Магазини</string>
+    <string name="view_groceries">Преглед на продукти</string>
+    <string name="view_groceries_desc">Разгледайте всички артикули по категории</string>
+    <string name="select_a_store">Избор на магазин</string>
+    <string name="select_a_store_desc">Започнете пазаруване в конкретен магазин</string>
+    <string name="change_to_store_view">Премини към изглед по магазини</string>
+    <string name="items_count">Артикули: %d</string>
+    <string name="unique_items_count">Уникални: %d</string>
+    <string name="no_stores_with_items">В момента няма магазини с артикули в списъка за пазаруване.</string>
+    <string name="finish_shopping_store">Приключи пазаруването (%d купени)</string>
+
+    <!-- Settings: alerts and backup / restore -->
+    <string name="settings_show_alerts">Показване на известия</string>
+    <string name="settings_show_alerts_description">Показване на иконата със звънче и открояване на артикули с изтичащ срок на годност или напомняне за покупка</string>
+    <string name="backup_and_restore">Архивиране и възстановяване</string>
+    <string name="backup">Архивиране</string>
+    <string name="restore">Възстановяване</string>
+    <string name="create_backup">Създаване на резервно копие</string>
+    <string name="restore_backup">Възстановяване от резервно копие</string>
+    <string name="backup_created">Създадено резервно копие: %s</string>
+    <string name="backup_failed">Неуспешно създаване на резервно копие</string>
+    <string name="backup_restored">Резервното копие е възстановено успешно!</string>
+    <string name="restore_failed">Неуспешно възстановяване на резервното копие. Моля, проверете формата на файла.</string>
+    <string name="select_backup_file">Изберете файл с резервно копие</string>
+    <string name="no_backup_files">Няма намерени резервни копия в папка „Изтегляния“.</string>
+    <string name="file_size_mb">%.2f МБ</string>
+    <string name="file_size_kb">%.2f КБ</string>
+    <string name="file_size_bytes">%d байта</string>
+    <string name="unknown_error">Неизвестна грешка</string>
+
+    <!-- Selection dialogs and grocery form -->
+    <string name="new_category">Нова категория</string>
+    <string name="new_sub_category">Нова подкатегория</string>
+    <string name="create_grocery">Създаване на продукт</string>
+    <string name="select_date">Избор на дата</string>
+    <string name="no_date_selected">Няма избрана дата</string>
+    <string name="invalid_date">Невалидна дата</string>
+    <string name="no_categories_yet">Все още няма категории</string>
+
+    <!-- Catalogue and shopping list -->
+    <string name="alerts">Известия</string>
+    <string name="collapse">Свий</string>
+    <string name="expand">Разгъни</string>
+    <string name="clear_search_for">Изчисти търсенето за „%s“</string>
+    <string name="unknown_store">Неизвестен</string>
+    <string name="more_options">Още опции</string>
+    <string name="mark_bought">Маркирай като купено</string>
+    <string name="mark_not_bought">Маркирай като некупено</string>
+    <string name="add_to_shopping_list_description">Добавяне към списъка за пазаруване</string>
+    <string name="buy_history_title">История на покупките - %s</string>
+    <string name="no_purchase_history">Все още няма история на покупките</string>
+    <string name="store_items_count">%d артикула</string>
+
+    <!-- Group sharing -->
+    <string name="group_code_copied">Кодът на групата е копиран!</string>
+
+    <!-- Meals -->
+    <string name="nav_meals">Ястия</string>
+    <string name="create_meal">Създай ястие</string>
+    <string name="new_meal">Ново ястие</string>
+    <string name="edit_meal">Редактирай ястие</string>
+    <string name="delete_meal">Изтрий ястие</string>
+    <string name="no_meals_yet">Все още няма ястия</string>
+    <string name="meal_ingredients_count">Съставки: %d</string>
+    <string name="meal_name">Име на ястието</string>
+    <string name="quantity">Количество</string>
+    <string name="add_ingredients">Добави съставки</string>
+    <string name="remove_ingredient">Премахни съставка</string>
+    <string name="no_ingredients_yet">Все още няма съставки</string>
+    <string name="already_in_list">Вече е в списъка</string>
+    <string name="add_count_to_shopping_list">Добави %d в списъка за пазаруване</string>
+    <string name="items_added_to_shopping_list">Добавени в списъка за пазаруване: %d</string>
+    <string name="select_ingredients">Изберете съставки</string>
+    <string name="new_grocery">Нов продукт</string>
+</resources>

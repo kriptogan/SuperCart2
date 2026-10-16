@@ -2,15 +2,15 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services")
+    alias(libs.plugins.google.services)  // Google Services plugin
 }
 
 android {
-    namespace = "com.kriptogan.supercart2"
+    namespace = "com.example.supercart2"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.kriptogan.supercart2"
+        applicationId = "com.example.supercart2"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -20,6 +20,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // ./gradlew createDebugUnitTestCoverageReport
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -38,6 +42,14 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // android.util.Log etc. return defaults instead of throwing in plain JVM tests
+            isReturnDefaultValues = true
+            // Robolectric needs merged resources
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -50,21 +62,55 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
     
-    // Firebase dependencies
-    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
-    implementation("com.google.firebase:firebase-firestore")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-analytics")
-    
-    // JSON serialization
+    // DataStore and Gson for local data persistence
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("com.google.code.gson:gson:2.10.1")
     
+    // Image loading library
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    
+    // ExifInterface for image orientation
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    
+    // Permission handling (for Android 12 and below)
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+    
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
+    
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation("io.mockk:mockk:1.13.12")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// Count classes loaded by Robolectric's sandbox classloader in the JaCoCo report.
+// AGP attaches the JaCoCo extension after configuration, so set it at execution time.
+tasks.withType<Test>().configureEach {
+    // Each test class gets a fresh JVM: the app state lives in process-wide singletons (DataManagerObject,
+    // DataStore, Firebase objects, the Compose main looper) that otherwise leak between Robolectric/Compose
+    // test classes and make later Compose tests hang with AppNotIdleException.
+    forkEvery = 1
+    maxParallelForks = 2
+    doFirst {
+        extensions.findByType(JacocoTaskExtension::class.java)?.apply {
+            isIncludeNoLocationClasses = true
+            excludes = listOf("jdk.internal.*")
+        }
+    }
 }

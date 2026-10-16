@@ -1,0 +1,21 @@
+package com.example.supercart2.models
+
+import java.util.UUID
+import java.time.LocalDate
+import java.time.LocalDateTime
+
+data class Grocery(
+    val uuid: String = UUID.randomUUID().toString(),
+    val name: String,
+    val categoryId: String,
+    val subCategoryId: String,
+    val expirationDate: LocalDate? = null,
+    val inShoppingList: Boolean = false,
+    val isBought: Boolean = false,
+    val buyEvents: List<LocalDate> = emptyList(),
+    val imageUUID: String? = null,
+    val averageBuyDays: Int? = null, // null means not enough data to calculate
+    val storeIds: List<String> = emptyList(),
+    val lastUpdate: LocalDateTime = LocalDateTime.now(),
+    val deleted: Boolean = false  // Changed from isDeleted to deleted
+)        
